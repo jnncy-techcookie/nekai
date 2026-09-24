@@ -290,3 +290,82 @@ body.paper {
   pointer-events: none;
   z-index: 60;
 }
+
+/* ---------- sidebar spacing (roomier nav, divider above the profile, log out) ---------- */
+.side{padding:28px 20px 24px}
+.side.is-collapsed{padding:24px 16px}
+.side-nav{gap:12px}
+.side-link{gap:20px;padding:0 14px;border-radius:10px}
+.side.is-collapsed .side-link{padding:0 12px}
+.side-link[aria-current="page"]{border-color:transparent}
+.opt-strong .side-link[aria-current="page"]{border-color:var(--ink)}
+.brand-word{font-family:'The Last Shuriken','Dela Gothic One',sans-serif;font-size:28px;line-height:32px;letter-spacing:1.5px}
+.side-foot{gap:12px}
+.side-sep{margin:4px 0;border:0;border-top:1.5px solid var(--line)}
+.side-me{padding:0 8px;gap:16px}
+.side-logout{width:100%;background:transparent;font-family:inherit;color:var(--muted);cursor:pointer}
+.side-logout:hover{background:#FFE0CC;color:var(--red-dark)}
+/* Collapsed: the profile circle shrinks to icon size */
+.side.is-collapsed .side-me{height:48px;padding:0 12px}
+.side.is-collapsed .avatar{width:24px;height:24px;border-width:1.5px}
+.side.is-collapsed .avatar svg{width:20px;height:20px}
+
+/* Collapse button: a plain icon like the nav items (no outline or white fill), same 24px icon */
+.side-toggle{border:0;border-radius:10px;background:transparent;transition:background-color .12s ease}
+.side-toggle:hover{background:rgba(15,31,92,.08)}
+/* Collapsed rail: icons sit closer together */
+.side.is-collapsed{gap:12px}
+.side.is-collapsed .side-head{gap:4px}
+.side.is-collapsed .side-nav,
+.side.is-collapsed .side-foot{gap:4px}
+.side.is-collapsed .side-sep{margin:6px 0}
+
+/* ---------- page switches without a glitch ----------
+   Until the shell script builds the sidebar, hold its space so the page never
+   paints at full width and then jumps. (Chromium also waits for the scripts via
+   blocking="render"; this covers the other browsers.) */
+@media (min-width: 768px) {
+  .app:not(:has(> .side))::before {
+    content: "";
+    flex: 0 0 var(--side-w);
+    min-height: 100vh;
+    background: var(--cream);
+    border-right: 1.5px solid var(--ink);
+  }
+  .nav-collapsed .app:not(:has(> .side))::before {
+    flex-basis: 80px;
+  }
+}
+@media (max-width: 767px) {
+  .app:not(:has(> .mtop))::before {
+    content: "";
+    display: block;
+    height: 72px;
+    background: var(--cream);
+    border-bottom: 1.5px solid var(--ink);
+  }
+}
+/* Cross-page transition: a quick cross-fade of the content while the sidebar and tabs stay put */
+@view-transition {
+  navigation: auto;
+}
+.side {
+  view-transition-name: nekai-side;
+}
+.mtabs {
+  view-transition-name: nekai-tabs;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.18s;
+}
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+}
+:root.opt-reduce-motion::view-transition-group(*),
+:root.opt-reduce-motion::view-transition-old(*),
+:root.opt-reduce-motion::view-transition-new(*) {
+  animation: none !important;
+}

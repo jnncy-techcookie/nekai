@@ -7,8 +7,18 @@
   <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=block" rel="stylesheet">
   <link rel="stylesheet" href="css/main.css">
+  <link rel="preload" href="assets/fonts/The%20Last%20Shuriken.ttf" as="font" type="font/ttf" crossorigin>
+  <!-- boot.js applies saved layout settings before the first paint; the rest run once the page is parsed,
+       and blocking="render" holds the first paint until the sidebar and content are built (no flash) -->
+  <script src="js/core/boot.js"></script>
+  <script src="js/data/sample-data.js" defer blocking="render"></script>
+  <script src="js/core/store.js" defer blocking="render"></script>
+  <script src="js/services/jikan.js" defer blocking="render"></script>
+  <script src="js/core/ui.js" defer blocking="render"></script>
+  <script src="js/core/detail-panel.js" defer blocking="render"></script>
+  <script src="js/pages/my-anime.js" defer blocking="render"></script>
 </head>
 <body class="paper">
   <div class="app">
@@ -52,12 +62,5 @@
       </div>
     </main>
   </div>
-
-  <script src="js/data/sample-data.js"></script>
-  <script src="js/core/store.js"></script>
-  <script src="js/services/jikan.js"></script>
-  <script src="js/core/ui.js"></script>
-  <script src="js/core/detail-panel.js"></script>
-  <script src="js/pages/my-anime.js"></script>
 </body>
 </html>

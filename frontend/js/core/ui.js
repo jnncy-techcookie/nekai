@@ -96,6 +96,7 @@
     external:
       '<path d="M14 4h6v6M20 4l-9 9"></path><path d="M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"></path>',
     note: '<path d="M6 3.5h9l3.5 3.5v13.5H6z"></path><path d="M14.5 3.5V7.5h4M9 12h6M9 16h4"></path>',
+    logout: '<path d="M14 4h4a2 2 0 012 2v12a2 2 0 01-2 2h-4"></path><path d="M9 16l-4-4 4-4M5 12h10"></path>',
     chevD: '<path d="M6 9l6 6 6-6"></path>',
     wifiOff:
       '<path d="M2 8.5a15 15 0 0120 0M5 12a10 10 0 0114 0M8.5 15.5a5 5 0 017 0M12 19h.01M3 3l18 18"></path>',
@@ -214,7 +215,7 @@
       '" aria-label="' +
       (ui.navOpen !== false ? "Collapse sidebar" : "Expand sidebar") +
       '">' +
-      icon("panel", 20, 2) +
+      icon("panel") +
       "</button>" +
       "</div>" +
       '<nav class="side-nav" aria-label="Main">' +
@@ -242,6 +243,7 @@
       ' title="Settings">' +
       icon("gear") +
       '<span class="side-label">Settings</span></a>' +
+      '<hr class="side-sep">' +
       '<a class="side-link side-me" href="profile.html" title="Your profile"><span class="avatar">' +
       AVATAR +
       '</span><span class="side-label"><span>' +
@@ -249,6 +251,9 @@
       '</span><span class="small muted">Level ' +
       lv.level +
       "</span></span></a>" +
+      '<button type="button" class="side-link side-logout" data-act="logout" title="Log out">' +
+      icon("logout") +
+      '<span class="side-label">Log out</span></button>' +
       "</div>";
     app.insertBefore(side, app.firstChild);
 
@@ -616,6 +621,10 @@
         a = S.anime(id),
         undo = S.rate(id, n);
       toast("Rated " + a.title + " " + n + "/10", undo);
+    },
+    logout: function () {
+      S.setSignedIn(false);
+      location.href = "signin.html";
     },
     remove: function (id) {
       var a = S.anime(id);
