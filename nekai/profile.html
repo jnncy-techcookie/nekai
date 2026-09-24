@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NEKAI — Profile</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="paper">
+  <div class="app">
+    <main id="main" class="main tight" tabindex="-1">
+      <noscript><p class="notice">NEKAI needs JavaScript turned on to load your profile.</p></noscript>
+      <div class="page-head">
+        <div class="page-title"><h1 class="h1">Profile</h1><span class="jp-tag" aria-hidden="true">プロフィール</span></div>
+        <p class="body muted">Your viewing record, level and achievements.</p>
+      </div>
+
+      <div class="profile">
+        <div class="stack gap-32">
+          <section id="me" aria-labelledby="me-h" class="card" style="overflow:hidden"></section>
+          <section id="level" aria-labelledby="lv-h" class="card pad-32 stack gap-16" style="background:var(--cream)"></section>
+        </div>
+        <div class="stack gap-32" style="min-width:0">
+          <dl id="stats" class="grid-stats"></dl>
+          <section aria-labelledby="gm-h" class="card pad-32 stack gap-24">
+            <h2 id="gm-h" class="h2 sec-title"><span class="pill pill-blue">MIX</span>Favorite genres</h2>
+            <div id="mix" class="stack gap-24"></div>
+            <p class="caption muted">Based on the genres of anime you’ve started, finished or dropped.</p>
+          </section>
+          <section aria-labelledby="ac-h" class="card pad-32 stack gap-24">
+            <div class="sec-head"><h2 id="ac-h" class="h2 sec-title"><span class="pill pill-red">STICKERS</span>Achievements</h2><span id="ach-count" class="small muted semibold ml-auto"></span></div>
+            <ul id="ach" class="ach"></ul>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/jikan.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/pages/profile.js"></script>
+</body>
+</html>

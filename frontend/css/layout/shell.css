@@ -1,0 +1,292 @@
+/* =========================================================
+   APP SHELL
+   The document scrolls; the sidebar is sticky and never scrolls.
+   ========================================================= */
+html {
+  scroll-behavior: smooth;
+}
+body.paper {
+  min-height: 100vh;
+}
+.app {
+  display: flex;
+  min-height: 100vh;
+}
+.side {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: var(--side-w);
+  overflow: hidden;
+}
+.side.is-collapsed {
+  --side-w: 80px;
+}
+.side-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.side.is-collapsed .side-head {
+  flex-direction: column;
+}
+.side-toggle {
+  margin-left: auto;
+}
+.side.is-collapsed .side-toggle {
+  margin-left: 0;
+}
+.side-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.side-foot {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.side.is-collapsed .side-link {
+  justify-content: center;
+}
+.side.is-collapsed .side-label,
+.side.is-collapsed .brand-word,
+.side.is-collapsed .lolli {
+  display: none;
+}
+.side .lolli-mini {
+  display: none;
+}
+.side.is-collapsed .lolli-mini,
+.side.lolli-hidden .lolli-mini {
+  display: flex;
+}
+.side.lolli-hidden .lolli {
+  display: none;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  text-decoration: none;
+  color: var(--ink);
+}
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 40px;
+  flex-shrink: 0;
+  background: var(--red);
+  color: var(--ink);
+  border-radius: 8px;
+  transform: rotate(-4deg);
+  font-family: "Dela Gothic One", sans-serif;
+  font-size: 20px;
+  line-height: 24px;
+}
+.brand-word {
+  font-family: "Dela Gothic One", sans-serif;
+  font-size: 24px;
+  line-height: 32px;
+  letter-spacing: 1px;
+}
+.brand:hover {
+  color: var(--ink);
+}
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink);
+  background: var(--pink);
+}
+.side-me {
+  height: 64px;
+  padding: 0 8px;
+}
+.side-me .side-label {
+  display: flex;
+  flex-direction: column;
+}
+.lolli-mini {
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+  width: 100%;
+}
+
+.main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 64px;
+  padding: 48px var(--gutter) 64px;
+}
+.main.tight {
+  gap: 32px;
+}
+
+/* Mobile top bar + bottom tabs (hidden on desktop) */
+.mtop,
+.mtabs {
+  display: none;
+}
+.mtop {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  height: 72px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  background: var(--cream);
+  border-bottom: 1.5px solid var(--ink);
+}
+.mtabs {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  height: 80px;
+  padding: 8px 8px 16px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  background: var(--cream);
+  border-top: 1.5px solid var(--ink);
+}
+.mtab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  text-decoration: none;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 700;
+}
+.mtab-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1.5px solid transparent;
+}
+.mtab[aria-current="page"] {
+  font-weight: 800;
+}
+.mtab[aria-current="page"] .mtab-icon {
+  background: var(--yellow);
+  border-color: var(--ink);
+}
+
+/* Toasts + confetti are fixed to the viewport */
+.toast-region {
+  position: fixed;
+  top: 24px;
+  right: 48px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  position: relative;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 440px;
+  max-width: calc(100vw - 32px);
+  min-height: 64px;
+  padding: 8px 8px 8px 16px;
+  border-radius: 12px;
+  background: var(--ink);
+  color: var(--cream);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 700;
+  box-shadow:
+    0 12px 28px rgba(15, 31, 92, 0.24),
+    0 2px 6px rgba(15, 31, 92, 0.12);
+  animation: toastIn 0.32s cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+}
+.toast-msg {
+  flex: 1;
+  min-width: 0;
+}
+.toast.is-leaving {
+  animation: toastOut 0.2s ease-in forwards;
+}
+.toast-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--yellow);
+  color: var(--ink);
+}
+.toast .btn-icon {
+  color: var(--white);
+}
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes toastOut {
+  to {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.97);
+  }
+}
+/* Phones: the toast sits above the bottom tabs, so it rises up and drops away */
+@keyframes toastInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes toastOutDown {
+  to {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast,
+  .toast.is-leaving {
+    animation-duration: 0.01s;
+  }
+}
+.confetti {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 60;
+}

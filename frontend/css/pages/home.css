@@ -1,0 +1,83 @@
+/* =========================================================
+   HOME
+   ========================================================= */
+.greet {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+.home-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 32px;
+  align-items: start;
+}
+.hero {
+  padding: 16px;
+}
+.hero .cart-label {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 32px;
+  padding: 24px;
+}
+.hero-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.week {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.week li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1.5px dashed #8c91a8;
+}
+.day.on {
+  background: var(--orange);
+  border: 0;
+}
+.icon-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 8px;
+}
+.badge-round {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--red);
+  color: var(--ink);
+  font-family: "Dela Gothic One", sans-serif;
+  font-size: 24px;
+  line-height: 32px;
+}
+/* Greeting: "Welcome back," and the name both use The Last Shuriken (.display-title) */
+.greet-hello {
+  font-size: 28px;
+  line-height: 36px;
+}

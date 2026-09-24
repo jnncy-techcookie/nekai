@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NEKAI — My Anime</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="paper">
+  <div class="app">
+    <main id="main" class="main tight" tabindex="-1">
+      <noscript><p class="notice">NEKAI needs JavaScript turned on to load your watchlist.</p></noscript>
+
+      <div class="page-actions">
+        <div class="page-head">
+          <div class="page-title"><h1 class="h1">My Anime</h1><span class="jp-tag" aria-hidden="true">マイリスト</span></div>
+          <p id="total" class="body muted"></p>
+        </div>
+        <a class="btn btn-primary" href="discover.html"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Add anime</a>
+      </div>
+
+      <div class="stack gap-24">
+        <div class="row gap-16" style="align-items:flex-end">
+          <div style="width:min(384px,100%)">
+            <label class="label" for="q">Search your list</label>
+            <input id="q" name="q" class="input" type="search" autocomplete="off" spellcheck="false" aria-describedby="q-count">
+          </div>
+          <div style="width:min(224px,100%)">
+            <label class="label" for="sort">Sort by</label>
+            <select id="sort" name="sort" class="input select">
+              <option value="updated">Recently updated</option>
+              <option value="rating">Your rating</option>
+              <option value="score">Jikan score</option>
+              <option value="title">Title (A–Z)</option>
+            </select>
+          </div>
+          <p id="q-count" class="small muted bold ml-auto" role="status" style="padding-bottom:8px"></p>
+        </div>
+        <div id="tabs" role="tablist" aria-label="Filter by status" class="row gap-8"></div>
+      </div>
+
+      <div id="panel" role="tabpanel" class="stack gap-16"></div>
+    </main>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/jikan.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/pages/my-anime.js"></script>
+</body>
+</html>

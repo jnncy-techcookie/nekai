@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NEKAI — Home</title>
+  <meta name="description" content="NEKAI anime watchlist: track episodes, rate shows and get picks that fit your taste.">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="paper">
+  <div class="app">
+    <main id="main" class="main" tabindex="-1">
+      <noscript><p class="notice">NEKAI needs JavaScript turned on to load your watchlist.</p></noscript>
+
+      <section aria-labelledby="page-h" class="stack gap-32">
+        <div class="stack gap-16">
+          <h1 id="page-h" class="greet">
+            <span class="page-title"><span class="h1">Welcome back,</span><span class="jp-tag" aria-hidden="true">おかえり！</span></span>
+            <span id="who" class="name-pop lg" translate="no">Niko</span>
+          </h1>
+          <p id="intro-sub" class="body muted" style="margin-top:8px"></p>
+        </div>
+        <dl class="grid-4">
+          <div class="card-sm stat yellow"><dt>Anime watched<span>Started or completed</span></dt><dd id="stat-watched" class="title">–</dd></div>
+          <div class="card-sm stat teal"><dt>Completed<span>Finished anime</span></dt><dd id="stat-completed" class="title">–</dd></div>
+          <div class="card-sm stat pink"><dt>Currently watching<span>Ongoing anime</span></dt><dd id="stat-watching" class="title">–</dd></div>
+          <div class="card-sm stat"><dt>Plan to Watch<span class="muted">Anime in your queue</span></dt><dd id="stat-plan" class="title">–</dd></div>
+        </dl>
+      </section>
+
+      <div class="home-top">
+        <div id="hero"></div>
+        <div class="stack gap-32">
+          <section id="streak" aria-labelledby="st-h" class="card pad-24 stack gap-16"></section>
+          <section id="achievement" aria-labelledby="ach-h" class="card pad-24 stack gap-16" style="background:var(--cream)"></section>
+        </div>
+      </div>
+
+      <section aria-labelledby="cont-h" class="stack gap-24">
+        <div class="sec-head">
+          <h2 id="cont-h" class="h2 sec-title"><span class="pill pill-red">UP NEXT</span>Continue watching</h2>
+          <a id="cont-count" class="btn btn-ghost ml-auto" href="my-anime.html">View all</a>
+        </div>
+        <div id="continue"></div>
+      </section>
+
+      <section aria-labelledby="np-h" class="stack gap-24">
+        <div class="sec-head">
+          <h2 id="np-h" class="h2 sec-title"><span class="pill pill-ink">NEKAI’S PICKS</span>Picked for you</h2>
+          <a class="btn btn-ghost ml-auto" href="discover.html">More in Discover</a>
+        </div>
+        <div id="picks"></div>
+        <p class="caption muted row gap-8"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8v.5"></path></svg><span>Match estimates how well a title fits your genres, ratings and history. It isn’t a guarantee you’ll enjoy it.</span></p>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/jikan.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/pages/home.js"></script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+/* =========================================================
+   PROFILE
+   ========================================================= */
+.profile {
+  display: grid;
+  grid-template-columns: 352px minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
+}
+.me-banner {
+  position: relative;
+  height: 208px;
+  background: var(--ink);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.me-house {
+  width: 176px;
+  height: 176px;
+  background: var(--cream);
+  clip-path: polygon(50% 0, 100% 32%, 100% 100%, 0 100%, 0 32%);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.genre-bar {
+  display: flex;
+  height: 24px;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.genre-bar span {
+  border-right: 2px solid var(--white);
+}
+.legend {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 700;
+}
+.legend i {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
+.ach {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 32px 16px;
+}
+.ach li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+.ach-badge {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  font-family: "Dela Gothic One", sans-serif;
+  font-size: 24px;
+  line-height: 32px;
+}
+.ach li.locked .ach-badge {
+  border: 1.5px dashed #8c91a8;
+  background: #f1e8d6;
+}
+.ach-lock {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--white);
+}

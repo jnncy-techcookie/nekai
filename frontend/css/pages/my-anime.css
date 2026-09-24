@@ -1,0 +1,528 @@
+/* =========================================================
+   MY ANIME
+   Cards and list rows share one soft style: light outline, rounded 16px,
+   pill stepper with round buttons, labelled progress, tinted status pill,
+   round delete button. Item styles are scoped to .my-list.
+   ========================================================= */
+
+/* ---------- column labels + List/Cards toggle ---------- */
+/* The toggle is pinned right so it stays put when the labels hide
+   (card view, or stacked rows on narrower windows). */
+.list-cols {
+  grid-template-columns: 48px minmax(0, 1fr) 172px 140px 156px 88px;
+  gap: 16px;
+}
+.list-head {
+  display: grid;
+  padding: 0 16px;
+}
+.list-bar {
+  position: relative;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+.list-bar[hidden] {
+  display: none;
+}
+.list-bar .list-head {
+  flex: 1;
+}
+.list-bar.is-cards .list-head {
+  visibility: hidden;
+}
+.view-toggle {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  border: 1.5px solid var(--ink);
+  border-radius: 8px;
+  background: var(--white);
+  overflow: hidden;
+}
+.view-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+.view-btn + .view-btn {
+  border-left: 1.5px solid var(--ink);
+}
+.view-btn:hover {
+  background: var(--cream);
+  color: var(--ink);
+}
+.view-btn[aria-pressed="true"] {
+  background: var(--yellow);
+  color: var(--ink);
+}
+.view-btn svg {
+  transition: transform 0.15s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+}
+.view-btn:active svg {
+  transform: scale(0.85);
+}
+@media (hover: hover) and (pointer: fine) {
+  .list-bar {
+    min-height: 36px;
+  }
+  .view-btn {
+    width: 36px;
+    height: 32px;
+  }
+}
+
+/* ---------- shared item style ---------- */
+.my-list .card-sm {
+  border: 1.5px solid var(--line);
+  border-radius: 16px;
+  background: var(--white);
+}
+.opt-strong .my-list .card-sm {
+  border-color: var(--ink);
+}
+.m-title {
+  margin: 0;
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.my-list .l-complete {
+  width: 100%;
+  height: 40px;
+  border-radius: 999px;
+}
+
+/* stepper: a soft pill with round − / + buttons */
+.my-list .stepper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 4px;
+  border: 0;
+  border-radius: 999px;
+  background: #f1e8d6; /* same warm gray as the note / delete buttons */
+  overflow: visible;
+}
+.my-list .step {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #e4d9c5; /* a shade deeper than the counter, so − / + still read as buttons */
+  color: var(--ink);
+  transition:
+    background-color 0.15s ease,
+    transform 0.12s ease;
+}
+.my-list .step:hover {
+  background: #d9cdb6;
+}
+.my-list .step:active {
+  transform: scale(0.9);
+}
+.my-list .step:disabled {
+  background: transparent;
+  color: #b3b6c6;
+  transform: none;
+}
+.my-list .step-val {
+  flex: 1;
+  min-width: 0;
+  height: auto;
+  padding: 0;
+  border: 0;
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 800;
+}
+
+/* rating: "Your rating" + stars */
+.m-rate {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.m-rate-label {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.my-list .star {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+}
+.my-list .star svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* status: tinted pill, tint follows the status */
+.my-list .status-select {
+  height: 40px;
+  padding: 0 36px 0 16px;
+  border: 1.5px solid #ffc9a3;
+  border-radius: 999px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: #ffe9d6
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230F1F5C' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")
+    no-repeat right 12px center/16px;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.my-list .status-select:hover {
+  border-color: currentColor;
+}
+.my-list [data-status="plan"] .status-select {
+  background-color: #dce4f8;
+  border-color: #b9c8f2;
+}
+.my-list [data-status="completed"] .status-select {
+  background-color: #e3e9fa;
+  border-color: #b9c8f2;
+}
+.my-list [data-status="dropped"] .status-select {
+  background-color: #ede4d2;
+  border-color: #dcd2be;
+}
+
+.m-del {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #f1e8d6;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+}
+
+.m-del {
+  color: var(--ink);
+}
+.m-del:hover {
+  background: #ffe0cc;
+  color: var(--red-dark);
+}
+.m-del:active {
+  transform: scale(0.88);
+}
+
+/* ---------- card view (Notion-style gallery) ---------- */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
+  gap: 20px;
+}
+.anime-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.anime-card:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 12px 28px rgba(15, 31, 92, 0.1),
+    0 2px 6px rgba(15, 31, 92, 0.06);
+}
+.ac-top {
+  position: relative;
+}
+/* the rating button sits on the poster, top right */
+.ac-top .rp-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  height: 34px;
+  border-color: transparent;
+  background: var(--white);
+  box-shadow: 0 2px 8px rgba(15, 31, 92, 0.2);
+}
+.ac-top .rp-btn:hover,
+.ac-top .rp-btn[aria-expanded="true"] {
+  border-color: var(--ink);
+}
+.ac-media {
+  display: block;
+}
+.anime-card .art {
+  width: 100%;
+  aspect-ratio: 4/3; /* shorter than square, so cards aren't so tall */
+  border-radius: 0;
+}
+.anime-card .art img {
+  object-position: center top;
+}
+
+.ac-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  padding: 12px 14px 14px;
+}
+.ac-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.ac-title {
+  font-size: 18px;
+  line-height: 24px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ac-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+}
+.ac-foot .l-status {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---------- list view: the same pieces in a row ---------- */
+.list-row {
+  display: grid;
+  align-items: center;
+  padding: 12px 16px;
+}
+.list-row .art.thumb {
+  width: 48px;
+}
+.l-title {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.l-controls {
+  display: contents;
+}
+.l-eps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.list-row .stepper {
+  height: 40px;
+}
+.list-row .step {
+  width: 32px;
+  height: 32px;
+}
+.list-row .m-rate-label {
+  display: none;
+}
+.l-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* Narrower windows: the table needs ~1300px with the sidebar open, so rows stack */
+@media (max-width: 1280px) {
+  .list-head {
+    display: none;
+  }
+  .list-row {
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    grid-template-areas: "art title actions" "art controls controls";
+    row-gap: 12px;
+  }
+  .list-row > .art {
+    grid-area: art;
+    align-self: start;
+  }
+  .list-row > .l-title {
+    grid-area: title;
+  }
+  .list-row > .l-actions {
+    grid-area: actions;
+    align-self: start;
+  }
+  .list-row .l-controls {
+    grid-area: controls;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 24px;
+  }
+  .list-row .l-eps {
+    width: 220px;
+  }
+  .list-row .m-rate-label {
+    display: inline;
+  }
+  .list-row .l-status {
+    width: 170px;
+    margin-left: auto;
+  }
+}
+@media (max-width: 767px) {
+  .list-row {
+    grid-template-areas: "art title actions" "controls controls controls";
+    padding: 12px;
+  }
+  .list-row .l-eps,
+  .list-row .l-status {
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
+/* Touch screens get bigger targets */
+@media (pointer: coarse) {
+  .my-list .step,
+  .list-row .step {
+    width: 40px;
+    height: 40px;
+  }
+  .my-list .stepper,
+  .list-row .stepper {
+    height: 48px;
+  }
+  .my-list .star {
+    width: 40px;
+    height: 40px;
+  }
+  .m-del {
+    width: 44px;
+    height: 44px;
+  }
+  .my-list .status-select {
+    height: 44px;
+  }
+}
+
+.status-select {
+  font-weight: 800;
+}
+/* List fades up when switching status tabs or layout (not on every re-render) */
+.tab-enter {
+  animation: tabEnter 0.24s ease-out both;
+}
+@keyframes tabEnter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tab-enter {
+    animation: none;
+  }
+  .anime-card,
+  .anime-card:hover {
+    transition: none;
+    transform: none;
+  }
+  .my-list .step:active,
+  .m-del:active {
+    transform: none;
+  }
+}
+
+/* ---------- rating: "★ 8.4 ⌄" button + pane (drag the stars or type 1–10) ---------- */
+.rp-btn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 8px 0 10px;border:1.5px solid var(--line);border-radius:12px;background:var(--white);color:var(--ink);font-family:inherit;font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;cursor:pointer;transition:border-color .15s ease,background-color .15s ease}
+.rp-btn:hover,.rp-btn[aria-expanded="true"]{border-color:var(--ink)}
+.rp-btn .rp-none{color:var(--muted)}
+.rp-btn > svg:last-child{color:var(--muted);transition:transform .2s ease}
+.rp-btn[aria-expanded="true"] > svg:last-child{transform:rotate(180deg)}
+.rp-pop{position:fixed;z-index:55;width:300px;padding:18px 20px 14px;border:1px solid var(--line);border-radius:18px;background:var(--white);box-shadow:0 18px 40px rgba(15,31,92,.16),0 2px 8px rgba(15,31,92,.08);animation:rpIn .16s ease-out}
+.rp-pop[hidden]{display:none}
+.rp-pop::before{content:"";position:absolute;top:-8px;left:var(--nub,50%);width:14px;height:14px;margin-left:-7px;background:var(--white);border-left:1px solid var(--line);border-top:1px solid var(--line);transform:rotate(45deg)}
+.rp-pop.above::before{top:auto;bottom:-8px;transform:rotate(225deg)}
+@keyframes rpIn{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}
+.rp-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.rp-title{font-size:18px;line-height:24px;font-weight:800;color:var(--ink)}
+.rp-badge{display:inline-flex;align-items:baseline;padding:6px 10px;border-radius:10px;background:#DCE4F8;color:var(--blue);font-size:18px;line-height:24px;font-weight:800;cursor:text;transition:background-color .15s ease,box-shadow .15s ease}
+.rp-badge:focus-within{box-shadow:0 0 0 2px var(--blue)}
+.rp-badge input{width:3.3ch;padding:0;border:0;background:transparent;color:inherit;font:inherit;font-variant-numeric:tabular-nums;text-align:right;outline:0}
+.rp-pop.has-error .rp-badge{background:#FFE0CC;color:var(--red-dark)}
+.rp-pop.has-error .rp-badge:focus-within{box-shadow:0 0 0 2px var(--red-dark)}
+.rp-stars{display:flex;justify-content:space-between;margin-top:16px;padding:2px;border-radius:10px;cursor:pointer;touch-action:none;user-select:none}
+.rp-star{position:relative;display:block;width:44px;height:44px;transition:transform .12s ease}
+.rp-star svg{position:absolute;inset:0;width:100%;height:100%}
+.rp-on{position:absolute;inset:0;clip-path:inset(0 calc(100% - var(--f,0%)) 0 0)}
+.rp-pop.is-dragging .rp-star{transform:scale(1.04)}
+.rp-err{margin-top:10px;font-size:13px;line-height:18px;font-weight:800;color:var(--red-dark)}
+.rp-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px;font-size:13px;line-height:18px;font-weight:700;color:var(--muted)}
+.rp-clear{padding:4px 0;border:0;background:none;color:var(--blue);font-family:inherit;font-size:13px;font-weight:800;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+@media (prefers-reduced-motion: reduce){.rp-pop{animation:none}.rp-star,.rp-btn > svg:last-child{transition:none}}
+
+/* ---------- year · genre line, note button, review pane ---------- */
+.m-sub{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:0;font-size:14px;line-height:20px;font-weight:700;color:var(--muted)}
+.m-sub .m-dot{color:#B3B6C6}
+.ac-head{gap:2px;min-height:70px} /* room for a two-line title + the year line, so steppers line up across cards */
+.ac-eps{display:flex;align-items:center;gap:8px}
+.ac-eps .stepper{flex:1;min-width:0}
+.m-note{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;flex-shrink:0;padding:0;border:0;border-radius:50%;background:#F1E8D6;color:var(--ink);cursor:pointer;transition:background-color .15s ease,color .15s ease,transform .15s cubic-bezier(.2,.9,.3,1.3)}
+.m-note:hover,.m-note[aria-expanded="true"]{background:#DCE4F8;color:var(--blue)}
+.m-note.has-note{background:#DCE4F8;color:var(--blue)}
+.m-note.has-note svg{fill:rgba(31,63,166,.14)}
+.m-note:active{transform:scale(.88)}
+@media (pointer:coarse){.m-note{width:44px;height:44px}}
+
+.np-pop{position:fixed;z-index:55;width:min(360px,calc(100vw - 24px));display:flex;flex-direction:column;gap:12px;padding:16px;border:1px solid var(--line);border-radius:18px;background:var(--white);box-shadow:0 18px 40px rgba(15,31,92,.16),0 2px 8px rgba(15,31,92,.08);animation:rpIn .16s ease-out}
+.np-pop[hidden]{display:none}
+.np-pop::before{content:"";position:absolute;top:-8px;left:var(--nub,50%);width:14px;height:14px;margin-left:-7px;background:var(--white);border-left:1px solid var(--line);border-top:1px solid var(--line);transform:rotate(45deg)}
+.np-pop.above::before{top:auto;bottom:-8px;transform:rotate(225deg)}
+.np-title{margin:0;font-size:18px;line-height:24px;font-weight:800;color:var(--ink)}
+.np-anime{margin:0;font-size:13px;line-height:18px;font-weight:700;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.np-text{width:100%;min-height:120px;max-height:50vh;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink);font-family:inherit;font-size:15px;line-height:22px;resize:vertical;transition:border-color .15s ease}
+.np-text:hover,.np-text:focus{border-color:var(--ink)}
+.np-text:focus{outline:0;box-shadow:0 0 0 3px rgba(31,63,166,.25)}
+.np-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.np-count{font-size:12px;line-height:16px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.np-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+.np-actions .btn{height:36px;padding:0 14px;font-size:14px}
+.np-del{padding:4px 0;border:0;background:none;color:var(--red-dark);font-family:inherit;font-size:13px;font-weight:800;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+@media (prefers-reduced-motion: reduce){.np-pop{animation:none}.m-note:active{transform:none}}
+
+/* Unknown total: watched count with a small "EP Unknown" inside the counter */
+.my-list .step-val.two{display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:16px}
+.my-list .step-val.two small{font-size:10px;line-height:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}

@@ -1,0 +1,377 @@
+/* Detail side panel: slides in from the right over a dimmed page.
+   Markup and behaviour live in js/core/detail-panel.js. The watchlist controls
+   reuse the soft My Anime styles (.my-list) for the stepper, stars and status pill. */
+.dp-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(15, 31, 92, 0.38);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.3s ease,
+    visibility 0s linear 0.3s;
+}
+.dp {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 61;
+  display: flex;
+  width: min(460px, 100vw);
+  background: var(--white);
+  border-left: 1.5px solid var(--ink);
+  box-shadow: -16px 0 40px rgba(15, 31, 92, 0.18);
+  transform: translateX(104%);
+  visibility: hidden;
+  transition:
+    transform 0.34s cubic-bezier(0.2, 0.8, 0.2, 1),
+    visibility 0s linear 0.34s;
+  outline: 0;
+}
+.is-open > .dp-scrim {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.3s ease;
+}
+.is-open > .dp {
+  transform: none;
+  visibility: visible;
+  transition: transform 0.34s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.dp-open,
+.dp-open body {
+  overflow: hidden;
+}
+.dp-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.dp-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--ink);
+  box-shadow: 0 2px 10px rgba(15, 31, 92, 0.25);
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    background-color 0.15s ease;
+}
+.dp-close:hover {
+  background: var(--cream);
+  transform: rotate(90deg);
+}
+
+/* poster hero fading into the panel */
+.dp-hero {
+  position: relative;
+  height: 300px;
+  overflow: hidden;
+  background: var(--ink);
+}
+.dp-hero img,
+.dp-hero .art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 20%;
+  aspect-ratio: auto;
+  border-radius: 0;
+}
+.dp-hero::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 96px;
+  background: linear-gradient(transparent, var(--white));
+  pointer-events: none;
+}
+.dp-hero.skel {
+  border-radius: 0;
+}
+.dp-pad {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 0 24px 32px;
+  margin-top: -28px;
+}
+.dp-title {
+  margin: 0;
+  font-size: 26px;
+  line-height: 32px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.dp-jp {
+  margin-top: 2px;
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+/* stat row: score · type · episodes · year */
+.dp-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.dp-stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--blue);
+}
+.dp-stat div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.dp-stat strong {
+  font-size: 16px;
+  line-height: 20px;
+  font-weight: 800;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dp-stat span {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.dp-stat svg {
+  flex-shrink: 0;
+}
+.dp-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dp-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: #ffe9d6;
+  color: var(--red-dark);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.dp-sec {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.dp-h {
+  margin: 0;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--red-dark);
+}
+.dp-h .muted {
+  letter-spacing: 0;
+  text-transform: none;
+}
+.dp-syn {
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--ink);
+  white-space: pre-line;
+}
+.dp-syn.clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.dp-link {
+  align-self: flex-start;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: var(--blue);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.dp-link:hover {
+  color: var(--ink);
+}
+
+/* watchlist */
+.dp-add {
+  display: flex;
+  gap: 8px;
+}
+.dp-add .select {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+}
+.dp-add .btn {
+  height: 44px;
+  padding: 0 16px;
+}
+.dp-prog {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* details list */
+.dp-info {
+  display: grid;
+  grid-template-columns: 108px minmax(0, 1fr);
+  gap: 8px 12px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+}
+.dp-info dt {
+  color: var(--muted);
+  font-weight: 700;
+}
+.dp-info dd {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.dp .trailer {
+  border-radius: 14px;
+}
+.dp .trailer-play {
+  height: 52px;
+  gap: 10px;
+  padding: 0 20px 0 12px;
+}
+
+/* episodes */
+.dp-eps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dp-ep {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--paper);
+}
+.dp-ep-n {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--white);
+  font-family: "Dela Gothic One", sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+}
+.dp-ep.watched .dp-ep-n {
+  background: var(--teal);
+}
+.dp-ep-t {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 800;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dp-ep-tag {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--red-dark);
+  white-space: nowrap;
+}
+.dp-ep-tag.done {
+  color: var(--blue);
+}
+
+.dp-full {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--muted);
+  text-decoration: none;
+}
+.dp-full:hover {
+  color: var(--ink);
+}
+
+@media (max-width: 767px) {
+  .dp {
+    width: 100vw;
+    border-left: 0;
+  }
+  .dp-hero {
+    height: 260px;
+  }
+  .dp-pad {
+    padding: 0 16px 32px;
+  }
+  .dp-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dp,
+  .dp-scrim,
+  .is-open > .dp,
+  .is-open > .dp-scrim {
+    transition: none;
+  }
+  .dp-close:hover {
+    transform: none;
+  }
+}

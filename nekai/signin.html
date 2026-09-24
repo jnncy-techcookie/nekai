@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NEKAI — Sign in</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="paper">
+  <div class="auth">
+    <section aria-label="About NEKAI" class="auth-hero">
+      <span class="brand"><span class="brand-mark">ネ</span><span class="brand-word">NEKAI</span></span>
+      <div class="auth-copy">
+        <span class="pill pill-yellow self-start">ANIME WATCHLIST</span>
+        <p class="auth-claim">Track every episode. Find your next favorite.</p>
+        <p class="body semibold">Search any anime, keep your lists in order, and get picks that actually fit your taste.</p>
+      </div>
+      <div class="auth-deco" aria-hidden="true">
+        <div class="cart" style="left:0;top:32px;transform:rotate(-10deg)"><div class="art" style="background:#1F3FA6"><span class="motif" style="background:#FAF3E6;border-radius:50%"></span><span class="band" style="background:#FFA25C"></span></div></div>
+        <div class="cart" style="left:96px;top:0;transform:rotate(8deg)"><div class="art" style="background:#FFA25C"><span class="motif" style="background:#6F8FE8;border-radius:50%"></span><span class="band" style="background:#0F1F5C"></span></div></div>
+      </div>
+      <p class="small semibold" style="position:relative;z-index:1">Anime data from the Jikan API (MyAnimeList).</p>
+    </section>
+
+    <main id="main" class="auth-side">
+      <div class="card auth-card">
+        <div class="stack gap-8">
+          <h1 id="auth-h" class="h2">Welcome back</h1>
+          <p id="auth-sub" class="small muted">Sign in to pick up where you left off.</p>
+        </div>
+        <p id="deleted" class="prompt" role="status" hidden>Your account data was deleted from this browser.</p>
+        <div class="auth-tabs grid-2" role="tablist" aria-label="Account" style="gap:8px">
+          <button id="tab-in" type="button" role="tab" class="chip" aria-selected="true" style="justify-content:center">Sign in</button>
+          <button id="tab-up" type="button" role="tab" class="chip" aria-selected="false" style="justify-content:center">Create account</button>
+        </div>
+        <div id="status" class="prompt" role="status" hidden><span id="status-text" class="grow"></span></div>
+        <form id="auth-form" class="stack gap-16" aria-labelledby="auth-h" novalidate>
+          <div id="name-field" hidden>
+            <label class="label" for="nm">Display name</label>
+            <input id="nm" name="display-name" class="input" type="text" autocomplete="nickname" aria-describedby="nm-err">
+            <p id="nm-err" class="error" role="alert" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.5"></path></svg>Choose a display name.</p>
+          </div>
+          <div>
+            <label class="label" for="em">Email</label>
+            <input id="em" name="email" class="input" type="email" spellcheck="false" autocomplete="email" aria-describedby="em-err">
+            <p id="em-err" class="error" role="alert" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.5"></path></svg>Enter an email like name@example.com.</p>
+          </div>
+          <div>
+            <div class="row" style="justify-content:space-between;align-items:baseline"><label class="label" for="pw">Password</label><a id="forgot" class="small bold" href="#reset">Forgot password?</a></div>
+            <div class="pw-wrap">
+              <input id="pw" name="password" class="input" type="password" autocomplete="current-password" aria-describedby="pw-help pw-err">
+              <button id="show-pw" type="button" class="btn btn-ghost btn-icon" aria-label="Show password" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+            </div>
+            <p id="pw-err" class="error" role="alert" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.5"></path></svg><span>Enter your password.</span></p>
+            <p id="pw-help" class="help" hidden>At least 8 characters.</p>
+          </div>
+          <button id="submit" type="submit" class="btn btn-primary w-full" style="margin-top:8px">Sign in</button>
+          <div class="row gap-16" aria-hidden="true" style="flex-wrap:nowrap"><span class="divider grow"></span><span class="small muted semibold">or</span><span class="divider grow"></span></div>
+          <button id="google" type="button" class="btn btn-secondary w-full">Continue with Google</button>
+        </form>
+        <p class="caption muted center">By continuing you agree to the Terms and Privacy Policy.</p>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/jikan.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/pages/signin.js"></script>
+</body>
+</html>

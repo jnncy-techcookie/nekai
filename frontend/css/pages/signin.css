@@ -1,0 +1,82 @@
+/* =========================================================
+   SIGN IN
+   ========================================================= */
+.auth {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  min-height: 100vh;
+}
+.auth-hero {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 64px;
+  background: var(--red);
+  color: var(--ink);
+}
+.auth-hero .brand {
+  color: var(--white);
+}
+.auth-hero .brand-mark {
+  background: var(--white);
+  color: var(--red);
+  width: 64px;
+  height: 56px;
+  font-size: 32px;
+  line-height: 40px;
+}
+.auth-hero .brand-word {
+  font-size: 32px;
+  line-height: 40px;
+}
+.auth-copy {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 480px;
+}
+.auth-claim {
+  font-family: "Dela Gothic One", sans-serif;
+  font-size: 48px;
+  line-height: 56px;
+}
+.auth-deco {
+  position: absolute;
+  right: -40px;
+  top: 40px;
+  width: 280px;
+  height: 280px;
+}
+.auth-deco .cart {
+  position: absolute;
+  width: 144px;
+}
+.auth-side {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 64px;
+}
+.auth-card {
+  width: min(480px, 100%);
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.pw-wrap {
+  position: relative;
+}
+.pw-wrap .input {
+  padding-right: 56px;
+}
+.pw-wrap .btn {
+  position: absolute;
+  right: 0;
+  top: 0;
+}

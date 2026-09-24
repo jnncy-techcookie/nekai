@@ -1,0 +1,22 @@
+/* Design tokens: every color and shared size lives here.
+   Palette (official brand: cream, cobalt blue, orange): navy ink #0F1F5C, paper #F3EAD7, cream #FAF3E6, orange #F25C05 (--red), light orange #FFA25C (--yellow), peach #FFD3B3 (--pink), periwinkle #6F8FE8 (--teal), cobalt #1F3FA6 (--blue), mid orange #F7823A (--orange). Text on orange is navy.
+   Spacing follows an 8pt scale. Strokes are 1.5px. Shadows only on hovered/floating pick cards. */
+
+:root {
+  --ink: #0f1f5c;
+  --paper: #f3ead7;
+  --cream: #faf3e6;
+  --red: #f25c05;
+  --red-dark: #b84300;
+  --yellow: #ffa25c;
+  --teal: #6f8fe8;
+  --pink: #ffd3b3;
+  --blue: #1f3fa6;
+  --blue-text: #1f3fa6;
+  --orange: #f7823a;
+  --muted: #4a5378;
+  --line: #dcd2be;
+  --white: #fffbf2;
+  --gutter: 48px;
+  --side-w: 256px;
+}

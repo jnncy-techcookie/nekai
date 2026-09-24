@@ -1,0 +1,19 @@
+/* NEKAI stylesheet entry point. Pages link only this file.
+   Import order is the cascade order: tokens, base, components, layout,
+   page styles, user-preference classes, then responsive overrides last. */
+@import url("base/fonts.css");
+@import url("base/tokens.css");
+@import url("base/base.css");
+@import url("components/components.css");
+@import url("components/detail-panel.css");
+@import url("layout/shell.css");
+@import url("layout/helpers.css");
+@import url("pages/home.css");
+@import url("pages/my-anime.css");
+@import url("pages/discover.css");
+@import url("pages/anime.css");
+@import url("pages/profile.css");
+@import url("pages/settings.css");
+@import url("pages/signin.css");
+@import url("utilities/preferences.css");
+@import url("layout/responsive.css");

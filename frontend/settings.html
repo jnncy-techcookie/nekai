@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NEKAI — Settings</title>
+  <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body class="paper">
+  <div class="app">
+    <main id="main" class="main tight" tabindex="-1">
+      <noscript><p class="notice">NEKAI needs JavaScript turned on to change settings.</p></noscript>
+      <div class="page-head">
+        <div class="page-title"><h1 class="h1">Settings</h1><span class="jp-tag" aria-hidden="true">せってい</span></div>
+        <p class="body muted">Account, preferences and accessibility.</p>
+      </div>
+
+      <div class="grid-fit">
+        <section aria-labelledby="acc-h" class="card pad-32">
+          <form id="profile-form" class="stack gap-24" novalidate>
+            <h2 id="acc-h" class="h2 sec-title"><span class="pill pill-red">ACCOUNT</span>Profile details</h2>
+            <div>
+              <label class="label" for="dn">Display name <span class="muted" style="font-weight:500">(required)</span></label>
+              <input id="dn" name="display-name" class="input" type="text" autocomplete="nickname" required aria-describedby="dn-help dn-err">
+              <p id="dn-err" class="error" role="alert" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.5"></path></svg>Enter a display name so friends can find you.</p>
+              <p id="dn-help" class="help">Shown on your profile and shared lists.</p>
+            </div>
+            <div>
+              <label class="label" for="em">Email</label>
+              <input id="em" name="email" class="input" type="email" spellcheck="false" autocomplete="email" required aria-describedby="em-help em-err">
+              <p id="em-err" class="error" role="alert" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.5"></path></svg>Enter an email like name@example.com.</p>
+              <p id="em-help" class="help">Used to sign in and for password resets. Never shown publicly.</p>
+            </div>
+            <div>
+              <label class="label" for="bio">Bio <span class="muted" style="font-weight:500">(optional)</span></label>
+              <textarea id="bio" name="bio" class="input" rows="3" maxlength="160" aria-describedby="bio-help"></textarea>
+              <p id="bio-help" class="help" aria-live="polite"></p>
+            </div>
+            <div class="row gap-16">
+              <button id="save" type="submit" class="btn btn-primary">Save changes</button>
+              <button id="pw-change" type="button" class="btn btn-secondary">Change password</button>
+            </div>
+          </form>
+        </section>
+
+        <section aria-labelledby="exp-h" class="card pad-32 stack gap-16">
+          <h2 id="exp-h" class="h2 sec-title"><span class="pill pill-yellow">FUN</span>Experience</h2>
+          <div id="sw-exp" class="stack gap-16"></div>
+        </section>
+
+        <section aria-labelledby="a11y-h" class="card pad-32 stack gap-16">
+          <h2 id="a11y-h" class="h2 sec-title"><span class="pill pill-blue">ACCESS</span>Accessibility</h2>
+          <div id="sw-acc" class="stack gap-16"></div>
+        </section>
+
+        <section aria-labelledby="dat-h" class="card pad-32 stack gap-24">
+          <h2 id="dat-h" class="h2 sec-title"><span class="pill pill-ink">DATA</span>Your data</h2>
+          <p class="small muted">NEKAI stores your list in this browser. Export it to keep a copy.</p>
+          <div class="row gap-16">
+            <button id="export" type="button" class="btn btn-secondary">Export my list (.csv)</button>
+            <button id="signout" type="button" class="btn btn-secondary">Sign out</button>
+            <button id="ask-delete" type="button" class="btn btn-ghost" style="color:var(--red-dark)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"></path></svg>Delete account
+            </button>
+          </div>
+          <div id="confirm" class="danger" role="alertdialog" aria-labelledby="del-h" aria-describedby="del-d" hidden>
+            <h3 id="del-h" class="h3" style="color:var(--red-dark)">Delete your account?</h3>
+            <p id="del-d" class="small">This permanently removes your watchlist, ratings, streaks and achievements from this browser. It can’t be undone.</p>
+            <div class="row gap-16">
+              <button id="keep" type="button" class="btn btn-secondary">Keep my account</button>
+              <button id="delete" type="button" class="btn btn-primary">Delete permanently</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/data/sample-data.js"></script>
+  <script src="js/core/store.js"></script>
+  <script src="js/services/jikan.js"></script>
+  <script src="js/core/ui.js"></script>
+  <script src="js/pages/settings.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+/* Local display fonts (files in assets/fonts). Dela Gothic One comes from Google Fonts in each page's <head>. */
+@font-face {
+  font-family: "Kamikaze 3D Gradient";
+  src: url("../../assets/fonts/Kamikaze3DGradient.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "The Last Shuriken";
+  src: url("../../assets/fonts/The%20Last%20Shuriken.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}

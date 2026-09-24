@@ -1,0 +1,34 @@
+/* =========================================================
+   USER SETTINGS APPLIED AS CLASSES ON <html>
+   ========================================================= */
+.opt-large-text body {
+  font-size: 20px;
+  line-height: 30px;
+}
+.opt-large-text .body {
+  font-size: 20px;
+  line-height: 30px;
+}
+.opt-large-text .small {
+  font-size: 18px;
+  line-height: 28px;
+}
+.opt-strong .card,
+.opt-strong .card-sm,
+.opt-strong .btn,
+.opt-strong .input,
+.opt-strong .chip,
+.opt-strong .pick-card {
+  border-width: 2px;
+}
+.opt-reduce-motion *,
+.opt-reduce-motion *::before,
+.opt-reduce-motion *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+.opt-reduce-motion .pick:hover .pick-card,
+.opt-reduce-motion .pick:focus-within .pick-card {
+  transform: none;
+}

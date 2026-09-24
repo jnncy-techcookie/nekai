@@ -1,0 +1,106 @@
+/* Base: reset, body, links, focus ring, paper grid and the type scale. */
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family: "Arial Rounded MT Bold", "Trebuchet MS", Arial, sans-serif;
+  font-size: 18px;
+  line-height: 28px;
+  font-weight: 500;
+  color: var(--ink);
+  background: var(--paper);
+}
+h1,
+h2,
+h3,
+p,
+dl,
+dd,
+ul,
+ol {
+  margin: 0;
+}
+a {
+  color: var(--ink);
+}
+a:hover {
+  color: var(--red-dark);
+}
+:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 3px;
+}
+.paper {
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(#e8dec9 1px, transparent 1px),
+    linear-gradient(90deg, #e8dec9 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+.h1 {
+  font-family: "Dela Gothic One", sans-serif;
+  font-weight: 400;
+  font-size: 48px;
+  line-height: 56px;
+}
+.display-title {
+  font-family: "The Last Shuriken", "Dela Gothic One", sans-serif;
+  font-weight: 400;
+}
+.h1-m {
+  font-family: "Dela Gothic One", sans-serif;
+  font-weight: 400;
+  font-size: 32px;
+  line-height: 40px;
+}
+.title {
+  font-family: "Dela Gothic One", sans-serif;
+  font-weight: 400;
+  font-size: 32px;
+  line-height: 40px;
+}
+.h2 {
+  font-family: "Dela Gothic One", sans-serif;
+  font-weight: 400;
+  font-size: 24px;
+  line-height: 32px;
+}
+.h3 {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 800;
+}
+.body {
+  font-size: 18px;
+  line-height: 28px;
+  font-weight: 500;
+}
+.small {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 500;
+}
+.caption {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 700;
+}
+.muted {
+  color: var(--muted);
+}
+.eyebrow {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--red-dark);
+}
+.clamp2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 48px;
+}

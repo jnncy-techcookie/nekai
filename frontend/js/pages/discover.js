@@ -1,0 +1,290 @@
+/* Discover: live Jikan search, "What should I watch next?" spin wheel, Nekai's Picks, Popular right now */
+(function () {
+  "use strict";
+  var S = NEKAI.store, U = NEKAI.ui, D = NEKAI.data, J = NEKAI.jikan, esc = U.esc, icon = U.icon;
+  if (!S.state.signedIn) { location.replace("signin.html"); return; }
+
+  U.shell({ page: "discover.html", lolli: "Not sure what to watch? Pick a genre or two below and I’ll find something you haven’t seen.", lolliCta: ["#picker", "Try it"] });
+
+  var ui = { types: {}, genre: "", results: [], submitted: "", searching: false, offline: false, error: "", sel: {}, finding: false, pick: null, pickNone: false };
+
+  /* ---------- featured banners: swipe, dots, auto-advance ---------- */
+  (function promo() {
+    var track = U.$("#promo-track"), dotsEl = U.$("#promo-dots");
+    var slides = Array.prototype.slice.call(track.children), n = slides.length;
+    var AUTO = 90000; // advance every 90 seconds
+    var timer, paused = false;
+    dotsEl.innerHTML = slides.map(function (s, i) { return '<button type="button" class="promo-dot" data-i="' + i + '" aria-label="Show banner ' + (i + 1) + " of " + n + '"></button>'; }).join("");
+    var dots = Array.prototype.slice.call(dotsEl.children);
+    function current() { return Math.round(track.scrollLeft / track.clientWidth) || 0; }
+    function sync() { var i = current(); dots.forEach(function (d, k) { d.setAttribute("aria-current", k === i); }); }
+    function go(i) { track.scrollTo({ left: ((i + n) % n) * track.clientWidth, behavior: U.reducedMotion() ? "auto" : "smooth" }); arm(); }
+    // Restart the countdown after any manual change; skip while hovered, focused or the tab is hidden
+    function arm() { clearTimeout(timer); timer = setTimeout(function () { if (!paused && !document.hidden) go(current() + 1); else arm(); }, AUTO); }
+    dotsEl.addEventListener("click", function (e) { var d = e.target.closest("[data-i]"); if (d) go(+d.dataset.i); });
+    track.addEventListener("scroll", function () { requestAnimationFrame(sync); }, { passive: true });
+    track.addEventListener("keydown", function (e) { if (e.key === "ArrowRight" || e.key === "ArrowLeft") { e.preventDefault(); go(current() + (e.key === "ArrowRight" ? 1 : -1)); } });
+    var promoEl = track.parentNode;
+    promoEl.addEventListener("mouseenter", function () { paused = true; });
+    promoEl.addEventListener("mouseleave", function () { paused = false; });
+    promoEl.addEventListener("focusin", function () { paused = true; });
+    promoEl.addEventListener("focusout", function (e) { if (!promoEl.contains(e.relatedTarget)) paused = false; });
+    // Touch and trackpads swipe natively (scroll-snap); a mouse can drag too
+    var drag = null;
+    track.addEventListener("pointerdown", function (e) {
+      if (e.pointerType !== "mouse" || e.button !== 0) return;
+      drag = { x: e.clientX, left: track.scrollLeft, from: current() };
+      track.classList.add("is-dragging"); track.setPointerCapture(e.pointerId);
+    });
+    track.addEventListener("pointermove", function (e) { if (drag) track.scrollLeft = drag.left - (e.clientX - drag.x); });
+    function endDrag(e) {
+      if (!drag) return;
+      var dx = e.clientX - drag.x, from = drag.from; drag = null;
+      track.classList.remove("is-dragging");
+      go(Math.abs(dx) > 60 ? from + (dx < 0 ? 1 : -1) : from);
+    }
+    track.addEventListener("pointerup", endDrag);
+    track.addEventListener("pointercancel", endDrag);
+    track.addEventListener("touchend", arm, { passive: true });
+    window.addEventListener("resize", function () { track.scrollLeft = current() * track.clientWidth; });
+    sync(); arm();
+  })();
+
+  /* ---------- search + genre pills ---------- */
+  var GENRES = [["Action", "swords"], ["Adventure", "mountain"], ["Comedy", "smile"], ["Drama", "masks"], ["Fantasy", "spark"],
+    ["Romance", "heart"], ["Sci-Fi", "planet"], ["Slice of Life", "leaf"], ["Thriller", "pulse"]];
+  var MORE = [["Horror", "ghost"], ["Mystery", "search"], ["Sports", "ball"], ["Supernatural", "moon"]];
+  var ALIAS = { Thriller: "Suspense" }; // MyAnimeList files thrillers under Suspense
+
+  function resultCard(a) {
+    var e = S.entry(a.id) || a;
+    var inList = !!e.inList;
+    return '<article class="cart">' + U.art(a, { ep: [a.type, a.epsText].filter(Boolean).join(" · ") }) +
+      '<div class="cart-label"><h3 class="h3 clamp2"><a class="title-link" href="' + U.detailsHref(a) + '">' + esc(a.title) + "</a></h3>" +
+      '<div class="row gap-8">' + U.scoreBadge(a) + "</div>" +
+      '<p class="caption muted">' + esc(a.genres.join(" · ") || "Genres unavailable") + "</p>" +
+      '<div class="row gap-8" style="margin-top:auto;padding-top:8px">' +
+        '<button type="button" class="btn ' + (inList ? "btn-accent" : "btn-secondary") + ' grow" data-act="toggle" data-id="' + a.id + '" aria-pressed="' + inList + '" style="padding:0 16px">' +
+        (inList ? "✓ " + D.statuses[e.status].label : "Add to watchlist") + "</button></div></div></article>";
+  }
+  var SKEL = '<div class="cart" aria-hidden="true"><div class="skel" style="aspect-ratio:3/4;background:#26336A"></div><div class="cart-label"><div class="skel" style="height:16px;width:80%"></div><div class="skel" style="height:16px;width:56%"></div><div class="skel" style="height:48px;margin-top:16px"></div></div></div>';
+
+  function typesOn() { return Object.keys(ui.types).filter(function (t) { return ui.types[t]; }); }
+  function localSearch(q) {
+    q = q.toLowerCase();
+    var types = typesOn(), g = ALIAS[ui.genre] || ui.genre;
+    return Object.keys(D.catalog).map(S.anime).filter(function (a) {
+      if (q && (a.title + " " + a.jp + " " + a.studio).toLowerCase().indexOf(q) < 0) return false;
+      if (types.length && types.indexOf(a.type) < 0) return false;
+      if (g && a.genres.indexOf(g) < 0) return false;
+      return true;
+    });
+  }
+
+  // Search by title, browse a genre, or both. An empty box with a genre browses that genre.
+  function doSearch() {
+    var q = U.$("#q").value.trim();
+    if (q.length === 1 || (!q && !ui.genre)) {
+      if (!q && !ui.genre) { ui.submitted = ""; ui.results = []; renderResults(); }
+      else { ui.error = "Type at least 2 characters to search."; renderSearch(); U.$("#q").focus(); }
+      return;
+    }
+    ui.error = ""; ui.searching = true; ui.offline = false;
+    ui.submitted = q ? "“" + q + "”" + (ui.genre ? " in " + ui.genre : "") : ui.genre;
+    renderSearch(); renderResults();
+    J.search(q, { type: typesOn(), genre: ui.genre }).then(function (list) {
+      S.cacheMany(list);
+      ui.results = list.map(function (a) { return S.anime(a.id); });
+    }).catch(function () {
+      ui.offline = true; ui.results = localSearch(q);
+    }).then(function () {
+      ui.searching = false; renderSearch(); renderResults();
+    });
+  }
+  function clearSearch() {
+    ui.submitted = ""; ui.results = []; ui.genre = ""; ui.types = {}; U.$("#q").value = "";
+    renderSearch(); renderResults(); U.$("#q").focus();
+  }
+
+  function pill(value, label, ic) {
+    return '<button type="button" class="gpill" data-g="' + esc(value) + '" aria-pressed="' + (ui.genre === value) + '">' + icon(ic, 18, 2.2) + esc(label) + "</button>";
+  }
+  function renderSearch() {
+    var q = U.$("#q"), err = U.$("#q-err");
+    q.setAttribute("aria-invalid", !!ui.error);
+    q.setAttribute("aria-busy", ui.searching);
+    err.hidden = !ui.error; err.lastChild.textContent = ui.error;
+    U.$("#q-kbd").innerHTML = ui.searching ? '<span class="spinner" aria-hidden="true"></span>' : (/Mac|iPhone|iPad/.test(navigator.platform) ? "⌘ K" : "Ctrl K");
+    var moreOpen = ui.moreOpen || MORE.some(function (g) { return g[0] === ui.genre; });
+    U.render(U.$("#genre-pills"), pill("", "All Genres", "grid") +
+      GENRES.map(function (g) { return pill(g[0], g[0], g[1]); }).join("") +
+      (moreOpen ? MORE.map(function (g) { return pill(g[0], g[0], g[1]); }).join("") : "") +
+      '<button type="button" class="gpill gpill-more" data-more aria-expanded="' + moreOpen + '">' + (moreOpen ? "Less" : "More") + icon("chevD", 16, 2.6) + "</button>");
+  }
+
+  function renderResults() {
+    var host = U.$("#results");
+    host.hidden = !ui.submitted;
+    if (!ui.submitted) return;
+    var types = ["TV", "Movie", "OVA", "ONA"].map(function (t) {
+      return '<button type="button" class="chip" data-type="' + t + '" aria-pressed="' + !!ui.types[t] + '">' + (ui.types[t] ? icon("check", 16, 3) : "") + t + "</button>";
+    }).join("");
+    var head = '<div class="sec-head"><h2 id="r-h" class="h2 sec-title" tabindex="-1"><span class="pill pill-blue">RESULTS</span>' + esc(ui.submitted) + "</h2>" +
+      '<span class="small muted semibold">' + (ui.searching ? "Searching Jikan…" : ui.results.length + " anime found") + "</span>" +
+      '<button type="button" class="btn btn-ghost ml-auto" id="clear">Clear search</button></div>' +
+      '<div class="row gap-8" role="group" aria-label="Filter by type">' + types + "</div>";
+    var note = ui.offline && !ui.searching ? '<p class="notice" role="status">' + icon("wifiOff", 20) + "<span>Couldn’t reach the Jikan API, so these results come from NEKAI’s built-in sample list. Check your connection and search again for everything on MyAnimeList.</span></p>" : "";
+    var body;
+    if (ui.searching) body = '<div class="grid-auto">' + SKEL + SKEL + SKEL + SKEL + "</div>";
+    else if (ui.results.length) body = '<div class="grid-auto">' + ui.results.map(resultCard).join("") + "</div>";
+    else body = '<div class="card empty"><div class="empty-top"><span class="pill pill-yellow">NO MATCH</span></div><div class="empty-body"><h3 class="h2">Nothing found for ' + esc(ui.submitted) +
+      '</h3><p class="body muted" style="max-width:480px">Check the spelling, try the Japanese title, or clear the type and genre filters.</p><button type="button" class="btn btn-secondary" id="clear2">Clear search</button></div></div>';
+    U.render(host, head + note + body);
+  }
+
+  /* ---------- "What should I watch next?" spin wheel ---------- */
+  function selected() { return Object.keys(ui.sel).filter(function (g) { return ui.sel[g]; }); }
+  // Unseen titles; with no genres selected, anything goes
+  function pool(extra) {
+    var sel = selected(), ids = {};
+    Object.keys(D.catalog).forEach(function (id) { ids[id] = 1; });
+    (extra || []).forEach(function (a) { ids[a.id] = 1; });
+    return Object.keys(ids).map(S.entry).filter(function (e) {
+      return e && e.status !== "watching" && e.status !== "completed" && e.status !== "dropped" &&
+        (!sel.length || e.genres.some(function (g) { return sel.indexOf(g) >= 0; }));
+    });
+  }
+
+  // The wheel is a long strip of identical mystery cards (assets/images/mystery-anime.png). Each spin snaps back to HOME
+  // (invisible, since every card looks the same) and glides forward to a random stop.
+  var wheelEl = U.$(".wheel"), track = U.$("#wheel-track"), viewport = track.parentNode;
+  var N = 64, HOME = 10;
+  var W = { pos: HOME, spinning: false, picked: null };
+  track.innerHTML = new Array(N + 1).join('<div class="wcard"><div class="wc-inner"><div class="wc-face wc-back"></div><div class="wc-face wc-front"></div></div></div>');
+  var cards = Array.prototype.slice.call(track.children);
+
+  // Cards shrink, fade and turn away with distance from the pointer; blur while moving fast
+  function layoutWheel(pos, speed) {
+    var c = cards[0], gap = parseFloat(getComputedStyle(track).columnGap) || 16;
+    var w = c.offsetWidth, step = w + gap, vw = viewport.clientWidth;
+    track.style.transform = "translate3d(" + (vw / 2 - (pos * step + w / 2)).toFixed(1) + "px,0,0)";
+    var reach = Math.ceil(vw / 2 / step) + 2;
+    for (var i = Math.max(0, Math.floor(pos) - reach); i <= Math.min(N - 1, Math.ceil(pos) + reach); i++) {
+      var d = i - pos, ad = Math.abs(d), el = cards[i];
+      el.style.transform = "perspective(800px) rotateY(" + Math.max(-35, Math.min(35, -d * 8)).toFixed(1) + "deg) scale(" + Math.max(0.6, 1 - ad * 0.09).toFixed(3) + ")";
+      el.style.opacity = Math.max(0.1, 1 - ad * 0.15).toFixed(2);
+      el.style.filter = speed > 0.04 && ad > 0.45 ? "blur(" + Math.min(3, speed * 16).toFixed(1) + "px)" : "";
+      el.classList.toggle("is-center", ad < 0.5);
+    }
+  }
+  function resetFace() {
+    if (!W.picked) return;
+    W.picked.classList.remove("is-flipped", "is-picked");
+    W.picked.querySelector(".wc-front").innerHTML = "";
+    W.picked = null;
+  }
+  function spin() {
+    return new Promise(function (done) {
+      resetFace(); W.spinning = true; wheelEl.classList.add("is-spinning");
+      layoutWheel(HOME, 0);
+      var from = HOME, target = HOME + 26 + Math.floor(Math.random() * 10);
+      var finish = function () { W.pos = target; layoutWheel(target, 0); W.spinning = false; wheelEl.classList.remove("is-spinning"); done(cards[target]); };
+      if (U.reducedMotion()) return finish();
+      var t0 = performance.now(), dur = 3600, last = from, lastTick = from;
+      requestAnimationFrame(function frame(now) {
+        var t = Math.min(1, (now - t0) / dur), p = from + (target - from) * (1 - Math.pow(1 - t, 4)); // ease-out quart
+        layoutWheel(p, p - last);
+        if (Math.round(p) !== lastTick) { lastTick = Math.round(p); U.sound("tick"); }
+        last = p; W.pos = p;
+        if (t < 1) requestAnimationFrame(frame); else finish();
+      });
+    });
+  }
+  function reveal(card, e) {
+    card.querySelector(".wc-front").innerHTML = U.art(e);
+    card.classList.add("is-flipped", "is-picked");
+    W.picked = card;
+    U.sound("done");
+  }
+  window.addEventListener("resize", function () { if (!W.spinning) layoutWheel(W.pos, 0); });
+
+  function find() {
+    if (ui.finding) return;
+    var sel = selected();
+    ui.finding = true; ui.pick = null; ui.pickNone = false; renderPicker();
+    var live = sel.length ? J.byGenres(sel).then(function (list) { S.cacheMany(list); return list; }).catch(function () { return []; }) : Promise.resolve([]);
+    // The wheel stops on its own schedule; if Jikan is slow, the center card waits face-down
+    Promise.all([live, spin()]).then(function (r) {
+      var p = pool(r[0]), others = p.filter(function (e) { return e.id !== ui.lastPick; }), list = others.length ? others : p;
+      ui.finding = false;
+      if (list.length) { var e = list[Math.floor(Math.random() * list.length)]; ui.pick = ui.lastPick = e.id; reveal(r[1], S.entry(e.id)); }
+      else ui.pickNone = true;
+      renderPicker();
+    });
+  }
+  function renderPicker() {
+    var sel = selected();
+    U.render(U.$("#genres"), D.pickerGenres.map(function (g) {
+      return '<button type="button" class="chip" data-genre="' + esc(g) + '" aria-pressed="' + !!ui.sel[g] + '">' + (ui.sel[g] ? icon("check", 16, 3) : "") + esc(g) + "</button>";
+    }).join(""));
+    var b = U.$("#find");
+    b.disabled = ui.finding; b.setAttribute("aria-busy", ui.finding);
+    b.innerHTML = ui.finding ? '<span class="spinner" aria-hidden="true"></span>Spinning…' : icon("play", 18) + (ui.pick ? "Spin again" : "Spin for an anime");
+    U.$("#find-help").textContent = (sel.length ? sel.join(", ") : "Any genre") + " · " + pool().length + "+ titles in the pool";
+    var out = U.$("#pick-out");
+    if (ui.pick && !ui.finding) {
+      var e = S.entry(ui.pick);
+      U.render(out, '<div class="wheel-result"><span class="eyebrow">YOUR PICK</span>' +
+        '<h3 class="h2">' + esc(e.title) + "</h3>" +
+        '<div class="row gap-16" style="justify-content:center">' + U.scoreBadge(e) + '<span class="small muted semibold">' + esc([e.type, e.epsText, e.genres.join(" · ")].filter(Boolean).join(" · ")) + "</span></div>" +
+        '<div class="row gap-16" style="justify-content:center;margin-top:8px">' +
+          '<button type="button" class="btn ' + (e.inList ? "btn-accent" : "btn-primary btn-add") + '" data-act="toggle" data-id="' + e.id + '" aria-pressed="' + e.inList + '">' + (e.inList ? "✓ " + D.statuses[e.status].label : "Add to watchlist") + "</button>" +
+          '<a class="btn btn-secondary" href="' + U.detailsHref(e) + '">View details</a></div></div>');
+    } else if (ui.pickNone && !ui.finding) {
+      U.render(out, '<div class="prompt" role="status" style="background:#FFE9D6;border-color:var(--ink);color:var(--ink)">You’ve seen every match for these genres. Add another genre to widen the pool.</div>');
+    } else out.innerHTML = "";
+  }
+  function changeGenres() { if (!ui.finding) { ui.pick = null; ui.pickNone = false; resetFace(); } renderPicker(); }
+
+  // Popular: Jikan's top airing list. Until it arrives (or if it can't), the best-scored sample titles.
+  function renderPopular() {
+    U.$("#pop-sub").textContent = ui.popular || !ui.popFailed ? "The top-rated shows airing now on MyAnimeList." : "MyAnimeList is busy right now, so here are the top-rated titles in NEKAI’s catalog.";
+    var list = ui.popular || Object.keys(D.catalog).map(S.anime).sort(function (a, b) { return (b.score || 0) - (a.score || 0); }).slice(0, 12);
+    U.pickRow(U.$("#popular"), list.map(function (a) { a = S.anime(a.id); a.match = S.match(a); return a; }), "Popular right now, scroll sideways", { lite: true });
+  }
+  // If Jikan is busy, say so rather than calling the sample titles "airing now", and try once more later
+  function loadPopular(retry) {
+    J.popular().then(function (list) { S.cacheMany(list); ui.popular = list; renderPopular(); })
+      .catch(function () { ui.popFailed = true; renderPopular(); if (retry) setTimeout(function () { loadPopular(false); }, 30000); });
+  }
+  loadPopular(true);
+
+  function renderPicks() { U.pickRow(U.$("#picks"), U.picks(), "Nekai’s Picks, scroll sideways"); }
+
+  /* ---------- events ---------- */
+  U.$(".disc-search-icon").innerHTML = icon("search", 20);
+  U.$("#q").addEventListener("keydown", function (e) { if (e.key === "Enter") doSearch(); });
+  U.$("#q").addEventListener("input", function (e) { if (ui.error && e.target.value.trim().length !== 1) { ui.error = ""; renderSearch(); } });
+  // The native clear (×) in the search box: fall back to the genre, or close the results
+  U.$("#q").addEventListener("search", function (e) { if (!e.target.value && ui.submitted) doSearch(); });
+  document.addEventListener("keydown", function (e) {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); U.$("#q").focus(); U.$("#q").select(); }
+  });
+  U.$("#genre-pills").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-g],[data-more]"); if (!b) return;
+    if (b.hasAttribute("data-more")) { ui.moreOpen = b.getAttribute("aria-expanded") !== "true"; renderSearch(); return; }
+    ui.genre = b.dataset.g; ui.error = ""; renderSearch(); doSearch();
+  });
+  U.$("#results").addEventListener("click", function (e) {
+    var t = e.target.closest("[data-type]");
+    if (t) { ui.types[t.dataset.type] = !ui.types[t.dataset.type]; doSearch(); return; }
+    if (e.target.id === "clear" || e.target.id === "clear2") clearSearch();
+  });
+  U.$("#genres").addEventListener("click", function (e) { var b = e.target.closest("[data-genre]"); if (b) { ui.sel[b.dataset.genre] = !ui.sel[b.dataset.genre]; changeGenres(); } });
+  U.$("#find").addEventListener("click", find);
+
+  S.subscribe(function () { renderResults(); renderPicker(); renderPicks(); renderPopular(); });
+  renderSearch(); renderResults(); renderPicker(); renderPopular(); renderPicks(); layoutWheel(HOME, 0);
+  if (location.hash === "#q") U.$("#q").focus();
+  var t; J.hydrate(D.picks.map(function (p) { return String(p.id); }), function () { clearTimeout(t); t = setTimeout(renderPicks, 250); });
+})();

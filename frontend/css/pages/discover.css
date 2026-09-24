@@ -1,0 +1,448 @@
+/* =========================================================
+   DISCOVER
+   ========================================================= */
+/* Featured banners: a scroll-snap carousel (swipe, drag, dots, auto-advance) */
+.promo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.promo-track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  border-radius: 20px;
+  cursor: grab;
+  touch-action: pan-x pan-y;
+}
+.promo-track::-webkit-scrollbar {
+  display: none;
+}
+.promo-track.is-dragging {
+  scroll-snap-type: none;
+  cursor: grabbing;
+  user-select: none;
+}
+.promo-slide {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+}
+.promo-slide img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3/1;
+  object-fit: cover;
+  pointer-events: none;
+}
+.promo-dots {
+  display: flex;
+  justify-content: center;
+}
+.promo-dot {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.promo-dot::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #b3b6c6;
+  transition:
+    width 0.25s ease,
+    background-color 0.25s ease;
+}
+.promo-dot[aria-current="true"]::before {
+  width: 22px;
+  background: var(--red);
+}
+
+/* "DISCOVER" + search */
+.disc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 32px;
+  flex-wrap: wrap;
+}
+.disc-title {
+  font-size: 64px;
+  line-height: 64px;
+}
+.disc-search {
+  position: relative;
+  flex: 0 1 460px;
+  min-width: 260px;
+}
+.disc-search .input {
+  height: 52px;
+  padding: 0 76px 0 48px;
+  border-color: var(--line);
+  border-radius: 14px;
+  transition: border-color 0.15s ease;
+}
+.disc-search .input:hover,
+.disc-search .input:focus {
+  border-color: var(--ink);
+}
+.disc-search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  display: flex;
+  transform: translateY(-50%);
+  color: var(--ink);
+  pointer-events: none;
+}
+.disc-kbd {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 26px;
+  padding: 0 8px;
+  transform: translateY(-50%);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--cream);
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 800;
+  color: var(--muted);
+  pointer-events: none;
+}
+.disc-search .input::-webkit-search-cancel-button {
+  margin-right: 48px;
+}
+.disc-err {
+  margin-top: -12px;
+}
+
+/* Genre pills */
+.genre-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.gpill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px 0 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.15s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+}
+.gpill svg {
+  flex-shrink: 0;
+  color: var(--red);
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+.gpill:hover {
+  border-color: var(--ink);
+}
+.gpill:active {
+  transform: scale(0.95);
+}
+.gpill[aria-pressed="true"] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--cream);
+}
+.gpill[aria-pressed="true"] svg {
+  color: var(--yellow);
+}
+.gpill-more {
+  padding: 0 12px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+}
+.gpill-more svg {
+  color: currentColor;
+}
+.gpill-more[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+.opt-strong .gpill {
+  border-color: var(--ink);
+}
+@media (max-width: 767px) {
+  .promo-track {
+    border-radius: 14px;
+  }
+  .disc-title {
+    font-size: 44px;
+    line-height: 48px;
+  }
+  .disc-search {
+    flex-basis: 100%;
+  }
+  .disc-search .input {
+    padding-right: 16px;
+  }
+  .disc-kbd {
+    display: none;
+  }
+  /* one swipeable row instead of six wrapped rows */
+  .genre-pills {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: 0 calc(var(--gutter) * -1);
+    padding: 2px var(--gutter);
+  }
+  .genre-pills::-webkit-scrollbar {
+    display: none;
+  }
+  .gpill {
+    flex-shrink: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gpill:active {
+    transform: none;
+  }
+  .promo-dot::before {
+    transition: none;
+  }
+}
+
+fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+/* "What should I watch next?" spin wheel: a navy stage with a strip of "?" cards,
+   an orange pointer, and the winning card flipping to show its poster */
+.wheel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 40px 0 28px;
+  border-radius: 20px;
+  background: radial-gradient(
+    ellipse 70% 80% at 50% 38%,
+    #1b2a66 0%,
+    var(--ink) 72%
+  );
+  overflow: hidden;
+}
+.wheel-pointer {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  z-index: 2;
+  width: 0;
+  height: 0;
+  margin-left: -12px;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-top: 15px solid var(--red);
+  filter: drop-shadow(0 2px 6px rgba(242, 92, 5, 0.6));
+}
+.wheel.is-spinning .wheel-pointer {
+  animation: pointerTick 0.12s ease-in-out infinite alternate;
+}
+@keyframes pointerTick {
+  to {
+    transform: translateY(3px);
+  }
+}
+.wheel-viewport {
+  position: relative;
+  width: 100%;
+  height: 224px;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 14%,
+    #000 86%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 14%,
+    #000 86%,
+    transparent
+  );
+}
+.wheel-track {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  will-change: transform;
+}
+.wcard {
+  flex-shrink: 0;
+  width: 128px;
+  height: 192px;
+  will-change: transform, opacity;
+}
+.wc-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.7s cubic-bezier(0.3, 1.35, 0.5, 1);
+}
+.wcard.is-flipped .wc-inner {
+  transform: rotateY(180deg);
+}
+.wc-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+/* card back artwork: one image shared by every card, so it downloads once */
+.wc-back {
+  background: #0f1f5c url("../../assets/images/mystery-anime.png") center/cover
+    no-repeat;
+  transition: box-shadow 0.2s ease;
+}
+.wcard.is-center .wc-back {
+  box-shadow:
+    0 0 0 2px var(--yellow),
+    0 0 24px rgba(242, 92, 5, 0.5);
+}
+.wc-front {
+  transform: rotateY(180deg);
+  border: 2px solid var(--red);
+  background: var(--ink);
+}
+.wc-front .art {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  border-radius: 0;
+}
+.wcard.is-picked .wc-front {
+  animation: pickGlow 1.6s ease-out 0.35s both;
+}
+@keyframes pickGlow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(242, 92, 5, 0.7);
+  }
+  40% {
+    box-shadow:
+      0 0 0 6px rgba(242, 92, 5, 0.35),
+      0 0 44px rgba(242, 92, 5, 0.6);
+  }
+  100% {
+    box-shadow:
+      0 0 0 3px rgba(242, 92, 5, 0.3),
+      0 0 28px rgba(242, 92, 5, 0.45);
+  }
+}
+.wheel-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.btn-spin {
+  height: 52px;
+  padding: 0 32px;
+  border-radius: 999px;
+  font-size: 17px;
+}
+.btn-spin svg {
+  margin-left: -4px;
+}
+.btn-spin:disabled {
+  background: var(--red);
+  border-color: var(--ink);
+  color: var(--ink);
+  opacity: 0.7;
+}
+
+
+
+
+
+
+
+
+.wheel-help {
+  text-align: center;
+  margin-top: -8px;
+}
+.wheel-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  animation: resultIn 0.35s ease-out both;
+}
+@keyframes resultIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (max-width: 767px) {
+  .wheel {
+    padding-top: 36px;
+  }
+  .wheel-viewport {
+    height: 176px;
+  }
+  .wcard {
+    width: 100px;
+    height: 150px;
+  }
+
+}
+@media (prefers-reduced-motion: reduce) {
+  .wc-inner {
+    transition: none;
+  }
+  .wheel.is-spinning .wheel-pointer,
+  .wcard.is-picked .wc-front,
+  .wheel-result {
+    animation: none;
+  }
+}
