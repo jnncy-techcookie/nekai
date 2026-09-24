@@ -1,20 +1,18 @@
 # NEKAI — Anime Watchlist
 
-A responsive anime watchlist built with **plain HTML, CSS and JavaScript**: no framework, no build step, no dependencies. Anime data comes from the free [Jikan API](https://docs.api.jikan.moe/) (unofficial MyAnimeList API).
+A responsive anime watchlist with a plain HTML, CSS and JavaScript frontend and a small Express backend. The backend serves the site and fetches anime data from the [Tenrai API](https://api.tenrai.org/documentation) (an unofficial MyAnimeList data provider).
 
 ## Run it
 
-Open `frontend/index.html` in a browser. That's all.
-
-For the smoothest experience (YouTube trailers in particular), serve the `frontend/` folder locally instead of opening the file directly:
+From the repository root:
 
 ```bash
-# any one of these, from inside the frontend/ folder
-python3 -m http.server 8000      # then visit http://localhost:8000
-npx serve .
+cd backend
+npm install
+npm start
 ```
 
-To deploy, upload the `frontend/` folder as-is to any static host (GitHub Pages, Netlify, Vercel, Cloudflare Pages).
+Open [http://localhost:3000](http://localhost:3000). The frontend calls the backend at `/api/tenrai`; the backend requests `https://api.tenrai.org/v1`. To deploy live anime search, deploy both the frontend and the Node.js backend.
 
 ## Pages
 
@@ -22,7 +20,7 @@ To deploy, upload the `frontend/` folder as-is to any static host (GitHub Pages,
 |---|---|---|
 | `index.html` | Home | Greeting, stats, continue-watching hero with episode stepper, streak, latest achievement, *Picked for you* row |
 | `my-anime.html` | My Anime | Search, sort and filter by status (Watching / Plan to Watch / Completed / Dropped); change progress, rating (a "★ 8.4" button that opens a pane: drag across the stars or type 1–10, one decimal) and status inline; remove |
-| `discover.html` | Discover | Live Jikan search with type and genre filters, *What should I watch next?* genre picker, Nekai's Picks, browse-by-genre signs |
+| `discover.html` | Discover | Live Tenrai search with type and genre filters, *What should I watch next?* genre picker, Nekai's Picks, browse-by-genre signs |
 | `<page>#anime-<id>` | Anime details | There is no separate details page. Titles, posters and "View details" links (`#anime-<id>`, where `id` is the MyAnimeList ID) open the **detail panel** (`js/core/detail-panel.js`) as a split view beside the page: poster, stats, synopsis, watchlist controls, details, trailer and episodes. It sits next to the content from 1024px (1280px with the sidebar expanded) and takes the content's place on narrower screens. Close with the X, Esc or Back; Ctrl/⌘-click opens the same page in a new tab with the panel open |
 | `profile.html` | Profile | Level and XP, stats dashboard, favorite-genre mix, achievements |
 | `settings.html` | Settings | Profile form with validation, sound / confetti / Lolli / streak toggles, reduce motion, larger text, stronger outlines, CSV export, sign out, delete |
@@ -33,7 +31,13 @@ To deploy, upload the `frontend/` folder as-is to any static host (GitHub Pages,
 ```
 nekai-anime-watchlist/
 ├── README.md
-└── frontend/                  the static site; deploy this folder as-is
+├── backend/                   Express server and Tenrai API proxy
+│   ├── package.json
+│   └── src/
+│       ├── server.js          serves the frontend and /api/tenrai
+│       ├── routes/anime.js    validates anime requests
+│       └── services/tenrai.js queues and caches upstream requests
+└── frontend/                  the browser interface
     ├── index.html, my-anime.html, discover.html,
     │   profile.html, settings.html, signin.html
     ├── assets/
@@ -51,13 +55,13 @@ nekai-anime-watchlist/
         ├── core/store.js         localStorage state, list actions with undo, streak / XP / achievements / match %
         ├── core/ui.js            icons, app shell (sidebar, mobile bars, Lolli), toasts, confetti, sound, shared components
         ├── core/detail-panel.js  the anime detail panel, a split view beside the page (opens from any #anime-<id> link)
-        ├── services/jikan.js     Jikan client: rate-limited queue, 429 retry, normalisation
+        ├── services/tenrai.js     Tenrai client: rate-limited queue, 429 retry, normalisation
         └── pages/                one script per page
 ```
 
 HTML pages sit at the root of `frontend/` so their URLs stay short and links between pages are plain file names.
 
-Scripts are classic `<script>` tags that share one `window.NEKAI` namespace, so everything works from `file://` without a server or bundler. Each page loads them in dependency order: `data/sample-data.js`, `core/store.js`, `services/jikan.js`, `core/ui.js`, then its own `pages/*.js`.
+Scripts are classic `<script>` tags that share one `window.NEKAI` namespace. Serve the site through the backend so `/api/tenrai` is available. Each page loads them in dependency order: `data/sample-data.js`, `core/store.js`, `services/tenrai.js`, `core/ui.js`, then its own `pages/*.js`.
 
 Add new styles to the file that matches their scope (a token, a shared component, a single page), and add any new stylesheet to `css/main.css` so it loads.
 
@@ -65,7 +69,7 @@ Add new styles to the file that matches their scope (a token, a shared component
 
 - **Your list** (status, episodes watched, your rating from 1 to 10 (one decimal; older 1–5 star ratings are converted once, ×2), hidden picks, watch log, settings and profile) is saved in the browser's `localStorage` under `nekai:v1`. Clear site data or use *Settings → Delete account* to start over.
 - **Sample data**: a first visit is seeded with a realistic list so every screen has content. Each title uses its real MyAnimeList ID, so NEKAI fetches the real poster, score, synopsis and trailer in the background.
-- **Jikan** is called for search, anime details, episode lists, the genre picker and poster images. Requests are spaced 400 ms apart to respect Jikan's rate limit (about 3 per second) and retried once on HTTP 429.
+- **Tenrai** is called for search, anime details, episode lists, the genre picker and poster images. Browser requests are spaced 400 ms apart, and the backend queues requests across users and caches successful responses. Tenrai's public limit is 120 requests per minute, 4 per second, and 40,000 per day per IP.
 - **Offline or rate-limited?** Search falls back to the built-in sample list, and the detail panel shows saved data. Each fallback is clearly labelled in the UI.
 
 ### Rules the app enforces
@@ -73,7 +77,7 @@ Add new styles to the file that matches their scope (a token, a shared component
 - When every episode is watched, NEKAI offers **Mark completed**.
 - Adding an episode to a *Plan to Watch* title moves it to *Watching*.
 - Confetti plays only the **first** time a title is completed, and never with reduce motion on.
-- Your personal 1–10 rating is kept separate from the Jikan community score.
+- Your personal 1–10 rating is kept separate from the MyAnimeList community score.
 - Changes to your list show a toast with **Undo** (removing, rating, status changes, adding episodes).
 
 ### Formulas
@@ -117,11 +121,11 @@ The official palette is **cream, cobalt blue and orange**. The tokens in `css/ba
 - The quick-info panel opens on keyboard focus and closes with Esc.
 - Respects `prefers-reduced-motion`, plus an in-app *Reduce motion* switch.
 
-## What's mocked (no backend)
+## What's still local
 
 - **Sign in, sign up, Google sign-in and password reset** validate the form and store your profile locally. Replace `submit()` in `frontend/js/pages/signin.js` with your auth API to make them real.
 - **Share list** copies a link to your list, but the list only exists in your browser until it's synced to a server.
 
 ## Credits
 
-Anime data © MyAnimeList, served through the unofficial Jikan API. Fonts: Dela Gothic One via Google Fonts.
+Anime data © MyAnimeList, served through the unofficial Tenrai API. Fonts: Dela Gothic One via Google Fonts.

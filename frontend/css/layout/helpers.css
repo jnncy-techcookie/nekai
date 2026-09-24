@@ -178,7 +178,7 @@
   background: var(--yellow);
 }
 
-/* Real poster images from Jikan sit on top of the brand placeholder art */
+/* Real poster images from Tenrai sit on top of the brand placeholder art */
 .art img {
   position: absolute;
   inset: 0;

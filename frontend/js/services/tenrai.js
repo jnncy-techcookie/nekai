@@ -1,11 +1,11 @@
-/* NEKAI Jikan client (https://docs.api.jikan.moe/)
- * Jikan is a free, unofficial MyAnimeList API with a limit of about
- * 3 requests per second, so requests are queued ~400ms apart, retried once
- * on HTTP 429, and cached in memory for the session.
+/* NEKAI Tenrai client (https://api.tenrai.org/documentation)
+ * Tenrai v1 provides MyAnimeList anime data with the response fields NEKAI expects.
+ * Requests are spaced ~400ms apart, retried once on HTTP 429, and cached
+ * in memory for the session. The backend also queues upstream requests.
  */
 (function () {
   "use strict";
-  var BASE = "/api/jikan";
+  var BASE = "/api/tenrai";
   var GAP = 400;
   var queue = Promise.resolve();
   var last = 0;
@@ -33,7 +33,7 @@
             return wait(1200).then(function () {
               return attempt(false);
             });
-          if (!res.ok) throw new Error("Jikan responded " + res.status);
+          if (!res.ok) throw new Error("Tenrai responded " + res.status);
           return res.json();
         });
       }));
@@ -57,7 +57,7 @@
     return m ? m[1] : "";
   }
 
-  /* Map a Jikan anime object onto NEKAI's shape */
+  /* Map a Tenrai anime object onto NEKAI's shape */
   function normalize(j) {
     var img =
       (j.images &&
@@ -113,7 +113,7 @@
     };
   }
 
-  NEKAI.jikan = {
+  NEKAI.tenrai = {
     normalize: normalize,
     /* Search by title; opts.type = ["TV","Movie",...], opts.genre = genre name */
     search: function (q, opts) {
@@ -146,7 +146,7 @@
         })
         .filter(Boolean);
       if (!idsParam.length) return Promise.resolve([]);
-      // Jikan ANDs genre ids, so ask one genre at a time and merge
+      // Query one genre at a time and merge results from all selected genres
       return Promise.all(
         idsParam.map(function (gid) {
           return request(

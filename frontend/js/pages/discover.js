@@ -1,7 +1,7 @@
-/* Discover: live Jikan search, "What should I watch next?" spin wheel, Nekai's Picks, Popular right now */
+/* Discover: live Tenrai search, "What should I watch next?" spin wheel, Nekai's Picks, Popular right now */
 (function () {
   "use strict";
-  var S = NEKAI.store, U = NEKAI.ui, D = NEKAI.data, J = NEKAI.jikan, esc = U.esc, icon = U.icon;
+  var S = NEKAI.store, U = NEKAI.ui, D = NEKAI.data, J = NEKAI.tenrai, esc = U.esc, icon = U.icon;
   if (!S.state.signedIn) { location.replace("signin.html"); return; }
 
   U.shell({ page: "discover.html", lolli: "Not sure what to watch? Pick a genre or two below and I’ll find something you haven’t seen.", lolliCta: ["#picker", "Try it"] });
@@ -130,10 +130,10 @@
       return '<button type="button" class="chip" data-type="' + t + '" aria-pressed="' + !!ui.types[t] + '">' + (ui.types[t] ? icon("check", 16, 3) : "") + t + "</button>";
     }).join("");
     var head = '<div class="sec-head"><h2 id="r-h" class="h2 sec-title" tabindex="-1"><span class="pill pill-blue">RESULTS</span>' + esc(ui.submitted) + "</h2>" +
-      '<span class="small muted semibold">' + (ui.searching ? "Searching Jikan…" : ui.results.length + " anime found") + "</span>" +
+      '<span class="small muted semibold">' + (ui.searching ? "Searching Tenrai…" : ui.results.length + " anime found") + "</span>" +
       '<button type="button" class="btn btn-ghost ml-auto" id="clear">Clear search</button></div>' +
       '<div class="row gap-8" role="group" aria-label="Filter by type">' + types + "</div>";
-    var note = ui.offline && !ui.searching ? '<p class="notice" role="status">' + icon("wifiOff", 20) + "<span>Couldn’t reach the Jikan API, so these results come from NEKAI’s built-in sample list. Check your connection and search again for everything on MyAnimeList.</span></p>" : "";
+    var note = ui.offline && !ui.searching ? '<p class="notice" role="status">' + icon("wifiOff", 20) + "<span>Couldn’t reach the Tenrai API, so these results come from NEKAI’s built-in sample list. Check your connection and search again for everything on MyAnimeList.</span></p>" : "";
     var body;
     if (ui.searching) body = '<div class="grid-auto">' + SKEL + SKEL + SKEL + SKEL + "</div>";
     else if (ui.results.length) body = '<div class="grid-auto">' + ui.results.map(resultCard).join("") + "</div>";
@@ -213,7 +213,7 @@
     var sel = selected();
     ui.finding = true; ui.pick = null; ui.pickNone = false; renderPicker();
     var live = sel.length ? J.byGenres(sel).then(function (list) { S.cacheMany(list); return list; }).catch(function () { return []; }) : Promise.resolve([]);
-    // The wheel stops on its own schedule; if Jikan is slow, the center card waits face-down
+    // The wheel stops on its own schedule; if Tenrai is slow, the center card waits face-down
     Promise.all([live, spin()]).then(function (r) {
       var p = pool(r[0]), others = p.filter(function (e) { return e.id !== ui.lastPick; }), list = others.length ? others : p;
       ui.finding = false;
@@ -246,13 +246,13 @@
   }
   function changeGenres() { if (!ui.finding) { ui.pick = null; ui.pickNone = false; resetFace(); } renderPicker(); }
 
-  // Popular: Jikan's top airing list. Until it arrives (or if it can't), the best-scored sample titles.
+  // Popular: Tenrai's top airing list. Until it arrives (or if it can't), the best-scored sample titles.
   function renderPopular() {
     U.$("#pop-sub").textContent = ui.popular || !ui.popFailed ? "The top-rated shows airing now on MyAnimeList." : "MyAnimeList is busy right now, so here are the top-rated titles in NEKAI’s catalog.";
     var list = ui.popular || Object.keys(D.catalog).map(S.anime).sort(function (a, b) { return (b.score || 0) - (a.score || 0); }).slice(0, 12);
     U.pickRow(U.$("#popular"), list.map(function (a) { a = S.anime(a.id); a.match = S.match(a); return a; }), "Popular right now, scroll sideways", { lite: true });
   }
-  // If Jikan is busy, say so rather than calling the sample titles "airing now", and try once more later
+  // If Tenrai is busy, say so rather than calling the sample titles "airing now", and try once more later
   function loadPopular(retry) {
     J.popular().then(function (list) { S.cacheMany(list); ui.popular = list; renderPopular(); })
       .catch(function () { ui.popFailed = true; renderPopular(); if (retry) setTimeout(function () { loadPopular(false); }, 30000); });

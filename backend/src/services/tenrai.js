@@ -1,4 +1,4 @@
-const BASE_URL = "https://api.jikan.moe/v4";
+const BASE_URL = "https://api.tenrai.org/v1";
 const cache = new Map();
 const inFlight = new Map();
 
@@ -7,7 +7,7 @@ let nextRequestAt = 0;
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-function getJikan(path, params = {}) {
+function getTenrai(path, params = {}) {
   const url = new URL(BASE_URL + path);
 
   for (const [name, value] of Object.entries(params)) {
@@ -36,7 +36,7 @@ function getJikan(path, params = {}) {
       });
 
       if (!response.ok) {
-        const error = new Error(`Jikan returned ${response.status}`);
+        const error = new Error(`Tenrai returned ${response.status}`);
         error.status = response.status;
         throw error;
       }
@@ -45,7 +45,7 @@ function getJikan(path, params = {}) {
 
       if (!result || result.status >= 400 || !Object.hasOwn(result, "data")) {
         const error = new Error(
-          result?.message || "Jikan returned no anime data",
+          result?.message || "Tenrai returned no anime data",
         );
         error.status = result?.status || 502;
         throw error;
@@ -67,4 +67,4 @@ function getJikan(path, params = {}) {
   return request;
 }
 
-module.exports = { getJikan };
+module.exports = { getTenrai };

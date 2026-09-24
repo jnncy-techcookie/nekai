@@ -102,9 +102,9 @@
   S.subscribe(render);
   render();
 
-  // Swap placeholder art for real posters from Jikan, a few at a time
+  // Swap placeholder art for real posters from Tenrai, a few at a time
   var pending;
-  NEKAI.jikan.hydrate(S.ids().concat(NEKAI.data.picks.map(function (p) { return String(p.id); })), function () {
+  NEKAI.tenrai.hydrate(S.ids().concat(NEKAI.data.picks.map(function (p) { return String(p.id); })), function () {
     clearTimeout(pending); pending = setTimeout(render, 250);
   });
 })();

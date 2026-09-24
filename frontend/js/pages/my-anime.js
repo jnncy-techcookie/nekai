@@ -360,5 +360,5 @@
 
   S.subscribe(render);
   render();
-  var t; NEKAI.jikan.hydrate(S.ids(), function () { clearTimeout(t); t = setTimeout(render, 250); });
+  var t; NEKAI.tenrai.hydrate(S.ids(), function () { clearTimeout(t); t = setTimeout(render, 250); });
 })();
