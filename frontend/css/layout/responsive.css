@@ -19,10 +19,6 @@
   .ach {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
-  .details {
-    grid-template-columns: 240px minmax(0, 1fr);
-    gap: 32px;
-  }
 }
 @media (max-width: 767px) {
   :root {
@@ -101,7 +97,6 @@
     animation-name: toastOutDown;
   }
   .grid-2,
-  .details,
   .auth {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -143,13 +138,6 @@
   }
   .search-row .btn {
     width: 100%;
-  }
-  .details .cart {
-    max-width: 220px;
-  }
-  .details .art.lg .jp {
-    font-size: 22px;
-    line-height: 28px;
   }
   .ach {
     grid-template-columns: repeat(2, minmax(0, 1fr));

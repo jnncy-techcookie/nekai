@@ -286,6 +286,8 @@
     var main = $(".main");
     app.insertBefore(top, main);
     document.body.appendChild(tabs);
+    // On desktop the content panel scrolls by itself; focus it so arrow keys, Page Down and Space scroll it right away
+    if (main && (!document.activeElement || document.activeElement === document.body)) main.focus({ preventScroll: true });
 
     var toasts = document.createElement("div");
     toasts.className = "toast-region";
@@ -461,7 +463,7 @@
     );
   }
   function detailsHref(a) {
-    return "anime.html?id=" + a.id;
+    return "#anime-" + a.id;
   }
 
   function stepper(e) {

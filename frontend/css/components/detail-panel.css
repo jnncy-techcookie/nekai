@@ -1,53 +1,95 @@
-/* Detail side panel: slides in from the right over a dimmed page.
-   Markup and behaviour live in js/core/detail-panel.js. The watchlist controls
-   reuse the soft My Anime styles (.my-list) for the stepper, stars and status pill. */
-.dp-scrim {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  background: rgba(15, 31, 92, 0.38);
-  opacity: 0;
-  visibility: hidden;
-  transition:
-    opacity 0.3s ease,
-    visibility 0s linear 0.3s;
+/* Detail panel: a split view, not an overlay.
+   Markup and behaviour live in js/core/detail-panel.js, which mounts the panel inside
+   .app right after .main, so both sit side by side in the same flex row.
+   - 1024px and wider: the sidebar stays, the panel takes ~38% on the right and the
+     content reflows into what's left (see the container rules at the bottom).
+   - 768–1023px: no room to split, so the panel takes the content's place.
+   - Under 768px: same, under the mobile top bar, scrolling with the page.
+   The watchlist controls reuse the soft My Anime styles (.my-list) for the stepper,
+   stars and status pill. */
+.dp-host {
+  display: none;
+}
+.dp-host.is-open {
+  display: flex;
+  min-width: 0;
 }
 .dp {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 61;
+  position: relative;
   display: flex;
-  width: min(460px, 100vw);
+  flex: 1;
+  min-width: 0;
   background: var(--white);
-  border-left: 1.5px solid var(--ink);
-  box-shadow: -16px 0 40px rgba(15, 31, 92, 0.18);
-  transform: translateX(104%);
-  visibility: hidden;
-  transition:
-    transform 0.34s cubic-bezier(0.2, 0.8, 0.2, 1),
-    visibility 0s linear 0.34s;
   outline: 0;
 }
-.is-open > .dp-scrim {
-  opacity: 1;
-  visibility: visible;
-  transition: opacity 0.3s ease;
-}
 .is-open > .dp {
-  transform: none;
-  visibility: visible;
-  transition: transform 0.34s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: dpIn 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-.dp-open,
-.dp-open body {
-  overflow: hidden;
+@keyframes dpIn {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
 }
 .dp-scroll {
   flex: 1;
+  min-width: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.dp-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* framed layouts (tablet and desktop): the panel is a rounded card like .main */
+@media (min-width: 768px) {
+  .dp-host.is-open {
+    height: calc(100vh - 24px);
+    margin: 12px 12px 12px 0;
+  }
+  .dp {
+    border-radius: 20px;
+    overflow: hidden;
+  }
+  .opt-strong .dp {
+    box-shadow: inset 0 0 0 1.5px var(--ink);
+  }
+}
+/* split view */
+@media (min-width: 1024px) {
+  .dp-host.is-open {
+    flex: 0 0 38%;
+    min-width: 400px;
+  }
+}
+/* too narrow to split: the details take the content's place beside the sidebar.
+   The expanded sidebar is 256px, so with it open the split needs 1280px to leave
+   the content enough room; the 80px rail only needs 1024px. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .dp-host.is-open {
+    flex: 1 1 auto;
+  }
+  .dp-open .app > .main {
+    display: none;
+  }
+}
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .app:has(> .side:not(.is-collapsed)) > .dp-host.is-open {
+    flex: 1 1 auto;
+  }
+  .dp-open .app:has(> .side:not(.is-collapsed)) > .main {
+    display: none;
+  }
+}
+@media (max-width: 767px) {
+  .dp-open .app > .main {
+    display: none;
+  }
+  .dp-scroll {
+    overflow: visible;
+    padding-bottom: 88px; /* clear the bottom tabs */
+  }
 }
 .dp-close {
   position: absolute;
@@ -334,44 +376,95 @@
   color: var(--blue);
 }
 
-.dp-full {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  align-self: flex-start;
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--muted);
-  text-decoration: none;
-}
-.dp-full:hover {
-  color: var(--ink);
-}
 
 @media (max-width: 767px) {
-  .dp {
-    width: 100vw;
-    border-left: 0;
-  }
   .dp-hero {
     height: 260px;
   }
   .dp-pad {
     padding: 0 16px 32px;
   }
+}
+/* the stat row wraps to two columns when the panel itself is narrow */
+.dp {
+  container: dp / inline-size;
+}
+@container dp (max-width: 520px) {
   .dp-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     row-gap: 12px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .dp,
-  .dp-scrim,
-  .is-open > .dp,
-  .is-open > .dp-scrim {
-    transition: none;
+  .is-open > .dp {
+    animation: none;
   }
   .dp-close:hover {
     transform: none;
+  }
+}
+.opt-reduce-motion .is-open > .dp {
+  animation: none;
+}
+
+/* ---------- content reflow beside the panel ----------
+   The page layouts switch columns with viewport media queries, which don't know the
+   content just gave ~38% of the window to the panel. While it's open, these container
+   queries apply the same narrower layouts based on .main's real width. */
+.app > .main {
+  container: main / inline-size;
+}
+@container main (max-width: 1040px) {
+  .dp-open .home-top,
+  .dp-open .profile {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dp-open .grid-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  /* My Anime table rows stack, as they do under 1280px */
+  .dp-open .list-head {
+    display: none;
+  }
+  .dp-open .list-row {
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    grid-template-areas: "art title actions" "art controls controls";
+    row-gap: 12px;
+  }
+  .dp-open .list-row > .art {
+    grid-area: art;
+    align-self: start;
+  }
+  .dp-open .list-row > .l-title {
+    grid-area: title;
+  }
+  .dp-open .list-row > .l-actions {
+    grid-area: actions;
+    align-self: start;
+  }
+  .dp-open .list-row .l-controls {
+    grid-area: controls;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 24px;
+  }
+  .dp-open .list-row .l-eps {
+    width: 220px;
+  }
+  .dp-open .list-row .m-rate-label {
+    display: inline;
+  }
+  .dp-open .list-row .l-status {
+    width: 170px;
+    margin-left: auto;
+  }
+}
+@container main (max-width: 860px) {
+  .dp-open .grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dp-open .ach {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
