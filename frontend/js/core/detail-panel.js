@@ -8,7 +8,7 @@
   var S = NEKAI.store,
     U = NEKAI.ui,
     D = NEKAI.data,
-    J = NEKAI.jikan,
+    J = NEKAI.tenrai,
     esc = U.esc,
     icon = U.icon;
 

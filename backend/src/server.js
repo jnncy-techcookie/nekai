@@ -9,7 +9,7 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-app.use("/api/jikan", animeRoutes);
+app.use("/api/tenrai", animeRoutes);
 app.use(express.static(path.join(__dirname, "../../frontend")));
 
 app.listen(PORT, () => {

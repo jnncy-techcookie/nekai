@@ -1,6 +1,6 @@
 /* NEKAI sample data.
- * Keys are real MyAnimeList IDs, so every title can be refreshed from the Jikan API.
- * Community scores and some fields are offline placeholders until Jikan responds.
+ * Keys are real MyAnimeList IDs, so every title can be refreshed from the Tenrai API.
+ * Community scores and some fields are offline placeholders until Tenrai responds.
  */
 window.NEKAI = window.NEKAI || {};
 NEKAI.data = {

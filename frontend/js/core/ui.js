@@ -543,10 +543,10 @@
   }
   function scoreBadge(a) {
     return (
-      '<span class="score" title="Community score from Jikan (MyAnimeList)">' +
+      '<span class="score" title="Community score from Tenrai (MyAnimeList)">' +
       star(16, "#0F1F5C") +
       esc(a.scoreText) +
-      '<span class="caption muted">Jikan</span></span>'
+      '<span class="caption muted">Tenrai</span></span>'
     );
   }
   function emptyState(pill, title, body, actionHtml) {
@@ -798,7 +798,7 @@
       esc(a.epsText) +
       "</span></div></div>" +
       '<p class="qi-syn">' +
-      esc(a.synopsis || "Synopsis loads from Jikan.") +
+      esc(a.synopsis || "Synopsis loads from Tenrai.") +
       "</p>" +
       '<dl class="qi-dl"><dt>Japanese</dt><dd>' +
       esc(a.jp || "–") +

@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { getJikan } = require("../services/jikan");
+const { getTenrai } = require("../services/tenrai");
 
 const validId = (id) => /^[1-9]\d*$/.test(id);
 const validNumber = (value, max) =>
@@ -7,9 +7,9 @@ const validNumber = (value, max) =>
 
 async function send(res, path, params = {}) {
   try {
-    res.json(await getJikan(path, params));
+    res.json(await getTenrai(path, params));
   } catch (error) {
-    console.error("Jikan request failed:", error);
+    console.error("Tenrai request failed:", error);
 
     const status =
       error.status === 404 ? 404 : error.status === 429 ? 503 : 502;
