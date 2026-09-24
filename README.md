@@ -23,7 +23,7 @@ To deploy, upload the `frontend/` folder as-is to any static host (GitHub Pages,
 | `index.html` | Home | Greeting, stats, continue-watching hero with episode stepper, streak, latest achievement, *Picked for you* row |
 | `my-anime.html` | My Anime | Search, sort and filter by status (Watching / Plan to Watch / Completed / Dropped); change progress, rating (a "★ 8.4" button that opens a pane: drag across the stars or type 1–10, one decimal) and status inline; remove |
 | `discover.html` | Discover | Live Jikan search with type and genre filters, *What should I watch next?* genre picker, Nekai's Picks, browse-by-genre signs |
-| `anime.html?id=…` | Anime details | Full-page version of the details. Titles, posters and "See full details" normally open the **detail side panel** instead (`js/core/detail-panel.js`): poster, stats, synopsis, watchlist controls, details, trailer and episodes, with an X, Esc, backdrop click or Back to close. Ctrl/⌘-click still opens this page. `id` is the MyAnimeList ID |
+| `<page>#anime-<id>` | Anime details | There is no separate details page. Titles, posters and "View details" links (`#anime-<id>`, where `id` is the MyAnimeList ID) open the **detail panel** (`js/core/detail-panel.js`) as a split view beside the page: poster, stats, synopsis, watchlist controls, details, trailer and episodes. It sits next to the content from 1024px (1280px with the sidebar expanded) and takes the content's place on narrower screens. Close with the X, Esc or Back; Ctrl/⌘-click opens the same page in a new tab with the panel open |
 | `profile.html` | Profile | Level and XP, stats dashboard, favorite-genre mix, achievements |
 | `settings.html` | Settings | Profile form with validation, sound / confetti / Lolli / streak toggles, reduce motion, larger text, stronger outlines, CSV export, sign out, delete |
 | `signin.html` | Sign in / Create account | Validated forms with show-password and loading states |
@@ -34,7 +34,7 @@ To deploy, upload the `frontend/` folder as-is to any static host (GitHub Pages,
 nekai-anime-watchlist/
 ├── README.md
 └── frontend/                  the static site; deploy this folder as-is
-    ├── index.html, my-anime.html, discover.html, anime.html,
+    ├── index.html, my-anime.html, discover.html,
     │   profile.html, settings.html, signin.html
     ├── assets/
     │   ├── fonts/             Kamikaze 3D Gradient, The Last Shuriken (declared in css/base/fonts.css)
@@ -50,7 +50,7 @@ nekai-anime-watchlist/
         ├── data/sample-data.js   sample catalog (keyed by real MyAnimeList IDs), seed list, picks, genre colors
         ├── core/store.js         localStorage state, list actions with undo, streak / XP / achievements / match %
         ├── core/ui.js            icons, app shell (sidebar, mobile bars, Lolli), toasts, confetti, sound, shared components
-        ├── core/detail-panel.js  the anime detail side panel (opens from any details link)
+        ├── core/detail-panel.js  the anime detail panel, a split view beside the page (opens from any #anime-<id> link)
         ├── services/jikan.js     Jikan client: rate-limited queue, 429 retry, normalisation
         └── pages/                one script per page
 ```
@@ -66,7 +66,7 @@ Add new styles to the file that matches their scope (a token, a shared component
 - **Your list** (status, episodes watched, your rating from 1 to 10 (one decimal; older 1–5 star ratings are converted once, ×2), hidden picks, watch log, settings and profile) is saved in the browser's `localStorage` under `nekai:v1`. Clear site data or use *Settings → Delete account* to start over.
 - **Sample data**: a first visit is seeded with a realistic list so every screen has content. Each title uses its real MyAnimeList ID, so NEKAI fetches the real poster, score, synopsis and trailer in the background.
 - **Jikan** is called for search, anime details, episode lists, the genre picker and poster images. Requests are spaced 400 ms apart to respect Jikan's rate limit (about 3 per second) and retried once on HTTP 429.
-- **Offline or rate-limited?** Search falls back to the built-in sample list, and details pages show saved data. Each fallback is clearly labelled in the UI.
+- **Offline or rate-limited?** Search falls back to the built-in sample list, and the detail panel shows saved data. Each fallback is clearly labelled in the UI.
 
 ### Rules the app enforces
 - Episode progress can't go past the total. Unknown totals show a count with no percentage.

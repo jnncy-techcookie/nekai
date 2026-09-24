@@ -1,7 +1,7 @@
 /* NEKAI detail side panel
- * Any link to anime.html?id=… opens that anime in a panel on the right instead of
- * leaving the page (like Chrome's image side panel). Ctrl/⌘/middle-click still
- * opens the full page. Closes with the X, Esc, the backdrop or the browser Back button.
+ * Every details link (href="#anime-<id>", built by NEKAI.ui.detailsHref) opens that anime
+ * in a split view beside the content (in its place on narrow screens). Ctrl/⌘/middle-click
+ * opens the same page in a new tab with the panel already open. Closes with the X, Esc or Back.
  */
 (function () {
   "use strict";
@@ -12,16 +12,19 @@
     esc = U.esc,
     icon = U.icon;
 
+  // The panel is part of the page layout: a flex sibling of .main inside .app (split view),
+  // not an overlay. CSS decides whether it sits beside the content or replaces it.
   var host = document.createElement("div");
+  host.className = "dp-host";
   host.innerHTML =
-    '<div class="dp-scrim" data-dp-close></div>' +
-    '<aside class="dp" role="dialog" aria-modal="true" aria-labelledby="dp-title" tabindex="-1">' +
+    '<aside class="dp" role="region" aria-labelledby="dp-title" tabindex="-1">' +
     '<button type="button" class="dp-close" data-dp-close aria-label="Close details" title="Close (Esc)">' +
     icon("x", 20, 2.6) +
     "</button>" +
     '<div class="dp-scroll my-list"><div id="dp-body"></div></div>' +
     "</aside>";
-  document.body.appendChild(host);
+  var app = document.querySelector(".app");
+  (app || document.body).appendChild(host);
   var panel = host.querySelector(".dp"),
     body = host.querySelector("#dp-body"),
     scroller = host.querySelector(".dp-scroll");
@@ -29,6 +32,28 @@
   var st = null; // state for the anime currently shown
   var opener = null; // element to return focus to
   var pushed = false; // whether we added a history entry
+  var saved = null; // page + content scroll positions from before opening
+
+  function mainEl() {
+    return document.querySelector(".app > .main");
+  }
+  function saveScroll() {
+    var m = mainEl();
+    saved = { win: window.scrollY, main: m ? m.scrollTop : 0 };
+  }
+  function restoreScroll() {
+    if (!saved) return;
+    var m = mainEl(),
+      s = saved;
+    saved = null;
+    // jump, don't smooth-scroll back
+    if (m) {
+      m.style.scrollBehavior = "auto";
+      m.scrollTop = s.main;
+      m.style.scrollBehavior = "";
+    }
+    window.scrollTo({ top: s.win, behavior: "instant" });
+  }
 
   function fresh(id) {
     return {
@@ -346,11 +371,6 @@
             icon("wifiOff", 18) +
             "<span>Couldn’t reach MyAnimeList, so some details may be missing.</span></p>"
           : "") +
-        '<a class="dp-full" href="anime.html?id=' +
-        e.id +
-        '" data-dp-skip>' +
-        icon("external", 18) +
-        "Open full page</a>" +
         "</div>",
     );
   }
@@ -410,8 +430,9 @@
       load(id);
     }
     if (!isOpen()) {
-      document.documentElement.classList.add("dp-open");
-      host.classList.add("is-open");
+      saveScroll();
+      // Push the history entry before the layout changes, so the browser records the
+      // page's real scroll position and Back returns to it
       if (!pushed) {
         history.pushState(
           { nekaiPanel: id },
@@ -425,6 +446,11 @@
           "",
           location.pathname + location.search + "#anime-" + id,
         );
+      document.documentElement.classList.add("dp-open");
+      host.classList.add("is-open");
+      // Narrow screens swap the content for the details, so start the page at the top
+      if (getComputedStyle(mainEl() || host).display === "none")
+        window.scrollTo({ top: 0, behavior: "instant" });
       setTimeout(function () {
         panel.focus({ preventScroll: true });
       }, 30);
@@ -442,6 +468,7 @@
     if (!isOpen()) return;
     host.classList.remove("is-open");
     document.documentElement.classList.remove("dp-open");
+    restoreScroll();
     st && (st.trailerOn = false);
     render(); // stop any playing trailer
     if (pushed && !fromHistory) {
@@ -456,12 +483,11 @@
       opener.focus({ preventScroll: true });
   }
 
-  // Intercept every "details" link on the page (titles, posters, See full details, View details)
+  // Intercept every details link on the page (titles, posters, View details)
   document.addEventListener("click", function (ev) {
-    var a = ev.target.closest('a[href^="anime.html?id="]');
+    var a = ev.target.closest('a[href^="#anime-"]');
     if (
       !a ||
-      a.hasAttribute("data-dp-skip") ||
       ev.defaultPrevented ||
       ev.button !== 0 ||
       ev.metaKey ||
@@ -470,7 +496,7 @@
       ev.altKey
     )
       return;
-    var id = Number(new URL(a.href, location.href).searchParams.get("id"));
+    var id = Number(a.getAttribute("href").slice(7)); // "#anime-".length
     if (!id) return;
     ev.preventDefault();
     open(
@@ -522,38 +548,13 @@
     if (ev.target.id === "dp-add-as" && st) st.addAs = ev.target.value;
   });
 
-  // Esc closes; Tab stays inside the panel while it's open
+  // Esc closes. There's no focus trap: the content beside the panel stays usable.
   document.addEventListener(
     "keydown",
     function (ev) {
-      if (!isOpen()) return;
-      if (ev.key === "Escape") {
-        ev.stopPropagation();
-        close();
-        return;
-      }
-      if (ev.key !== "Tab") return;
-      var f = Array.prototype.filter.call(
-        panel.querySelectorAll(
-          'a[href],button:not([disabled]),select,iframe,[tabindex]:not([tabindex="-1"])',
-        ),
-        function (x) {
-          return x.offsetParent !== null;
-        },
-      );
-      if (!f.length) return;
-      var first = f[0],
-        last = f[f.length - 1];
-      if (
-        ev.shiftKey &&
-        (document.activeElement === first || document.activeElement === panel)
-      ) {
-        ev.preventDefault();
-        last.focus();
-      } else if (!ev.shiftKey && document.activeElement === last) {
-        ev.preventDefault();
-        first.focus();
-      }
+      if (!isOpen() || ev.key !== "Escape") return;
+      ev.stopPropagation();
+      close();
     },
     true,
   );
