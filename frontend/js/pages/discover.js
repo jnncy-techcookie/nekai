@@ -75,17 +75,6 @@
     ui.genreNote = ""; ui.error = ""; renderSearch(); doSearch();
   }
 
-  function resultCard(a) {
-    var e = S.entry(a.id) || a;
-    var inList = !!e.inList;
-    return '<article class="cart">' + U.art(a, { ep: [a.type, a.epsText].filter(Boolean).join(" · ") }) +
-      '<div class="cart-label"><h3 class="h3 clamp2"><a class="title-link" href="' + U.detailsHref(a) + '">' + esc(a.title) + "</a></h3>" +
-      '<div class="row gap-8">' + U.scoreBadge(a) + "</div>" +
-      '<p class="caption muted">' + esc(a.genres.join(" · ") || "Genres unavailable") + "</p>" +
-      '<div class="row gap-8" style="margin-top:auto;padding-top:8px">' +
-        '<button type="button" class="btn ' + (inList ? "btn-accent" : "btn-secondary") + ' grow" data-act="toggle" data-id="' + a.id + '" aria-pressed="' + inList + '" style="padding:0 16px">' +
-        (inList ? "✓ " + D.statuses[e.status].label : "Add to watchlist") + "</button></div></div></article>";
-  }
   var SKEL = '<div class="cart" aria-hidden="true"><div class="skel" style="aspect-ratio:3/4;background:#26336A"></div><div class="cart-label"><div class="skel" style="height:16px;width:80%"></div><div class="skel" style="height:16px;width:56%"></div><div class="skel" style="height:48px;margin-top:16px"></div></div></div>';
 
   function typesOn() { return Object.keys(ui.types).filter(function (t) { return ui.types[t]; }); }
@@ -202,13 +191,15 @@
     var note = ui.offline && !ui.searching ? '<p class="notice" role="status">' + icon("wifiOff", 20) + "<span>Couldn’t reach the Tenrai API, so these results come from NEKAI’s built-in sample list. Check your connection and search again for everything on MyAnimeList.</span></p>" : "";
     var body;
     if (ui.searching) body = '<div class="grid-auto">' + SKEL + SKEL + SKEL + SKEL + "</div>";
-    else if (ui.results.length) body = '<div class="grid-auto">' + ui.results.map(resultCard).join("") + "</div>";
+    else if (ui.results.length) body = '<div id="r-row"></div>';
     else body = '<div class="card empty"><div class="empty-top"><span class="pill pill-yellow">NO MATCH</span></div><div class="empty-body"><h3 class="h2">Nothing found for ' + esc(ui.submitted) +
       '</h3><p class="body muted" style="max-width:480px">Check the spelling, try the Japanese title, or clear the type and genre filters.</p><button type="button" class="btn btn-secondary" id="clear2">Clear search</button></div></div>';
     if (ui.resultError) note += '<p class="notice" role="alert">' + esc(ui.resultError) + '</p>';
     if (!ui.searching && !ui.results.length && ui.hasNext) body = '<p class="body muted">No matches on this page. Select Next to keep browsing, or change the filters.</p>';
     host.setAttribute("aria-busy", ui.searching);
     U.render(host, head + note + body + pagination("bottom"));
+    // Results use the same card as Popular right now, in a grid, without the hover preview
+    if (!ui.searching && ui.results.length) U.pickGrid(U.$("#r-row"), ui.results.map(function (a) { a = S.anime(a.id); a.match = S.match(a); return a; }), "Search results", { lite: true, preview: false });
   }
 
   /* ---------- "What should I watch next?" spin wheel ---------- */
@@ -307,7 +298,7 @@
         '<h3 class="h2">' + esc(e.title) + "</h3>" +
         '<div class="row gap-16" style="justify-content:center">' + U.scoreBadge(e) + '<span class="small muted semibold">' + esc([e.type, e.epsText, e.genres.join(" · ")].filter(Boolean).join(" · ")) + "</span></div>" +
         '<div class="row gap-16" style="justify-content:center;margin-top:8px">' +
-          '<button type="button" class="btn ' + (e.inList ? "btn-accent" : "btn-primary btn-add") + '" data-act="toggle" data-id="' + e.id + '" aria-pressed="' + e.inList + '">' + (e.inList ? "✓ " + D.statuses[e.status].label : "Add to watchlist") + "</button>" +
+          '<button type="button" class="btn ' + (e.inList ? "btn-accent" : "btn-primary btn-add") + '" data-act="toggle" data-id="' + e.id + '" aria-pressed="' + e.inList + '">' + (e.inList ? "✓ " + D.statuses[e.status].label : "Add to Library") + "</button>" +
           '<a class="btn btn-secondary" href="' + U.detailsHref(e) + '">View details</a></div></div>');
     } else if (ui.pickNone && !ui.finding) {
       U.render(out, '<div class="prompt" role="status" style="background:#FFE9D6;border-color:var(--ink);color:var(--ink)">You’ve seen every match for these genres. Add another genre to widen the pool.</div>');
@@ -319,7 +310,7 @@
   function renderPopular() {
     U.$("#pop-sub").textContent = ui.popular || !ui.popFailed ? "The top-rated shows airing now on MyAnimeList." : "MyAnimeList is busy right now, so here are the top-rated titles in NEKAI’s catalog.";
     var list = ui.popular || Object.keys(D.catalog).map(S.anime).sort(function (a, b) { return (b.score || 0) - (a.score || 0); }).slice(0, 12);
-    U.pickRow(U.$("#popular"), list.map(function (a) { a = S.anime(a.id); a.match = S.match(a); return a; }), "Popular right now, scroll sideways", { lite: true });
+    U.pickRow(U.$("#popular"), list.map(function (a) { a = S.anime(a.id); a.match = S.match(a); return a; }), "Popular right now, scroll sideways", { lite: true, wide: true });
   }
   // If Tenrai is busy, say so rather than calling the sample titles "airing now", and try once more later
   function loadPopular(retry) {
@@ -328,7 +319,7 @@
   }
   loadPopular(true);
 
-  function renderPicks() { U.pickRow(U.$("#picks"), U.picks(), "Nekai’s Picks, scroll sideways"); }
+  function renderPicks() { U.pickRow(U.$("#picks"), U.picks(), "Nekai’s Picks, scroll sideways", { lite: true, wide: true, dismiss: true }); }
 
   /* ---------- events ---------- */
   U.$(".disc-search-icon").innerHTML = icon("search", 20);

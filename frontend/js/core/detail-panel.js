@@ -90,11 +90,14 @@
         : e.statusText
           ? "Finished"
           : "";
-    var cell = function (ic, top, sub) {
+    // Each cell: a small label (what the number is), the value, and optional detail underneath
+    var cell = function (ic, label, top, sub) {
       return (
         '<div class="dp-stat">' +
         ic +
-        "<div><strong>" +
+        '<div><span class="dp-label">' +
+        esc(label) +
+        "</span><strong>" +
         esc(top) +
         "</strong>" +
         (sub ? "<span>" + esc(sub) + "</span>" : "") +
@@ -105,16 +108,18 @@
       '<div class="dp-stats">' +
       cell(
         U.star(22, "#F25C05"),
+        "Score",
         e.scoreText,
-        e.members ? "(" + compact(e.members) + ")" : "Score",
+        e.members ? compact(e.members) + " members" : "",
       ) +
-      cell(icon("tv", 20, 2.2), e.type || "TV", "") +
+      cell(icon("tv", 20, 2.2), "Type", e.type || "TV", "") +
       cell(
         icon("film", 20, 2.2),
-        e.episodes ? String(e.episodes) : "?",
         "Episodes",
+        e.episodes ? String(e.episodes) : "?",
+        "",
       ) +
-      cell(icon("calendar", 20, 2.2), e.year || "–", status) +
+      cell(icon("calendar", 20, 2.2), "Year", e.year || "–", status) +
       "</div>"
     );
   }
@@ -160,7 +165,7 @@
         "</select>" +
         '<button type="button" id="dp-add" class="btn btn-primary btn-add">' +
         icon("plus", 20) +
-        "Add to watchlist</button></div>"
+        "Add to Library</button></div>"
       );
     }
     return (
@@ -359,16 +364,16 @@
         "</div>" +
         stats(e) +
         (e.genres.length
-          ? '<div class="dp-tags">' +
+          ? '<div class="dp-genres"><span class="dp-label">Genres</span><div class="dp-tags">' +
             e.genres
               .map(function (g) {
                 return '<span class="dp-tag">' + esc(g) + "</span>";
               })
               .join("") +
-            "</div>"
+            "</div></div>"
           : "") +
         section("Synopsis", synopsis(e)) +
-        section("Your watchlist", watchlist(e)) +
+        section("Your Library", watchlist(e)) +
         section("Details", info(e)) +
         section("Trailer", trailer(e)) +
         section(

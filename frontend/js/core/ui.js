@@ -778,13 +778,19 @@
           icon("dots", 20) +
           "</button></div>") +
       "</div>" +
-      '<div class="qi" id="qi-' +
+      // opts.preview === false: card only, no hover preview panel
+      (opts.preview === false
+        ? ""
+        : '<div class="qi" id="qi-' +
       a.id +
       '" role="group" aria-label="Quick info: ' +
       esc(a.title) +
       '">' +
+      // opts.wide (Discover's Picks and Popular): the title is the way into full details
       '<div class="qi-head"><p class="qi-title">' +
-      esc(a.title) +
+      (opts.wide
+        ? '<a class="title-link" href="' + detailsHref(a) + '">' + esc(a.title) + "</a>"
+        : esc(a.title)) +
       "</p>" +
       '<div class="qi-chips"><span class="qi-chip hl" aria-label="Community score ' +
       a.scoreText +
@@ -815,20 +821,69 @@
           esc(a.why) +
           "</span></p>"
         : "") +
-      '<div class="qi-foot"><a class="btn btn-see" href="' +
+      // opts.wide: full-size Add to Library, plus Not interested when opts.dismiss
+      (opts.wide
+        ? '<div class="qi-foot qi-foot-wide"><button type="button" class="btn ' +
+          (e.inList ? "btn-accent" : "btn-primary btn-add") +
+          '" data-act="toggle" data-id="' +
+          a.id +
+          '" aria-pressed="' +
+          e.inList +
+          '" aria-label="' +
+          (e.inList
+            ? "Remove " + esc(a.title) + " from your Library"
+            : "Add " + esc(a.title) + " to your Library") +
+          '">' +
+          icon(e.inList ? "check" : "plus", 20, 2.6) +
+          (e.inList ? "In Library" : "Add to Library") +
+          "</button>" +
+          (opts.dismiss
+            ? '<button type="button" class="btn btn-secondary" data-act="dismiss" data-id="' +
+              a.id +
+              '" aria-label="Not interested in ' +
+              esc(a.title) +
+              '">' +
+              icon("x", 20) +
+              "Not interested</button>"
+            : "") +
+          "</div>" +
+          "</div>"
+        : '<div class="qi-foot"><a class="btn btn-see" href="' +
       detailsHref(a) +
       '" style="flex-grow:1">See full details</a>' +
+      // Lite cards have no Add button on the face, so the preview carries it
       (opts.lite
-        ? ""
-        : '<button type="button" class="btn btn-secondary btn-icon" data-act="dismiss" data-id="' +
+        ? '<button type="button" class="btn ' +
+          (e.inList ? "btn-accent" : "btn-primary btn-add") +
+          ' btn-icon" data-act="toggle" data-id="' +
           a.id +
-          '" style="width:44px;height:44px" aria-label="Not interested in ' +
-          esc(a.title) +
-          '" title="Not interested">' +
-          icon("x", 20) +
-          "</button>") +
+          '" aria-pressed="' +
+          e.inList +
+          '" style="width:44px;height:44px" aria-label="' +
+          (e.inList
+            ? "Remove " + esc(a.title) + " from your list"
+            : "Add " + esc(a.title) + " to Plan to Watch") +
+          '" title="' +
+          (e.inList ? "In your list" : "Add to Plan to Watch") +
+          '">' +
+          icon(e.inList ? "check" : "plus", 20, 2.6) +
+          "</button>"
+        : dismissBtn(a)) +
       "</div>" +
-      "</div></article>"
+      "</div>")) +
+      "</article>"
+    );
+  }
+
+  function dismissBtn(a) {
+    return (
+      '<button type="button" class="btn btn-secondary btn-icon" data-act="dismiss" data-id="' +
+      a.id +
+      '" style="width:44px;height:44px" aria-label="Not interested in ' +
+      esc(a.title) +
+      '" title="Not interested">' +
+      icon("x", 20) +
+      "</button>"
     );
   }
 
@@ -856,12 +911,23 @@
     clearTimeout(closeTimer);
     var go = function () {
       if (openCard && openCard !== card) closePanel(true);
-      var row = card.closest(".pick-row"),
+      var row = card.closest(".pick-row, .pick-grid"),
         r = card.getBoundingClientRect();
-      card.classList.toggle(
-        "flip",
-        !!row && r.right + r.width * 1.54 > row.getBoundingClientRect().right,
-      );
+      var qi = card.querySelector(".qi");
+      qi.style.left = "";
+      if (row && row.classList.contains("pick-grid")) {
+        // Grid: open on whichever side fits; if neither does, slide the panel in over the card so it stays inside the grid
+        var g = row.getBoundingClientRect(),
+          need = qi.offsetWidth + 16,
+          right = g.right - r.right >= need,
+          left = r.left - g.left >= need;
+        card.classList.toggle("flip", !right && left);
+        if (!right && !left) qi.style.left = g.right - qi.offsetWidth - r.left + "px";
+      } else
+        card.classList.toggle(
+          "flip",
+          !!row && r.right + r.width * 1.54 > row.getBoundingClientRect().right,
+        );
       card.classList.add("is-open");
       var m = card.querySelector("[data-more]");
       if (m) m.setAttribute("aria-expanded", "true");
@@ -876,8 +942,16 @@
     var keep = host.querySelector(".pick-row");
     var scroll = keep ? keep.scrollLeft : 0,
       wasOpen = openKey;
+    // Previews with a "why we picked it" line or the full-size footer are taller, so give the row more room below the cards
+    var tall =
+      !!(opts && opts.wide) ||
+      items.some(function (a) {
+        return a.why;
+      });
     host.innerHTML =
-      '<div class="pick-wrap"><div class="pick-row" role="region" aria-label="' +
+      '<div class="pick-wrap"><div class="pick-row' +
+      (tall ? " pick-row-tall" : "") +
+      '" role="region" aria-label="' +
       esc(label) +
       '" tabindex="0">' +
       items
@@ -936,7 +1010,27 @@
     host._onResize = sync;
     window.addEventListener("resize", sync);
     sync();
+    bindPicks(row, wasOpen);
+  }
 
+  // Same cards as pickRow, laid out in a wrapping grid (no sideways scrolling); opts.preview === false skips the hover preview
+  function pickGrid(host, items, label, opts) {
+    var wasOpen = openKey;
+    host.innerHTML =
+      '<div class="pick-grid" role="region" aria-label="' +
+      esc(label) +
+      '">' +
+      items
+        .map(function (a) {
+          return pickCard(a, opts);
+        })
+        .join("") +
+      "</div>";
+    if (!opts || opts.preview !== false)
+      bindPicks(host.querySelector(".pick-grid"), wasOpen);
+  }
+
+  function bindPicks(row, wasOpen) {
     // Hover intent: a quick pass tilts/lifts (CSS); resting ~450ms opens the panel
     $$(".pick", row).forEach(function (card) {
       card.addEventListener("mouseenter", function () {
@@ -1024,6 +1118,7 @@
     emptyState: emptyState,
     detailsHref: detailsHref,
     pickRow: pickRow,
+    pickGrid: pickGrid,
     picks: picks,
     afterComplete: afterComplete,
   };
