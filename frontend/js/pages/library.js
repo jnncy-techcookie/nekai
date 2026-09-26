@@ -35,7 +35,7 @@
     return (e.askComplete ? '<button type="button" class="btn btn-accent l-complete" data-act="complete" data-id="' + e.id + '">Mark completed</button>' : "");
   }
   // Rating: a compact "★ 8.4 ⌄" button; the pane (below) lets you drag across the stars or type 1–10
-  function fmtRating(n) { return (Math.round(n * 10) / 10).toFixed(1); }
+  function fmtRating(n) { return (Math.round(n * 10) / 10).toFixed(1).replace(/^10\.0$/, "10"); }
   function rating(e) { return '<div class="m-rate"><span class="m-rate-label">Your rating</span>' + ratingBtn(e) + "</div>"; }
   function ratingBtn(e) {
     return '<button type="button" class="rp-btn" data-rate-open="' + e.id + '" aria-haspopup="dialog" aria-expanded="false" aria-label="Your rating for ' + esc(e.title) + ": " + (e.rating ? fmtRating(e.rating) + " out of 10" : "not rated") + '. Change rating">' +
