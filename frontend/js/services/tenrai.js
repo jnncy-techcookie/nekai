@@ -115,7 +115,7 @@
 
   NEKAI.tenrai = {
     normalize: normalize,
-    /* Search by title; opts.type = ["TV","Movie",...], opts.genre = genre name, opts.page = page number */
+    /* Search by title; opts.type = ["TV","Movie",...], opts.genres = Tenrai genre ids (all must match), opts.page = page number */
     search: function (q, opts) {
       opts = opts || {};
       var params = [
@@ -128,8 +128,8 @@
       ];
       if (opts.type && opts.type.length === 1)
         params.push("type=" + opts.type[0].toLowerCase());
-      if (opts.genre && NEKAI.data.genreIds[opts.genre])
-        params.push("genres=" + NEKAI.data.genreIds[opts.genre]);
+      if (opts.genres && opts.genres.length)
+        params.push("genres=" + opts.genres.join(","));
       return request("/anime?" + params.join("&")).then(function (r) {
         var list = (r.data || []).map(normalize);
         if (opts.type && opts.type.length > 1)
@@ -170,6 +170,14 @@
           });
         });
         return out;
+      });
+    },
+    /* Every anime genre on MyAnimeList with its title count: [{ id, name, count }] */
+    genres: function () {
+      return request("/genres/anime").then(function (r) {
+        return (r.data || []).map(function (g) {
+          return { id: g.mal_id, name: g.name, count: g.count || 0 };
+        });
       });
     },
     /* Top-rated shows airing right now (Discover → Popular) */

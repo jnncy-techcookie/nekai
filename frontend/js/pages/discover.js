@@ -6,7 +6,7 @@
 
   U.shell({ page: "discover.html", lolli: "Not sure what to watch? Pick a genre or two below and I’ll find something you haven’t seen.", lolliCta: ["#picker", "Try it"] });
 
-  var ui = { types: {}, genre: "", results: [], submitted: "", searching: false, offline: false, error: "", sel: {}, finding: false, pick: null, pickNone: false };
+  var ui = { types: {}, genres: [], genreList: null, genreFailed: false, genreNote: "", showAll: false, results: [], submitted: "", searching: false, offline: false, error: "", sel: {}, finding: false, pick: null, pickNone: false };
 
   var searchId = 0, PAGE_SIZE = 24;
   ui.page = 1; ui.hasNext = false; ui.query = ""; ui.resultError = "";
@@ -54,10 +54,26 @@
   })();
 
   /* ---------- search + genre pills ---------- */
-  var GENRES = [["Action", "swords"], ["Adventure", "mountain"], ["Comedy", "smile"], ["Drama", "masks"], ["Fantasy", "spark"],
-    ["Romance", "heart"], ["Sci-Fi", "planet"], ["Slice of Life", "leaf"], ["Thriller", "pulse"]];
-  var MORE = [["Horror", "ghost"], ["Mystery", "search"], ["Sports", "ball"], ["Supernatural", "moon"]];
-  var ALIAS = { Thriller: "Suspense" }; // MyAnimeList files thrillers under Suspense
+  // Genres come from Tenrai: the 8 with the most anime get pills, the full list lives in the More menu
+  var TOP_GENRES = 8, MAX_GENRES = 5;
+  function byName(a, b) { return a.name.localeCompare(b.name); }
+  function genreById(id) { return (ui.genreList || []).filter(function (g) { return g.id === id; })[0]; }
+  function genreNames() { return ui.genres.map(function (id) { var g = genreById(id); return g ? g.name : ""; }).filter(Boolean); }
+  function topGenres() {
+    return (ui.genreList || []).slice().sort(function (a, b) { return b.count - a.count || byName(a, b); }).slice(0, TOP_GENRES).sort(byName);
+  }
+  function loadGenres() {
+    ui.genreFailed = false; renderSearch();
+    J.genres().then(function (list) { ui.genreList = list.sort(byName); renderSearch(); })
+      .catch(function () { ui.genreFailed = true; renderSearch(); });
+  }
+  function toggleGenre(id) {
+    var i = ui.genres.indexOf(id);
+    if (i >= 0) ui.genres.splice(i, 1);
+    else if (ui.genres.length >= MAX_GENRES) { ui.genreNote = "You can pick up to " + MAX_GENRES + " genres. Remove one to add another."; renderSearch(); return; }
+    else ui.genres.push(id);
+    ui.genreNote = ""; ui.error = ""; renderSearch(); doSearch();
+  }
 
   function resultCard(a) {
     var e = S.entry(a.id) || a;
@@ -75,11 +91,11 @@
   function typesOn() { return Object.keys(ui.types).filter(function (t) { return ui.types[t]; }); }
   function localSearch(q) {
     q = q.toLowerCase();
-    var types = typesOn(), g = ALIAS[ui.genre] || ui.genre;
+    var types = typesOn(), names = genreNames();
     return Object.keys(D.catalog).map(S.anime).filter(function (a) {
       if (q && (a.title + " " + a.jp + " " + a.studio).toLowerCase().indexOf(q) < 0) return false;
       if (types.length && types.indexOf(a.type) < 0) return false;
-      if (g && a.genres.indexOf(g) < 0) return false;
+      if (names.some(function (g) { return a.genres.indexOf(g) < 0; })) return false;
       return true;
     });
   }
@@ -89,8 +105,9 @@
     var paging = typeof page === "number";
     var q = paging ? ui.query : U.$("#q").value.trim();
     page = paging ? page : 1;
-    if (q.length === 1 || (!q && !ui.genre)) {
-      if (!q && !ui.genre) { clearSearch(); }
+    var genreLabel = genreNames().join(" + ");
+    if (q.length === 1 || (!q && !ui.genres.length)) {
+      if (!q && !ui.genres.length) { clearSearch(); }
       else { ui.error = "Type at least 2 characters to search."; renderSearch(); U.$("#q").focus(); }
       return;
     }
@@ -99,14 +116,14 @@
     if (!paging) {
       ui.offline = false; ui.page = 1; ui.hasNext = false; ui.results = [];
       ui.query = q;
-      ui.submitted = q ? "“" + q + "”" + (ui.genre ? " in " + ui.genre : "") : ui.genre;
+      ui.submitted = q ? "“" + q + "”" + (genreLabel ? " in " + genreLabel : "") : genreLabel;
     }
     renderSearch(); renderResults();
     function localPage() {
       var list = localSearch(q);
       return { items: list.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), hasNext: list.length > page * PAGE_SIZE };
     }
-    var request = paging && ui.offline ? Promise.resolve(localPage()) : J.search(q, { type: typesOn(), genre: ui.genre, page: page });
+    var request = paging && ui.offline ? Promise.resolve(localPage()) : J.search(q, { type: typesOn(), genres: ui.genres, page: page });
     return request.catch(function () {
       if (id !== searchId) return;
       if (paging) { ui.resultError = "Couldn’t load that page. Please try again."; return; }
@@ -125,7 +142,7 @@
   }
   function clearSearch() {
     ++searchId;
-    ui.submitted = ""; ui.results = []; ui.genre = ""; ui.types = {}; U.$("#q").value = "";
+    ui.submitted = ""; ui.results = []; ui.genres = []; ui.genreNote = ""; ui.types = {}; U.$("#q").value = "";
     ui.page = 1; ui.hasNext = false; ui.query = ""; ui.searching = false; ui.offline = false; ui.error = ""; ui.resultError = "";
     renderSearch(); renderResults(); U.$("#q").focus();
   }
@@ -137,8 +154,11 @@
       '<button type="button" class="btn btn-secondary" data-page="' + (ui.page + 1) + '"' + (ui.searching || !ui.hasNext ? ' disabled' : '') + ' aria-label="Next page" title="Next page">' + icon("chevR", 20, 2.6) + '</button></nav>';
   }
 
-  function pill(value, label, ic) {
-    return '<button type="button" class="gpill" data-g="' + esc(value) + '" aria-pressed="' + (ui.genre === value) + '">' + icon(ic, 18, 2.2) + esc(label) + "</button>";
+  // Pills and box items share one toggle; stable ids keep keyboard focus through re-renders
+  function genreButton(g, cls, prefix) {
+    var on = ui.genres.indexOf(g.id) >= 0, full = !on && ui.genres.length >= MAX_GENRES;
+    return '<button type="button" id="' + prefix + g.id + '" class="' + cls + (full ? " is-full" : "") + '" data-gid="' + g.id + '" aria-pressed="' + on + '">' +
+      (on ? icon("check", 16, 3) : "") + esc(g.name) + "</button>";
   }
   function renderSearch() {
     var q = U.$("#q"), err = U.$("#q-err");
@@ -146,11 +166,26 @@
     q.setAttribute("aria-busy", ui.searching);
     err.hidden = !ui.error; err.lastChild.textContent = ui.error;
     U.$("#q-kbd").innerHTML = ui.searching ? '<span class="spinner" aria-hidden="true"></span>' : (/Mac|iPhone|iPad/.test(navigator.platform) ? "⌘ K" : "Ctrl K");
-    var moreOpen = ui.moreOpen || MORE.some(function (g) { return g[0] === ui.genre; });
-    U.render(U.$("#genre-pills"), pill("", "All Genres", "grid") +
-      GENRES.map(function (g) { return pill(g[0], g[0], g[1]); }).join("") +
-      (moreOpen ? MORE.map(function (g) { return pill(g[0], g[0], g[1]); }).join("") : "") +
-      '<button type="button" class="gpill gpill-more" data-more aria-expanded="' + moreOpen + '">' + (moreOpen ? "Less" : "More") + icon("chevD", 16, 2.6) + "</button>");
+    var pills = U.$("#genre-pills"), box = U.$("#genre-box"), note = U.$("#genre-note");
+    // All Genres opens and closes the box that lists every genre
+    var all = '<button type="button" id="g-all" class="gpill" data-gall aria-controls="genre-box" aria-expanded="' + ui.showAll + '"' + (ui.genreList ? "" : " disabled") + ">" +
+      icon("grid", 18, 2.2) + "All Genres" + icon("chevD", 16, 2.6) + "</button>";
+    if (!ui.genreList) {
+      U.render(pills, all + (ui.genreFailed
+        ? '<span class="small muted semibold">Couldn’t load genres from Tenrai.</span><button type="button" id="g-retry" class="gpill gpill-more" data-gretry>Try again</button>'
+        : '<span class="small muted semibold" role="status">Loading genres…</span>'));
+      box.hidden = true; note.hidden = true;
+      return;
+    }
+    var top = topGenres(), topIds = top.map(function (g) { return g.id; });
+    // Genres picked in the box also get a pill, so every active filter stays visible
+    var extra = ui.genres.filter(function (id) { return topIds.indexOf(id) < 0; }).map(genreById).filter(Boolean).sort(byName);
+    U.render(pills, all + top.concat(extra).map(function (g) { return genreButton(g, "gpill", "g-"); }).join(""));
+    box.hidden = !ui.showAll;
+    if (ui.showAll) U.render(box, '<div class="genre-box-head"><span class="eyebrow">ALL GENRES</span><span class="small muted semibold">' +
+      ui.genres.length + " of " + MAX_GENRES + " picked</span></div>" +
+      '<div class="genre-box-list">' + ui.genreList.map(function (g) { return genreButton(g, "chip", "gb-"); }).join("") + "</div>");
+    note.hidden = !ui.genreNote; note.textContent = ui.genreNote;
   }
 
   function renderResults() {
@@ -304,11 +339,19 @@
   document.addEventListener("keydown", function (e) {
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); U.$("#q").focus(); U.$("#q").select(); }
   });
-  U.$("#genre-pills").addEventListener("click", function (e) {
-    var b = e.target.closest("[data-g],[data-more]"); if (!b) return;
-    if (b.hasAttribute("data-more")) { ui.moreOpen = b.getAttribute("aria-expanded") !== "true"; renderSearch(); return; }
-    ui.genre = b.dataset.g; ui.error = ""; renderSearch(); doSearch();
-  });
+  function genreClick(e) {
+    var b = e.target.closest("[data-gid],[data-gall],[data-gretry]"); if (!b) return;
+    if (b.hasAttribute("data-gretry")) { loadGenres(); return; }
+    if (b.hasAttribute("data-gall")) { ui.showAll = !ui.showAll; renderSearch(); return; }
+    toggleGenre(Number(b.dataset.gid));
+  }
+  U.$("#genre-pills").addEventListener("click", genreClick);
+  U.$("#genre-box").addEventListener("click", genreClick);
+  // Close the box on Escape or a click outside it
+  function closeBox(refocus) { if (!ui.showAll) return; ui.showAll = false; renderSearch(); if (refocus) U.$("#g-all").focus(); }
+  // A toggled genre re-renders before this runs, so a detached target still counts as inside the box
+  document.addEventListener("click", function (e) { if (e.target.isConnected && !e.target.closest("#genre-box,#g-all")) closeBox(false); });
+  U.$(".genre-filter").addEventListener("keydown", function (e) { if (e.key === "Escape" && ui.showAll) { e.stopPropagation(); closeBox(true); } });
   U.$("#results").addEventListener("click", function (e) {
     var pageButton = e.target.closest("[data-page]");
     if (pageButton) {
@@ -327,7 +370,7 @@
   U.$("#find").addEventListener("click", find);
 
   S.subscribe(function () { renderResults(); renderPicker(); renderPicks(); renderPopular(); });
-  renderSearch(); renderResults(); renderPicker(); renderPopular(); renderPicks(); layoutWheel(HOME, 0);
+  renderSearch(); loadGenres(); renderResults(); renderPicker(); renderPopular(); renderPicks(); layoutWheel(HOME, 0);
   if (location.hash === "#q") U.$("#q").focus();
   var t; J.hydrate(D.picks.map(function (p) { return String(p.id); }), function () { clearTimeout(t); t = setTimeout(renderPicks, 250); });
 })();

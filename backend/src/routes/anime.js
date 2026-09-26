@@ -73,6 +73,8 @@ router.get("/top/anime", (req, res) => {
   return send(res, "/top/anime", { filter, limit, sfw: "true" });
 });
 
+router.get("/genres/anime", (req, res) => send(res, "/genres/anime", { filter: "genres" }));
+
 router.get("/anime/:id/full", (req, res) => {
   if (!validId(req.params.id)) {
     return res.status(400).json({ error: "Invalid anime ID" });

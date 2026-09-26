@@ -49,7 +49,11 @@
           </div>
         </div>
         <p id="q-err" class="error disc-err" role="alert" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.5"></path></svg><span></span></p>
-        <div id="genre-pills" class="genre-pills" role="group" aria-label="Browse by genre"></div>
+        <div class="genre-filter">
+          <div id="genre-pills" class="genre-pills" role="group" aria-label="Browse by genre, pick up to 5"></div>
+          <div id="genre-box" class="genre-box" role="group" aria-label="All genres" hidden></div>
+          <p id="genre-note" class="small semibold genre-note" role="status" hidden></p>
+        </div>
       </section>
 
       <section id="results" aria-live="polite" class="stack gap-24" hidden></section>
