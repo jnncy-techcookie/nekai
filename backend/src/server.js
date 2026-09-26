@@ -2,6 +2,7 @@ const path = require("node:path");
 const express = require("express");
 const animeRoutes = require("./routes/anime");
 const lolliRoutes = require("./routes/lolli");
+const recommendRoutes = require("./routes/recommend");
 
 // Secrets such as GEMINI_API_KEY live in backend/.env (gitignored)
 try {
@@ -19,6 +20,7 @@ app.get("/api/health", (req, res) => {
 
 app.use("/api/tenrai", animeRoutes);
 app.use("/api/lolli", express.json({ limit: "32kb" }), lolliRoutes);
+app.use("/api/recommend", express.json({ limit: "64kb" }), recommendRoutes);
 app.use(express.static(path.join(__dirname, "../../frontend")));
 
 app.listen(PORT, () => {

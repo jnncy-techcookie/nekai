@@ -22,7 +22,7 @@ Open [http://localhost:3000](http://localhost:3000). The frontend calls the back
 |---|---|---|
 | `index.html` | Home | Greeting, stats, continue-watching hero with episode stepper, streak, latest achievement, *Picked for you* row |
 | `library.html` | Library | Search, sort and filter by status (Watching / Plan to Watch / Completed / Dropped); change progress, rating (a "★ 8.4" button that opens a pane: drag across the stars or type 1–10, one decimal) and status inline; remove |
-| `discover.html` | Discover | Live Tenrai search with type and genre filters, *What should I watch next?* genre picker, Nekai's Picks, browse-by-genre signs |
+| `discover.html` | Discover | Live Tenrai search with type and genre filters, *What should I watch next?* genre picker, Nekai's Picks (AI recommendations with a match % and High / Medium / Low tier), browse-by-genre signs |
 | `<page>#anime-<id>` | Anime details | There is no separate details page. Titles, posters and "View details" links (`#anime-<id>`, where `id` is the MyAnimeList ID) open the **detail panel** (`js/core/detail-panel.js`) as a split view beside the page: poster, stats, synopsis, watchlist controls, details, trailer and episodes. It sits next to the content from 1024px (1280px with the sidebar expanded) and takes the content's place on narrower screens. Close with the X, Esc or Back; Ctrl/⌘-click opens the same page in a new tab with the panel open |
 | `profile.html` | Profile | Level and XP, stats dashboard, favorite-genre mix, achievements |
 | `settings.html` | Settings | Profile form with validation, sound / confetti / Lolli / streak toggles, reduce motion, larger text, stronger outlines, CSV export, sign out, delete |
@@ -40,8 +40,10 @@ nekai-anime-watchlist/
 │       ├── server.js          serves the frontend and /api/tenrai
 │       ├── routes/anime.js    validates anime requests
 │       ├── routes/lolli.js    Lolli chat: validates, rate-limits, builds the prompt
+│       ├── routes/recommend.js AI picks: asks Gemini for JSON picks, finds each on MyAnimeList via Tenrai
 │       ├── services/tenrai.js queues and caches upstream requests
-│       └── services/gemini.js calls the Gemini API (key from backend/.env)
+│       ├── services/gemini.js calls the Gemini API (key from backend/.env)
+│       └── services/rate-limit.js per-IP request limits for the Gemini routes
 └── frontend/                  the browser interface
     ├── index.html, library.html, discover.html,
     │   profile.html, settings.html, signin.html
@@ -62,6 +64,7 @@ nekai-anime-watchlist/
         ├── core/lolli.js         Lolli chat panel (sends your list summary to /api/lolli/chat)
         ├── core/detail-panel.js  the anime detail panel, a split view beside the page (opens from any #anime-<id> link)
         ├── services/tenrai.js     Tenrai client: rate-limited queue, 429 retry, normalisation
+        ├── services/recommend.js  AI picks client (Discover only): sends your history to /api/recommend, saves the picks
         └── pages/                one script per page
 ```
 
@@ -75,6 +78,8 @@ Add new styles to the file that matches their scope (a token, a shared component
 
 - **Your list** (status, episodes watched, your rating from 1 to 10 (one decimal; older 1–5 star ratings are converted once, ×2), hidden picks, watch log, settings and profile) is saved in the browser's `localStorage` under `nekai:v1`. Clear site data or use *Settings → Delete account* to start over.
 - **Sample data**: a first visit is seeded with a realistic list so every screen has content. Each title uses its real MyAnimeList ID, so NEKAI fetches the real poster, score, synopsis and trailer in the background.
+- **Nekai's Picks** (Discover, and *Picked for you* on Home once they exist) come from Gemini. `services/recommend.js` sends up to 60 of your titles with their genres, status and rating to `POST /api/recommend`. Gemini returns 10 titles, each with a one-line reason and a 0–100 fit estimate. The backend finds each title on MyAnimeList through Tenrai and drops anything already on your list or marked *Not interested*, keeping 8. Picks are saved under `recs` in `nekai:v1` and only requested again when a title, status, rating or *Not interested* changes, after a day, or when you select **New picks**. If the AI can't answer, the curated picks in `sample-data.js` are shown and the page says so.
+- **Match %** on AI picks is 60% the history formula (`store.match`: genre overlap, genres you rated highly, finished vs dropped) and 40% the AI's fit estimate (`store.blendMatch`). Other cards use the formula alone. Tiers: **High** 80%+, **Medium** 65–79%, **Low** under 65%.
 - **Tenrai** is called for search, anime details, episode lists, the genre picker and poster images. Browser requests are spaced 400 ms apart, and the backend queues requests across users and caches successful responses. Tenrai's public limit is 120 requests per minute, 4 per second, and 40,000 per day per IP.
 - **Offline or rate-limited?** Search falls back to the built-in sample list, and the detail panel shows saved data. Each fallback is clearly labelled in the UI.
 

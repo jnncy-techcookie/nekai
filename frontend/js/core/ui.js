@@ -751,6 +751,26 @@
     }
   }
 
+  /* ---------- match % tiers ---------- */
+  function matchTier(pct) {
+    if (pct >= 80) return { key: "high", label: "High" };
+    if (pct >= 65) return { key: "mid", label: "Medium" };
+    return { key: "low", label: "Low" };
+  }
+  function matchBadge(pct) {
+    var t = matchTier(pct);
+    // Reads as "78% High match"
+    return (
+      '<span class="match-pill match-' +
+      t.key +
+      '">' +
+      pct +
+      '%<span class="match-tier">' +
+      t.label +
+      '</span><span class="sr"> match</span></span>'
+    );
+  }
+
   /* ---------- Picked for you row ---------- */
   // opts.lite: browse-only card (no Add, no quick-info button, no "Not interested")
   function pickCard(a, opts) {
@@ -781,9 +801,7 @@
       '" tabindex="-1" aria-hidden="true">' +
       art(a) +
       "</a>" +
-      '<span class="match-green">' +
-      a.match +
-      "% match</span>" +
+      matchBadge(a.match) +
       "</div>" +
       '<h3 class="pick-title"><a class="title-link" href="' +
       detailsHref(a) +
@@ -1122,6 +1140,11 @@
       if (again) {
         openKey = null;
         openPanel(again, 0);
+      } else {
+        // The open card left the row (e.g. a pick added to the Library): keep keyboard focus in the row
+        openKey = null;
+        openCard = null;
+        if (document.activeElement === document.body) row.focus({ preventScroll: true });
       }
     }
   }
@@ -1132,17 +1155,24 @@
     if (openKey && !e.target.closest(".pick")) closePanel(true);
   });
 
-  /* Picks = curated candidates the user hasn't hidden, sorted by live match % */
+  /* Picks = the AI's picks when there are some (see services/recommend.js), otherwise
+   * the curated candidates; minus hidden ones and anything already in the Library,
+   * sorted by live match %. A pick added from the row disappears (the toast has Undo). */
+  function aiPicks() {
+    var r = S.state.recs;
+    return !!(r && r.items && r.items.length);
+  }
   function picks() {
-    return D.picks
+    return (aiPicks() ? S.state.recs.items : D.picks)
       .filter(function (p) {
-        return !S.state.hidden[String(p.id)];
+        var id = String(p.id);
+        return !S.state.hidden[id] && !S.state.list[id] && S.anime(id);
       })
       .map(function (p) {
         var a = S.anime(p.id);
         a.why = p.why;
         a.synopsis = a.synopsis || p.synopsis;
-        a.match = S.match(a);
+        a.match = p.fit != null ? S.blendMatch(a, p.fit) : S.match(a);
         return a;
       })
       .sort(function (x, y) {
@@ -1174,6 +1204,8 @@
     pickRow: pickRow,
     pickGrid: pickGrid,
     picks: picks,
+    aiPicks: aiPicks,
+    matchTier: matchTier,
     afterComplete: afterComplete,
     streakReminder: streakReminder,
     lolliSvg: lolliSvg,

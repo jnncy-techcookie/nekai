@@ -49,6 +49,7 @@
       list: list,
       anime: {},
       hidden: {},
+      recs: null, // AI picks: { at, key, items: [{ id, why, fit }] }
       log: log,
       ui: { navOpen: true, lolliHidden: false },
       profile: {
@@ -392,6 +393,10 @@
       emit();
       return undoTo(snap);
     },
+    setRecs: function (recs) {
+      state.recs = recs;
+      emit();
+    },
     setUi: function (patch) {
       Object.assign(state.ui, patch);
       save();
@@ -650,6 +655,11 @@
       rated = gs.length ? rated / gs.length : 0.5;
       hist = gs.length ? hist / gs.length : 0.5;
       return Math.round(35 + 60 * (0.6 * overlap + 0.3 * rated + 0.1 * hist));
+    },
+    /* AI picks: the history-based match above (60%) blended with the AI's own fit estimate (40%) */
+    blendMatch: function (a, fit) {
+      var f = Math.min(100, Math.max(0, Number(fit) || 0));
+      return Math.round(0.6 * api.match(a) + 0.4 * f);
     },
   };
   NEKAI.store = api;
