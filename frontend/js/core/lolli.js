@@ -122,7 +122,7 @@
     panel.setAttribute("aria-labelledby", "lchat-h");
     panel.innerHTML =
       '<header class="lchat-head"><span class="lchat-face" aria-hidden="true">' + U.lolliSvg(40) + "</span>" +
-        '<div class="grow"><h2 id="lchat-h" class="h3">Lolli</h2><p class="caption muted">Your watch buddy · powered by Gemini</p></div>' +
+        '<div class="grow"><h2 id="lchat-h" class="h3">Lolli</h2><p class="caption">Your watch buddy</p></div>' +
         '<button type="button" class="btn btn-ghost btn-icon" data-lchat="clear" aria-label="Start a new chat" title="New chat">' + icon("trash", 20) + "</button>" +
         '<button type="button" class="btn btn-ghost btn-icon" data-lchat="close" aria-label="Close chat">' + icon("x", 20) + "</button></header>" +
       '<div class="lchat-log" role="log" aria-live="polite" aria-label="Conversation with Lolli" tabindex="0"></div>' +

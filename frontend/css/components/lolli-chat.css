@@ -19,7 +19,7 @@
   width: 64px;
   height: 64px;
   padding: 0;
-  border: 1.5px solid var(--ink);
+  border: 0;
   border-radius: 50%;
   background: var(--pink);
   color: var(--ink);
@@ -69,10 +69,12 @@
   flex-direction: column;
   width: min(400px, calc(100vw - 32px));
   height: min(600px, calc(100vh - 48px));
-  border: 1.5px solid var(--ink);
-  border-radius: 16px;
-  background: var(--cream);
-  box-shadow: 0 18px 40px rgba(15, 31, 92, 0.18);
+  border: 0;
+  border-radius: 20px;
+  background: #faf3e6;
+  box-shadow:
+    0 24px 60px rgba(15, 31, 92, 0.22),
+    0 4px 12px rgba(15, 31, 92, 0.1);
   overflow: hidden;
   /* grows from the button's center: both sit 24px from the corner, the button is 64px */
   transform-origin: calc(100% - 32px) calc(100% - 32px);
@@ -103,19 +105,35 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 8px 12px 16px;
-  background: var(--yellow);
-  border-bottom: 1.5px solid var(--ink);
+  padding: 14px 10px 14px 16px;
+  background: var(--blue);
+  color: #faf3e6;
+}
+.lchat-head .h3 {
+  color: #faf3e6;
 }
 .lchat-head .caption {
-  color: var(--ink);
+  color: #ffd3b3;
+  font-weight: 700;
+}
+.lchat-head .btn-icon {
+  border: 0;
+  background: transparent;
+  color: #faf3e6;
+}
+.lchat-head .btn-icon:hover {
+  background: rgba(250, 243, 230, 0.14);
+  color: #ffffff;
+}
+.lchat-head .btn-icon:focus-visible {
+  outline: 3px solid #ffd3b3;
+  outline-offset: 1px;
 }
 .lchat-face {
   display: inline-flex;
   padding: 2px;
   border-radius: 50%;
-  background: var(--white);
-  border: 1.5px solid var(--ink);
+  background: var(--pink);
 }
 
 .lchat-log {
@@ -142,17 +160,19 @@
 }
 .lchat-bubble {
   padding: 10px 14px;
-  border: 1.5px solid var(--ink);
-  border-radius: 16px 16px 16px 4px;
+  border: 0;
+  border-radius: 18px 18px 18px 6px;
   background: var(--white);
+  box-shadow: 0 2px 8px rgba(15, 31, 92, 0.08);
   color: var(--ink);
   font-size: 15px;
   line-height: 22px;
   overflow-wrap: anywhere;
 }
 .lchat-user .lchat-bubble {
-  border-radius: 16px 16px 4px 16px;
+  border-radius: 18px 18px 6px 18px;
   background: var(--blue);
+  box-shadow: none;
   color: var(--white);
 }
 .lchat-bubble p + p,
@@ -174,7 +194,9 @@
   height: 36px;
   margin-top: 8px;
   padding: 0 12px;
-  border: 1.5px solid var(--ink);
+  border: 0;
+  background: #ffe0cc;
+  color: var(--red-dark);
 }
 
 .lchat-typing {
@@ -219,6 +241,14 @@
   text-align: left;
   font-size: 14px;
   line-height: 20px;
+  border: 0;
+  border-radius: 14px;
+  background: #ffe0cc;
+  color: var(--ink);
+  transition: background-color 0.15s ease;
+}
+.lchat-chips .chip:hover {
+  background: #ffd3b3;
 }
 
 .lchat-form {
@@ -226,21 +256,35 @@
   align-items: flex-end;
   gap: 8px;
   padding: 12px 12px 4px;
-  border-top: 1.5px solid var(--ink);
+}
+.lchat-form .btn-icon {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 50%;
 }
 .lchat-form textarea {
   flex: 1 1 auto;
   min-height: 48px;
   max-height: 120px;
-  padding: 12px 14px;
-  border: 1.5px solid var(--ink);
-  border-radius: 12px;
-  background: var(--white);
+  padding: 13px 16px;
+  border: 0;
+  border-radius: 24px;
+  background: #f3ead7;
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
   color: var(--ink);
   font: inherit;
   font-size: 15px;
   line-height: 22px;
   resize: none;
+}
+.lchat-form textarea:focus {
+  outline: 0;
+  background: var(--white);
+  box-shadow: 0 0 0 2px var(--blue);
 }
 .lchat-note {
   padding: 0 16px 10px;
@@ -297,8 +341,7 @@
     bottom: 0;
     width: 100%;
     height: min(85vh, 640px);
-    border-width: 1.5px 0 0;
-    border-radius: 16px 16px 0 0;
+    border-radius: 20px 20px 0 0;
     transform-origin: bottom center;
     transform: translateY(100%);
     opacity: 1;
@@ -339,4 +382,12 @@
   height: 36px;
   margin-top: 8px;
   padding: 0 14px;
+}
+
+/* Settings → Stronger outlines: outlines come back for people who need clearer edges */
+.opt-strong .lchat,
+.opt-strong .lolli-fab,
+.opt-strong .lchat-bubble,
+.opt-strong .lchat-form textarea {
+  box-shadow: inset 0 0 0 1.5px var(--ink);
 }
