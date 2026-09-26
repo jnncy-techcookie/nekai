@@ -5,6 +5,7 @@ const { rateLimiter } = require("../services/rate-limit");
 
 const MAX_HISTORY = 60;
 const MAX_EXCLUDE = 300;
+const MAX_REVIEW = 200; // the client sends a snippet of each review, not the whole text
 const ASK_FOR = 10; // a few spares, since some titles won't resolve or are already on the list
 const RETURN = 8;
 const STATUSES = ["watching", "plan", "completed", "dropped"];
@@ -18,6 +19,7 @@ From the user's watch history, recommend exactly ${ASK_FOR} anime they have NOT 
 How to read the history:
 - status: completed and watching mean they chose to keep going; dropped means it didn't work for them; plan means interest but no opinion yet.
 - rating: their own score out of 10 (0 = not rated). 8+ is a strong signal; 5 or lower is a negative signal.
+- review (optional): a snippet of their own review. It says WHY they liked or disliked a title (characters, pacing, art, tone, themes). Use it to pick titles that share what they praised and avoid what they complained about. A review is a stronger signal than genre alone.
 - Weigh genres and titles they rated highly and finished. Steer away from what they dropped or rated low.
 
 Rules:
@@ -25,7 +27,7 @@ Rules:
 - A sequel is fine only when they completed the earlier part and rated it 7 or more.
 - Mostly strong matches, plus one or two "stretch" picks from a genre they haven't tried much, for variety.
 - title: the main title exactly as MyAnimeList lists it (usually romaji, e.g. "Shingeki no Kyojin"). year: the year it first aired.
-- why: one sentence under 90 characters, addressed to the user, naming a title or genre from their history. No spoilers.
+- why: one sentence under 90 characters, addressed to the user, naming a title or genre from their history (or something they praised in a review). No spoilers.
 - fit: an integer 0 to 100, your estimate of how likely they are to enjoy it. Be calibrated, not flattering:
   85-95 = shares their top-rated genres and closely resembles titles they rated 8+;
   65-84 = good overlap with what they finish;
@@ -72,7 +74,8 @@ function validHistory(history) {
         h.rating <= 10 &&
         Array.isArray(h.genres) &&
         h.genres.length <= 10 &&
-        h.genres.every((g) => shortText(g, 40)),
+        h.genres.every((g) => shortText(g, 40)) &&
+        (h.review === undefined || shortText(h.review, MAX_REVIEW)),
     )
   );
 }
@@ -121,6 +124,7 @@ router.post("/", async (req, res) => {
         genres: h.genres,
         status: h.status,
         rating: h.rating,
+        ...(h.review && h.review.trim() ? { review: h.review.trim() } : {}),
       })),
       notInterested,
     };

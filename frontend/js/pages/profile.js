@@ -4,9 +4,9 @@
   var S = NEKAI.store, U = NEKAI.ui, esc = U.esc, icon = U.icon;
   if (!S.state.signedIn) { location.replace("signin.html"); return; }
 
-  var st = S.streak();
+  var st = S.streak(), weekStreak = S.state.earned["Week Streak"] != null;
   U.shell({ page: "profile.html", lolli: !S.state.settings.streak ? "Every episode, rating and finished show earns XP toward your next level."
-    : st.current >= 7 ? "Week Streak earned! Keep the run going." : "Only " + (7 - st.current) + " more day" + (7 - st.current === 1 ? "" : "s") + " of watching to earn your Week Streak sticker!" });
+    : weekStreak ? "Week Streak earned! Keep the run going." : "Only " + (7 - st.current) + " more day" + (7 - st.current === 1 ? "" : "s") + " of watching to earn your Week Streak sticker!" });
 
   var GCOL = ["#1F3FA6", "#F25C05", "#6F8FE8", "#FFA25C", "#FFD3B3", "#F7823A", "#B3B6C6"];
   var FACE = '<svg width="144" height="144" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="17" r="10.5" fill="#FFFBF2" stroke="#0F1F5C" stroke-width="1"></circle><path d="M4.6 14.5c1.6-8 17.4-10 20.8-1.4c-5-1-8-3.8-9-5c-2.2 3.2-6.4 5.4-11.8 6.4z" fill="#0F1F5C"></path><circle cx="11.6" cy="18" r="1.1" fill="#0F1F5C"></circle><circle cx="18.4" cy="18" r="1.1" fill="#0F1F5C"></circle><path d="M13 22q2 1.6 4 0" stroke="#0F1F5C" stroke-width="1.1" fill="none" stroke-linecap="round"></path><circle cx="9.6" cy="20.6" r="1.3" fill="#FFD3B3"></circle><circle cx="20.4" cy="20.6" r="1.3" fill="#FFD3B3"></circle></svg>';
