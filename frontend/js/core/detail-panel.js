@@ -168,16 +168,16 @@
         "Add to Library</button></div>"
       );
     }
+    // Episodes, then Status, then Your rating, then the review
     return (
-      '<div class="dp-prog">' +
+      '<div class="dp-field"><span class="dp-field-label" id="dp-eps-label">Episodes</span>' +
+      '<div class="dp-prog" role="group" aria-labelledby="dp-eps-label">' +
       U.stepper(e) +
-      "</div>" +
-      '<div class="m-rate"><span class="m-rate-label">Your rating</span>' +
-      U.stars(e) +
-      "</div>" +
+      "</div></div>" +
+      '<div class="dp-field"><label class="dp-field-label" for="dp-st">Status</label>' +
       '<div class="ac-foot"><div class="l-status" data-status="' +
       e.status +
-      '"><label class="sr" for="dp-st">Status</label>' +
+      '">' +
       U.statusSelect(e, "dp-st") +
       "</div>" +
       '<button type="button" class="m-del" data-act="remove" data-id="' +
@@ -186,7 +186,50 @@
       esc(e.title) +
       ' from your list" title="Remove from list">' +
       icon("trash", 18) +
-      "</button></div>"
+      "</button></div></div>" +
+      '<div class="m-rate"><span class="m-rate-label">Your rating</span>' +
+      U.stars(e) +
+      "</div>" +
+      review(e)
+    );
+  }
+  function reviewCount() {
+    return st.reviewDraft.length.toLocaleString("en-US") + " / 2,000";
+  }
+  // Personal review: shown under the rating, edited in place (plain text, up to 2000 characters)
+  function review(e) {
+    if (st.reviewing) {
+      return (
+        '<div class="dp-field"><label class="dp-field-label" for="dp-review">Your review</label>' +
+        '<textarea id="dp-review" class="input dp-review-text" rows="4" maxlength="2000" aria-describedby="dp-review-count" placeholder="What did you think? Favorite moments, characters, how it made you feel…">' +
+        esc(st.reviewDraft) +
+        "</textarea>" +
+        '<span id="dp-review-count" class="small muted semibold">' +
+        reviewCount() +
+        "</span>" +
+        '<div class="row gap-8"><button type="button" id="dp-review-save" class="btn btn-primary">Save review</button>' +
+        '<button type="button" id="dp-review-cancel" class="btn btn-ghost">Cancel</button>' +
+        (e.note
+          ? '<button type="button" id="dp-review-del" class="btn btn-ghost ml-auto">Delete review</button>'
+          : "") +
+        "</div></div>"
+      );
+    }
+    if (e.note) {
+      return (
+        '<div class="dp-field"><span class="dp-field-label">Your review</span>' +
+        '<p class="dp-review">' +
+        esc(e.note) +
+        "</p>" +
+        '<button type="button" id="dp-review-edit" class="btn btn-secondary self-start">' +
+        icon("note", 18, 2.2) +
+        "Edit review</button></div>"
+      );
+    }
+    return (
+      '<button type="button" id="dp-review-edit" class="btn btn-secondary self-start">' +
+      icon("note", 18, 2.2) +
+      "Write a review</button>"
     );
   }
   function info(e) {
@@ -598,6 +641,35 @@
     }
     if (t.id === "dp-more-eps" && !st.epsLoading)
       loadEpisodes(st.id, st.epsPage + 1);
+    if (t.id === "dp-review-edit") {
+      st.reviewing = true;
+      st.reviewDraft = S.entry(st.id).note || "";
+      render();
+      var ta = document.getElementById("dp-review");
+      ta.focus();
+      ta.setSelectionRange(ta.value.length, ta.value.length);
+      return;
+    }
+    if (t.id === "dp-review-cancel") {
+      st.reviewing = false;
+      render();
+      document.getElementById("dp-review-edit").focus();
+      return;
+    }
+    if (t.id === "dp-review-save" || t.id === "dp-review-del") {
+      var had = S.entry(st.id).note,
+        text = t.id === "dp-review-del" ? "" : st.reviewDraft;
+      st.reviewing = false;
+      var undo = S.setNote(st.id, text);
+      U.toast(
+        (text.trim() ? (had ? "Review updated for " : "Review saved for ") : "Review deleted for ") +
+          S.anime(st.id).title,
+        undo,
+      );
+      var edit = document.getElementById("dp-review-edit");
+      if (edit) edit.focus();
+      return;
+    }
     if (t.id === "dp-add") {
       var a = S.anime(st.id),
         r = S.add(st.id, st.addAs);
@@ -606,6 +678,13 @@
         U.sound("done");
       }
       U.toast(a.title + " added to " + D.statuses[st.addAs].label, r.undo);
+    }
+  });
+  // Keep the review draft in state so a re-render (e.g. logging an episode) doesn't lose it
+  host.addEventListener("input", function (ev) {
+    if (ev.target.id === "dp-review" && st) {
+      st.reviewDraft = ev.target.value;
+      document.getElementById("dp-review-count").textContent = reviewCount();
     }
   });
   host.addEventListener("change", function (ev) {

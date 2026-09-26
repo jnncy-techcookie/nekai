@@ -304,6 +304,36 @@
   height: 44px;
   padding: 0 16px;
 }
+/* Your Library: a label above each control (Episodes, Status, Your review) */
+.dp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dp-field-label {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.dp-review {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
+  font-size: 15px;
+  line-height: 22px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.dp-review-text {
+  min-height: 112px;
+  padding: 12px 14px;
+  resize: vertical;
+  font: inherit;
+  line-height: 22px;
+}
 .dp-prog {
   display: flex;
   flex-direction: column;
