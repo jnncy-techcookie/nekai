@@ -239,6 +239,18 @@
     );
   }
 
+  // Titles saved with every episode watched but not yet completed (from before
+  // completion became automatic) are completed now, quietly, with no confetti
+  Object.keys(state.list).forEach(function (id) {
+    var e = state.list[id], a = anime(id);
+    if (a && a.episodes && e.watched >= a.episodes && (e.status === "watching" || e.status === "plan")) {
+      e.status = "completed";
+      e.completedOnce = true;
+    }
+    // Watching with no episodes logged is really Plan to Watch
+    if (e.status === "watching" && !e.watched) e.status = "plan";
+  });
+
   var api = {
     get state() {
       return state;
@@ -293,6 +305,13 @@
       var patch = { status: status };
       var first = false,
         wasLogged = !!state.log[dayKey()];
+      // Starting a planned show or rewatching a completed one begins at episode 1; Plan to Watch means nothing watched yet
+      if (
+        status === "watching" &&
+        (e.status === "completed" || (e.status === "plan" && !e.watched))
+      )
+        patch.watched = 1;
+      if (status === "plan") patch.watched = 0;
       if (status === "completed") {
         if (a && a.episodes) patch.watched = a.episodes;
         first = !e.completedOnce;
@@ -314,8 +333,16 @@
       var snap = snapshot();
       var e = entry(id);
       if (!e || !e.canInc) return null;
+      var finished = e.known && e.watched + 1 === e.episodes;
       var patch = { watched: e.watched + 1 };
       if (e.status === "plan") patch.status = "watching";
+      // Logging the last episode completes the anime; there is no separate "Mark completed" step
+      var first = false;
+      if (finished) {
+        patch.status = "completed";
+        first = !state.list[String(id)].completedOnce;
+        patch.completedOnce = true;
+      }
       touch(id, patch);
       var wasLogged = !!state.log[dayKey()];
       logToday(1);
@@ -323,7 +350,8 @@
       return {
         undo: undoTo(snap),
         watched: e.watched + 1,
-        finished: e.known && e.watched + 1 === e.episodes,
+        finished: finished,
+        firstCompletion: first,
         streakUp: !wasLogged, // first episode today: the streak just grew by a day
       };
     },
@@ -331,7 +359,10 @@
       var snap = snapshot();
       var e = entry(id);
       if (!e || !e.canDec) return null;
-      touch(id, { watched: e.watched - 1 });
+      var patch = { watched: e.watched - 1 };
+      // Nothing watched any more, so it belongs back in Plan to Watch
+      if (patch.watched === 0 && e.status === "watching") patch.status = "plan";
+      touch(id, patch);
       // Take back one of today's logged episodes (an episode from an earlier day stays in history)
       logToday(-1);
       emit();

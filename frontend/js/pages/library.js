@@ -30,10 +30,6 @@
 
   // Pieces shared by the list row and the card
   function title(e, cls) { return '<h2 class="m-title ' + (cls || "") + '"><a class="title-link" href="' + U.detailsHref(e) + '">' + esc(e.title) + "</a></h2>"; }
-  // The stepper shows "11 / 12" (or "EP Unknown"), so only the Mark completed button lives here
-  function progress(e) {
-    return (e.askComplete ? '<button type="button" class="btn btn-accent l-complete" data-act="complete" data-id="' + e.id + '">Mark completed</button>' : "");
-  }
   // Rating: a compact "★ 8.4 ⌄" button; the pane (below) lets you drag across the stars or type 1–10
   function fmtRating(n) { return (Math.round(n * 10) / 10).toFixed(1).replace(/^10\.0$/, "10"); }
   function rating(e) { return '<div class="m-rate"><span class="m-rate-label">Your rating</span>' + ratingBtn(e) + "</div>"; }
@@ -42,33 +38,28 @@
         U.star(16, e.rating ? "#F25C05" : "#E6DCC7") + (e.rating ? "<span>" + fmtRating(e.rating) + "</span>" : '<span class="rp-none">Rate</span>') + icon("chevD", 16, 2.6) + "</button>";
   }
   function status(e) { return '<div class="l-status" data-status="' + e.status + '"><label class="sr" for="st-' + e.id + '">Status for ' + esc(e.title) + "</label>" + U.statusSelect(e, "st-" + e.id) + "</div>"; }
-  // "2019 • Action" under the title
+  // "2019 • Action • Adventure • Fantasy" under the title (up to 3 genres)
   function sub(e) {
-    var bits = [e.year, e.mainGenre].filter(Boolean).map(esc);
+    var bits = [e.year].concat((e.genres || []).slice(0, 3)).filter(Boolean).map(esc);
     return bits.length ? '<p class="m-sub">' + bits.join('<span class="m-dot" aria-hidden="true">•</span>') + "</p>" : "";
-  }
-  // Review note: opens the note pane (below); filled when a review exists
-  function noteBtn(e) {
-    var label = (e.note ? "Edit your review of " : "Write a review of ") + e.title;
-    return '<button type="button" class="m-note' + (e.note ? " has-note" : "") + '" data-note-open="' + e.id + '" aria-haspopup="dialog" aria-expanded="false" aria-label="' + esc(label) + '" title="' + (e.note ? "Edit your review" : "Write a review") + '">' + icon("note", 18, 2.2) + "</button>";
   }
   function del(e) { return '<button type="button" class="m-del" data-act="remove" data-id="' + e.id + '" aria-label="Remove ' + esc(e.title) + ' from your list" title="Remove from list">' + icon("trash", 18) + "</button>"; }
 
-  // List: [poster] [title, year · genre] [stepper] [rating] [status] [note, delete]
+  // List: [poster] [title, year · genre] [stepper] [rating] [status] [delete]
   function row(e) {
     return '<article class="card-sm list-row list-cols">' + U.art(e, { thumb: true }) +
       '<div class="l-title">' + title(e) + sub(e) + "</div>" +
-      '<div class="l-controls"><div class="l-eps">' + U.stepper(e) + progress(e) + "</div>" + rating(e) + status(e) + "</div>" +
-      '<div class="l-actions">' + noteBtn(e) + del(e) + "</div>" +
+      '<div class="l-controls"><div class="l-eps">' + U.stepper(e) + "</div>" + rating(e) + status(e) + "</div>" +
+      '<div class="l-actions">' + del(e) + "</div>" +
       "</article>";
   }
-  // Card: poster with the rating button on it, then a two-line title, year · genre, stepper + note, status + delete
+  // Card: poster with the rating button on it, then a two-line title, year · genre, stepper, status + delete
   function card(e) {
     return '<article class="card-sm anime-card">' +
       '<div class="ac-top"><a class="ac-media" href="' + U.detailsHref(e) + '" tabindex="-1" aria-hidden="true">' + U.art(e) + "</a>" + ratingBtn(e) + "</div>" +
       '<div class="ac-body">' +
         '<div class="ac-head">' + title(e, "ac-title") + sub(e) + "</div>" +
-        '<div class="ac-eps">' + U.stepper(e) + noteBtn(e) + "</div>" + progress(e) +
+        '<div class="ac-eps">' + U.stepper(e) + "</div>" +
         '<div class="ac-foot">' + status(e) + del(e) + "</div>" +
       "</div></article>";
   }
@@ -278,85 +269,6 @@
   document.addEventListener("keydown", function (ev) { if (ev.key === "Escape" && RP.id) { ev.stopPropagation(); closeRating(true); } }, true);
   window.addEventListener("resize", function () { if (RP.id) place(); });
   window.addEventListener("scroll", function () { if (RP.id) place(); }, { passive: true, capture: true });
-
-  /* ---------- review note pane ---------- */
-  var NOTE_MAX = 2000;
-  var np = document.createElement("div");
-  np.className = "np-pop";
-  np.setAttribute("role", "dialog");
-  np.setAttribute("aria-labelledby", "np-title");
-  np.hidden = true;
-  np.innerHTML =
-    '<div class="np-head"><p id="np-title" class="np-title">Your review</p><p id="np-anime" class="np-anime"></p></div>' +
-    '<label class="sr" for="np-text">Your review</label>' +
-    '<textarea id="np-text" class="np-text" rows="5" maxlength="' + NOTE_MAX + '" placeholder="What did you think? Favorite moments, characters, how it made you feel…" aria-describedby="np-count"></textarea>' +
-    '<div class="np-foot"><span id="np-count" class="np-count"></span>' +
-      '<div class="np-actions"><button type="button" class="np-del" hidden>Delete review</button>' +
-      '<button type="button" class="btn btn-secondary np-cancel">Cancel</button>' +
-      '<button type="button" class="btn btn-primary np-save">Save</button></div></div>';
-  document.body.appendChild(np);
-  var npText = np.querySelector("#np-text"), npSave = np.querySelector(".np-save"), npDel = np.querySelector(".np-del");
-  var NP = { id: null, drafts: {} }; // unsaved text is kept per anime until saved or cancelled
-
-  function noteAnchor() { return NP.id ? document.querySelector('[data-note-open="' + NP.id + '"]') : null; }
-  function syncNote() {
-    var saved = S.entry(NP.id).note, v = npText.value;
-    np.querySelector("#np-count").textContent = v.length.toLocaleString("en-US") + " / " + NOTE_MAX.toLocaleString("en-US");
-    npSave.disabled = v.trim() === saved;
-    npDel.hidden = !saved;
-  }
-  function placeNote() {
-    var a = noteAnchor();
-    if (!a) { closeNote(false); return; }
-    var r = a.getBoundingClientRect(), w = np.offsetWidth, h = np.offsetHeight;
-    var left = Math.max(12, Math.min(innerWidth - w - 12, r.right - w + 16));
-    var above = r.bottom + 12 + h > innerHeight - 8 && r.top - 12 - h > 8;
-    np.style.left = left + "px";
-    np.style.top = (above ? r.top - 12 - h : r.bottom + 12) + "px";
-    np.style.setProperty("--nub", (r.left + r.width / 2 - left) + "px");
-    np.classList.toggle("above", above);
-    a.setAttribute("aria-expanded", "true");
-  }
-  function openNote(id) {
-    if (NP.id && NP.id !== id) closeNote(false);
-    NP.id = id;
-    var e = S.entry(id);
-    np.querySelector("#np-anime").textContent = e.title;
-    npText.value = NP.drafts[id] != null ? NP.drafts[id] : e.note;
-    np.hidden = false;
-    syncNote(); placeNote();
-    npText.focus({ preventScroll: true });
-    npText.setSelectionRange(npText.value.length, npText.value.length);
-  }
-  function closeNote(returnFocus, keepDraft) {
-    var a = noteAnchor();
-    if (NP.id) { if (keepDraft && npText.value.trim() !== S.entry(NP.id).note) NP.drafts[NP.id] = npText.value; else delete NP.drafts[NP.id]; }
-    if (a) a.setAttribute("aria-expanded", "false");
-    np.hidden = true; NP.id = null;
-    if (returnFocus && a) a.focus({ preventScroll: true });
-  }
-  function saveNote(text) {
-    var id = NP.id, e = S.entry(id);
-    delete NP.drafts[id];
-    closeNote(false);
-    var undo = S.setNote(id, text);
-    U.toast(text.trim() ? (e.note ? "Review updated for " : "Review saved for ") + e.title : "Review deleted for " + e.title, undo);
-    var a = document.querySelector('[data-note-open="' + id + '"]'); if (a) a.focus({ preventScroll: true });
-  }
-
-  npText.addEventListener("input", syncNote);
-  npText.addEventListener("keydown", function (ev) { if (ev.key === "Enter" && (ev.ctrlKey || ev.metaKey) && !npSave.disabled) { ev.preventDefault(); saveNote(npText.value); } });
-  npSave.addEventListener("click", function () { saveNote(npText.value); });
-  np.querySelector(".np-cancel").addEventListener("click", function () { closeNote(true, false); });
-  npDel.addEventListener("click", function () { saveNote(""); });
-  document.addEventListener("click", function (ev) {
-    var b = ev.target.closest("[data-note-open]");
-    if (b) { if (NP.id === b.dataset.noteOpen) closeNote(false, true); else openNote(b.dataset.noteOpen); return; }
-    if (NP.id && !np.contains(ev.target)) closeNote(false, true); // clicking away keeps the draft
-  });
-  document.addEventListener("keydown", function (ev) { if (ev.key === "Escape" && NP.id) { ev.stopPropagation(); closeNote(true, true); } }, true);
-  window.addEventListener("resize", function () { if (NP.id) placeNote(); });
-  window.addEventListener("scroll", function () { if (NP.id) placeNote(); }, { passive: true, capture: true });
 
   S.subscribe(render);
   render();

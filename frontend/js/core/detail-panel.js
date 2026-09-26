@@ -90,11 +90,14 @@
         : e.statusText
           ? "Finished"
           : "";
-    var cell = function (ic, top, sub) {
+    // Each cell: a small label (what the number is), the value, and optional detail underneath
+    var cell = function (ic, label, top, sub) {
       return (
         '<div class="dp-stat">' +
         ic +
-        "<div><strong>" +
+        '<div><span class="dp-label">' +
+        esc(label) +
+        "</span><strong>" +
         esc(top) +
         "</strong>" +
         (sub ? "<span>" + esc(sub) + "</span>" : "") +
@@ -105,16 +108,18 @@
       '<div class="dp-stats">' +
       cell(
         U.star(22, "#F25C05"),
+        "Score",
         e.scoreText,
-        e.members ? "(" + compact(e.members) + ")" : "Score",
+        e.members ? compact(e.members) + " members" : "",
       ) +
-      cell(icon("tv", 20, 2.2), e.type || "TV", "") +
+      cell(icon("tv", 20, 2.2), "Type", e.type || "TV", "") +
       cell(
         icon("film", 20, 2.2),
-        e.episodes ? String(e.episodes) : "?",
         "Episodes",
+        e.episodes ? String(e.episodes) : "?",
+        "",
       ) +
-      cell(icon("calendar", 20, 2.2), e.year || "–", status) +
+      cell(icon("calendar", 20, 2.2), "Year", e.year || "–", status) +
       "</div>"
     );
   }
@@ -160,25 +165,19 @@
         "</select>" +
         '<button type="button" id="dp-add" class="btn btn-primary btn-add">' +
         icon("plus", 20) +
-        "Add to watchlist</button></div>"
+        "Add to Library</button></div>"
       );
     }
+    // Episodes, then Status, then Your rating, then the review
     return (
-      '<div class="dp-prog">' +
+      '<div class="dp-field"><span class="dp-field-label" id="dp-eps-label">Episodes</span>' +
+      '<div class="dp-prog" role="group" aria-labelledby="dp-eps-label">' +
       U.stepper(e) +
-
-      (e.askComplete
-        ? '<button type="button" class="btn btn-accent l-complete" data-act="complete" data-id="' +
-          e.id +
-          '">Mark completed</button>'
-        : "") +
-      "</div>" +
-      '<div class="m-rate"><span class="m-rate-label">Your rating</span>' +
-      U.stars(e) +
-      "</div>" +
+      "</div></div>" +
+      '<div class="dp-field"><label class="dp-field-label" for="dp-st">Status</label>' +
       '<div class="ac-foot"><div class="l-status" data-status="' +
       e.status +
-      '"><label class="sr" for="dp-st">Status</label>' +
+      '">' +
       U.statusSelect(e, "dp-st") +
       "</div>" +
       '<button type="button" class="m-del" data-act="remove" data-id="' +
@@ -187,7 +186,42 @@
       esc(e.title) +
       ' from your list" title="Remove from list">' +
       icon("trash", 18) +
-      "</button></div>"
+      "</button></div></div>" +
+      '<div class="m-rate"><span class="m-rate-label">Your rating</span>' +
+      U.stars(e) +
+      "</div>" +
+      review(e)
+    );
+  }
+  // Review text box: holds the saved review until you type (st.reviewDraft stays null until then)
+  function reviewDraft(e) {
+    return st.reviewDraft != null ? st.reviewDraft : e.note || "";
+  }
+  function reviewChanged(e) {
+    return reviewDraft(e).trim() !== (e.note || "");
+  }
+  function reviewCount(text) {
+    return text.length.toLocaleString("en-US") + " / 2,000";
+  }
+  // Personal review: always an editable box under the rating (plain text, up to 2000 characters).
+  // Save review saves a new review or an edit; saving an empty box deletes it.
+  function review(e) {
+    var draft = reviewDraft(e),
+      off = reviewChanged(e) ? "" : " disabled";
+    return (
+      '<div class="dp-field"><label class="dp-field-label" for="dp-review">Your review</label>' +
+      '<textarea id="dp-review" class="input dp-review-text" rows="4" maxlength="2000" aria-describedby="dp-review-count" placeholder="What did you think? Favorite moments, characters, how it made you feel…">' +
+      esc(draft) +
+      "</textarea>" +
+      '<span id="dp-review-count" class="small muted semibold">' +
+      reviewCount(draft) +
+      "</span>" +
+      '<div class="row gap-8"><button type="button" id="dp-review-save" class="btn btn-primary"' +
+      off +
+      ">Save review</button>" +
+      '<button type="button" id="dp-review-cancel" class="btn btn-ghost"' +
+      off +
+      ">Cancel</button></div></div>"
     );
   }
   function info(e) {
@@ -365,16 +399,16 @@
         "</div>" +
         stats(e) +
         (e.genres.length
-          ? '<div class="dp-tags">' +
+          ? '<div class="dp-genres"><span class="dp-label">Genres</span><div class="dp-tags">' +
             e.genres
               .map(function (g) {
                 return '<span class="dp-tag">' + esc(g) + "</span>";
               })
               .join("") +
-            "</div>"
+            "</div></div>"
           : "") +
         section("Synopsis", synopsis(e)) +
-        section("Your watchlist", watchlist(e)) +
+        section("Your Library", watchlist(e)) +
         section("Details", info(e)) +
         section("Trailer", trailer(e)) +
         section(
@@ -599,6 +633,25 @@
     }
     if (t.id === "dp-more-eps" && !st.epsLoading)
       loadEpisodes(st.id, st.epsPage + 1);
+    if (t.id === "dp-review-cancel") {
+      st.reviewDraft = null; // back to the saved review
+      render();
+      document.getElementById("dp-review").focus();
+      return;
+    }
+    if (t.id === "dp-review-save") {
+      var had = S.entry(st.id).note,
+        text = st.reviewDraft || "";
+      st.reviewDraft = null;
+      var undo = S.setNote(st.id, text);
+      U.toast(
+        (text.trim() ? (had ? "Review updated for " : "Review saved for ") : "Review deleted for ") +
+          S.anime(st.id).title,
+        undo,
+      );
+      document.getElementById("dp-review").focus();
+      return;
+    }
     if (t.id === "dp-add") {
       var a = S.anime(st.id),
         r = S.add(st.id, st.addAs);
@@ -607,6 +660,16 @@
         U.sound("done");
       }
       U.toast(a.title + " added to " + D.statuses[st.addAs].label, r.undo);
+    }
+  });
+  // Keep the review draft in state so a re-render (e.g. logging an episode) doesn't lose it
+  host.addEventListener("input", function (ev) {
+    if (ev.target.id === "dp-review" && st) {
+      st.reviewDraft = ev.target.value;
+      var off = !reviewChanged(S.entry(st.id));
+      document.getElementById("dp-review-count").textContent = reviewCount(st.reviewDraft);
+      document.getElementById("dp-review-save").disabled = off;
+      document.getElementById("dp-review-cancel").disabled = off;
     }
   });
   host.addEventListener("change", function (ev) {

@@ -211,6 +211,21 @@
 .dp-stat svg {
   flex-shrink: 0;
 }
+/* small caps label above each value so it's clear what the number means */
+.dp-stat .dp-label,
+.dp-label {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.dp-genres {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 .dp-tags {
   display: flex;
   flex-wrap: wrap;
@@ -288,6 +303,25 @@
 .dp-add .btn {
   height: 44px;
   padding: 0 16px;
+}
+/* Your Library: a label above each control (Episodes, Status, Your review) */
+.dp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dp-field-label {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.dp-review-text {
+  min-height: 112px;
+  padding: 12px 14px;
+  resize: vertical;
+  font: inherit;
+  line-height: 22px;
 }
 .dp-prog {
   display: flex;

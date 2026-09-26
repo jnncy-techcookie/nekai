@@ -779,6 +779,20 @@ textarea {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
+.pick-row-tall {
+  padding-bottom: 176px;
+  margin-bottom: -152px;
+}
+.pick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
+  gap: 24px;
+  /* closed previews sit beside the right column; clip them sideways only so open ones can still drop below */
+  overflow-x: clip;
+}
+.pick-grid .pick {
+  min-width: 0;
+}
 .pick-row::-webkit-scrollbar {
   display: none;
 }
@@ -1142,6 +1156,20 @@ textarea {
   align-items: center;
   gap: 8px;
   margin-top: 4px;
+}
+/* Discover's Picks and Popular: full-size Add to Library (sharing the row with Not interested in Picks) */
+.qi-foot-wide .btn {
+  flex: 1 1 0;
+  gap: 6px;
+  padding: 0 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.qi .qi-foot-wide .btn-secondary {
+  border-radius: 999px;
+}
+.qi-title .title-link {
+  color: inherit;
 }
 .qi .btn-see {
   background: #1f3fa6;
