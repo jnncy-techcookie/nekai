@@ -65,11 +65,11 @@
       '<ul class="week" aria-label="This week">' + week + "</ul>" +
       '<p class="small muted">' + (st.loggedToday ? "Today’s episode is logged. See you tomorrow!" : "Log one episode today to reach " + (st.current + 1) + " days.") + "</p>";
 
-    var earned = S.achievements().filter(function (a) { return a.earned; });
-    var last = earned[earned.length - 1];
+    var ach = S.achievements(), earned = ach.filter(function (a) { return a.earned; });
+    var last = S.latestAchievement();
     U.$("#achievement").innerHTML = '<span class="eyebrow">LATEST ACHIEVEMENT</span>' +
       (last ? '<div class="row gap-16" style="flex-wrap:nowrap"><span class="badge-round" aria-hidden="true" style="background:' + last.bg + ";color:" + (last.bg === "#1F3FA6" ? "#FFFBF2" : "#0F1F5C") + '">' + esc(last.glyph) + "</span>" +
-        '<div><h2 id="ach-h" class="h3">' + esc(last.name) + '</h2><p class="small muted">' + esc(last.desc) + " · " + earned.length + " of 8 earned</p></div></div>"
+        '<div><h2 id="ach-h" class="h3">' + esc(last.name) + '</h2><p class="small muted">' + esc(last.desc) + " · " + earned.length + " of " + ach.length + " earned</p></div></div>"
         : '<h2 id="ach-h" class="h3">No stickers yet</h2><p class="small muted">Add your first anime to earn First Steps.</p>') +
       '<a class="btn btn-secondary self-start" href="profile.html">' + icon("trophy", 20) + "All achievements</a>";
   }

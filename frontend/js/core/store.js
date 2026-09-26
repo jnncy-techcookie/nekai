@@ -7,6 +7,7 @@
   var KEY = "nekai:v1";
   var D = NEKAI.data;
   var listeners = [];
+  var unlockListeners = [];
   var state = load();
 
   function dayKey(d) {
@@ -50,6 +51,7 @@
       anime: {},
       hidden: {},
       recs: null, // AI picks: { at, key, items: [{ id, why, fit }] }
+      earned: {}, // achievement name -> time it was unlocked (0: already earned before times were saved)
       log: log,
       ui: { navOpen: true, lolliHidden: false },
       profile: {
@@ -106,9 +108,23 @@
     }
   }
   function emit() {
+    var unlocked = recordUnlocks(Date.now());
     save();
     listeners.forEach(function (fn) {
       fn(state);
+    });
+    if (unlocked.length)
+      unlockListeners.forEach(function (fn) {
+        fn(unlocked);
+      });
+  }
+  // Saves the time of every achievement that is met but not saved yet, and returns those achievements.
+  // Once saved, an achievement stays earned even if its condition stops holding (e.g. a broken streak).
+  function recordUnlocks(at) {
+    return api.achievements().filter(function (a) {
+      if (!a.met || state.earned[a.name] != null) return false;
+      state.earned[a.name] = at;
+      return true;
     });
   }
   function snapshot() {
@@ -258,6 +274,10 @@
     },
     subscribe: function (fn) {
       listeners.push(fn);
+    },
+    // fn(achievements) runs after a change unlocks one or more achievements
+    onUnlock: function (fn) {
+      unlockListeners.push(fn);
     },
     dayKey: dayKey,
     daysAgo: daysAgo,
@@ -419,6 +439,7 @@
       } catch (e) {}
       state = seed();
       state.signedIn = false;
+      recordUnlocks(0); // the sample list's badges count as already earned, with no toast
       save();
     },
 
@@ -501,15 +522,20 @@
       });
       var ng = Object.keys(genres).length,
         n = Object.keys(list).length,
-        maxDay = api.maxDay();
+        maxDay = api.maxDay(),
+        saved = state.earned || {};
+      // met: the condition holds right now. earned: met now or unlocked before (saved in state.earned)
       function A(glyph, name, desc, bg, ok, progress) {
+        var at = saved[name];
         return {
           glyph: glyph,
           name: name,
           desc: desc,
           bg: bg,
-          earned: ok,
-          progress: ok ? "" : progress,
+          met: ok,
+          earned: ok || at != null,
+          earnedAt: at || 0,
+          progress: ok || at != null ? "" : progress,
         };
       }
       return [
@@ -558,7 +584,7 @@
           "Week Streak",
           "Watch 7 days in a row",
           "#F7823A",
-          st >= 7,
+          api.longestStreak() >= 7, // any 7-day run counts, not only the current one
           st + " / 7 days",
         ),
         A(
@@ -661,6 +687,19 @@
       var f = Math.min(100, Math.max(0, Number(fit) || 0));
       return Math.round(0.6 * api.match(a) + 0.4 * f);
     },
+    /* The most recently unlocked achievement (list order breaks ties between ones earned before times were saved) */
+    latestAchievement: function () {
+      return api
+        .achievements()
+        .filter(function (a) {
+          return a.earned;
+        })
+        .reduce(function (best, a) {
+          return !best || a.earnedAt >= best.earnedAt ? a : best;
+        }, null);
+    },
   };
+  // Achievements already met when the page loads (older saves, the sample list) are recorded without a toast
+  if (recordUnlocks(0).length) save();
   NEKAI.store = api;
 })();

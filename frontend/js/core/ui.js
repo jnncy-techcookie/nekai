@@ -191,13 +191,31 @@
       return n > 1 ? " · Day " + n + " of your streak" : " · Streak started";
     confetti();
     sound("done");
-    return (
-      " · " +
-      n +
-      "-day streak!" +
-      (n === 7 ? " Week Streak badge earned" : "")
-    );
+    return " · " + n + "-day streak!"; // badges (like Week Streak) are announced by the unlock news below
   }
+
+  /* ---------- achievement unlocks ---------- */
+  // The store reports unlocks while an action runs, just before that action shows its toast.
+  // The news rides along on that toast (keeping its Undo); an action with no toast gets one of its own.
+  var unlockNews = "";
+  function unlockText(list) {
+    var names = list.map(function (a) {
+      return a.name;
+    });
+    var joined =
+      names.length > 1
+        ? names.slice(0, -1).join(", ") + " and " + names[names.length - 1]
+        : names[0];
+    return joined + (names.length > 1 ? " badges" : " badge") + " earned!";
+  }
+  S.onUnlock(function (list) {
+    unlockNews = unlockText(list);
+    confetti();
+    sound("done");
+    setTimeout(function () {
+      if (unlockNews) toast(""); // no action toast took it
+    }, 0);
+  });
 
   function shell(opts) {
     // opts: { page: "index.html", lolli: "message", lolliCta: [href, label] }
@@ -361,6 +379,10 @@
   function toast(msg, undo) {
     var region = $(".toast-region");
     if (!region) return;
+    if (unlockNews) {
+      msg = msg ? msg + " · " + unlockNews : unlockNews;
+      unlockNews = "";
+    }
     clearTimeout(toastTimer);
     region.innerHTML =
       '<div class="toast"><span class="toast-icon">' +

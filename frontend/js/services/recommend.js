@@ -1,13 +1,30 @@
-/* NEKAI AI picks: sends the user's history (titles, genres, status, ratings) to
- * /api/recommend, where Gemini picks titles and Tenrai finds them on MyAnimeList.
- * Results are saved in the store (state.recs) and only asked for again when the
- * list, a status, a rating or "Not interested" changes, or after a day.
+/* NEKAI AI picks: sends the user's history (titles, genres, status, ratings and
+ * short review snippets) to /api/recommend, where Gemini picks titles and Tenrai
+ * finds them on MyAnimeList. Results are saved in the store (state.recs) and only
+ * asked for again when the list, a status, a rating, a review or "Not interested"
+ * changes, or after a day.
  */
 (function () {
   "use strict";
   var S = NEKAI.store, J = NEKAI.tenrai;
   var MAX_AGE = 24 * 3600e3;
+  var MAX_NOTE = 200; // review snippet sent per title: enough for the gist, keeps the request small
   var pending = null;
+
+  // First MAX_NOTE characters of a review, whitespace collapsed, cut at a word where possible
+  function snippet(text) {
+    var s = String(text || "").replace(/\s+/g, " ").trim();
+    if (s.length <= MAX_NOTE) return s;
+    s = s.slice(0, MAX_NOTE - 1);
+    var cut = s.lastIndexOf(" ");
+    return (cut > MAX_NOTE / 2 ? s.slice(0, cut) : s) + "…";
+  }
+  // Short, stable hash so editing a review refreshes the picks without storing the text in the key
+  function hash(s) {
+    var h = 0;
+    for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+    return (h >>> 0).toString(36);
+  }
 
   function history() {
     return S.ids()
@@ -15,14 +32,18 @@
       .sort(function (a, b) { return b.updatedAt - a.updatedAt; })
       .slice(0, 60)
       .map(function (e) {
-        return { id: e.id, title: e.title, genres: e.genres.slice(0, 10), status: e.status, rating: e.rating || 0 };
+        var h = { id: e.id, title: e.title, genres: e.genres.slice(0, 10), status: e.status, rating: e.rating || 0 };
+        var note = snippet(e.note);
+        if (note) h.review = note;
+        return h;
       });
   }
   // Changes that should give different picks (episode progress alone doesn't)
   function key() {
     var list = S.state.list;
     return Object.keys(list).sort().map(function (id) {
-      return id + ":" + list[id].status + ":" + (list[id].rating || 0);
+      var note = snippet(list[id].note);
+      return id + ":" + list[id].status + ":" + (list[id].rating || 0) + (note ? ":" + hash(note) : "");
     }).join(",") + "|" + Object.keys(S.state.hidden).sort().join(",");
   }
   function fresh() {
