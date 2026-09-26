@@ -19,7 +19,7 @@ Open [http://localhost:3000](http://localhost:3000). The frontend calls the back
 | File (in `frontend/`) | Page | What it does |
 |---|---|---|
 | `index.html` | Home | Greeting, stats, continue-watching hero with episode stepper, streak, latest achievement, *Picked for you* row |
-| `my-anime.html` | My Anime | Search, sort and filter by status (Watching / Plan to Watch / Completed / Dropped); change progress, rating (a "★ 8.4" button that opens a pane: drag across the stars or type 1–10, one decimal) and status inline; remove |
+| `library.html` | My Anime | Search, sort and filter by status (Watching / Plan to Watch / Completed / Dropped); change progress, rating (a "★ 8.4" button that opens a pane: drag across the stars or type 1–10, one decimal) and status inline; remove |
 | `discover.html` | Discover | Live Tenrai search with type and genre filters, *What should I watch next?* genre picker, Nekai's Picks, browse-by-genre signs |
 | `<page>#anime-<id>` | Anime details | There is no separate details page. Titles, posters and "View details" links (`#anime-<id>`, where `id` is the MyAnimeList ID) open the **detail panel** (`js/core/detail-panel.js`) as a split view beside the page: poster, stats, synopsis, watchlist controls, details, trailer and episodes. It sits next to the content from 1024px (1280px with the sidebar expanded) and takes the content's place on narrower screens. Close with the X, Esc or Back; Ctrl/⌘-click opens the same page in a new tab with the panel open |
 | `profile.html` | Profile | Level and XP, stats dashboard, favorite-genre mix, achievements |
@@ -38,7 +38,7 @@ nekai-anime-watchlist/
 │       ├── routes/anime.js    validates anime requests
 │       └── services/tenrai.js queues and caches upstream requests
 └── frontend/                  the browser interface
-    ├── index.html, my-anime.html, discover.html,
+    ├── index.html, library.html, discover.html,
     │   profile.html, settings.html, signin.html
     ├── assets/
     │   ├── fonts/             Kamikaze 3D Gradient, The Last Shuriken (declared in css/base/fonts.css)

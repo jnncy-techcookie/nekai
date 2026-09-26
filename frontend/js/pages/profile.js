@@ -57,7 +57,7 @@
 
   U.$("#me").addEventListener("click", function (e) {
     if (!e.target.closest("#share")) return;
-    var url = location.href.replace(/profile\.html.*$/, "my-anime.html?tab=all");
+    var url = location.href.replace(/profile\.html.*$/, "library.html?tab=all");
     var done = function () { U.toast("Link to your list copied"); };
     if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(url).then(done, function () { U.toast("Couldn’t copy. Your list link: " + url); });
     else U.toast("Your list link: " + url);

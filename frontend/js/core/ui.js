@@ -164,7 +164,7 @@
   /* ---------- app shell ---------- */
   var NAV = [
     ["index.html", "Home", "home"],
-    ["my-anime.html", "Library", "list"],
+    ["library.html", "Library", "list"],
     ["discover.html", "Discover", "compass"],
     ["profile.html", "Profile", "user"],
   ];

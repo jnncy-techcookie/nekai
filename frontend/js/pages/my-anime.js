@@ -9,7 +9,7 @@
     .filter(function (e) { return e.known && e.episodes - e.watched >= 1; })
     .sort(function (a, b) { return (a.episodes - a.watched) - (b.episodes - b.watched); })[0];
   U.shell({
-    page: "my-anime.html",
+    page: "library.html",
     lolli: close ? (close.episodes - close.watched === 1 ? close.title + " is one episode from the finale. Want to finish it tonight?"
       : close.title + " has " + (close.episodes - close.watched) + " episodes left. You’re nearly there!") : "Your list is looking tidy. Find something new in Discover."
   });

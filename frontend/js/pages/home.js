@@ -45,7 +45,7 @@
         '<div class="row gap-16">' + U.scoreBadge(e) + '<span class="small bold">Your rating: ' + (e.rating ? e.rating + " / 10" : "Not rated") + "</span></div>" +
         '<div class="stack gap-8"><span class="small bold">' + esc(e.progText) + "</span>" +
           (e.known ? '<div class="progress" role="progressbar" aria-label="' + esc(e.title) + ' progress" aria-valuemin="0" aria-valuemax="' + e.episodes + '" aria-valuenow="' + e.watched + '"><span style="width:' + e.pct + '%"></span></div>' : "") + "</div>" +
-        '<div class="row gap-16">' + U.stepper(e) + '<a class="btn btn-ghost" href="my-anime.html">Open in Library</a></div>' +
+        '<div class="row gap-16">' + U.stepper(e) + '<a class="btn btn-ghost" href="library.html">Open in Library</a></div>' +
         (e.askComplete ? '<div class="prompt" role="status"><span class="grow">All ' + e.episodes + " episodes watched. Mark " + esc(e.title) + ' as completed?</span><button type="button" class="btn btn-accent" data-act="complete" data-id="' + e.id + '">Mark completed</button></div>' : "") +
       "</div></div></section>");
   }
@@ -95,7 +95,7 @@
     var rest = list.filter(function (e) { return String(e.id) !== heroId; }).slice(0, 4);
     U.$("#cont-count").textContent = "View all " + S.counts().watching;
     U.render(U.$("#continue"), rest.length ? '<div class="grid-auto">' + rest.map(contCard).join("") + "</div>"
-      : '<p class="body muted">Nothing else in progress. Pick something from <a href="my-anime.html">Plan to Watch</a>.</p>');
+      : '<p class="body muted">Nothing else in progress. Pick something from <a href="library.html">Plan to Watch</a>.</p>');
     U.pickRow(U.$("#picks"), U.picks(), "Picked for you, scroll sideways");
   }
 
