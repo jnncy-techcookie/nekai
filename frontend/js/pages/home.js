@@ -46,7 +46,6 @@
         '<div class="stack gap-8"><span class="small bold">' + esc(e.progText) + "</span>" +
           (e.known ? '<div class="progress" role="progressbar" aria-label="' + esc(e.title) + ' progress" aria-valuemin="0" aria-valuemax="' + e.episodes + '" aria-valuenow="' + e.watched + '"><span style="width:' + e.pct + '%"></span></div>' : "") + "</div>" +
         '<div class="row gap-16">' + U.stepper(e) + '<a class="btn btn-ghost" href="library.html">Open in Library</a></div>' +
-        (e.askComplete ? '<div class="prompt" role="status"><span class="grow">All ' + e.episodes + " episodes watched. Mark " + esc(e.title) + ' as completed?</span><button type="button" class="btn btn-accent" data-act="complete" data-id="' + e.id + '">Mark completed</button></div>' : "") +
       "</div></div></section>");
   }
 
@@ -79,7 +78,6 @@
       '<p class="small muted semibold">' + esc(e.progText) + "</p>" +
       (e.known ? '<div class="progress" role="progressbar" aria-label="' + esc(e.title) + ' progress" aria-valuemin="0" aria-valuemax="' + e.episodes + '" aria-valuenow="' + e.watched + '"><span style="width:' + e.pct + '%"></span></div>' : "") +
       '<div style="margin-top:8px">' + U.stepper(e) + "</div>" +
-      (e.askComplete ? '<button type="button" class="btn btn-accent w-full" data-act="complete" data-id="' + e.id + '" style="padding:0 16px">' + icon("check", 20) + "Mark completed</button>" : "") +
       "</div></article>";
   }
 

@@ -166,12 +166,6 @@
     return (
       '<div class="dp-prog">' +
       U.stepper(e) +
-
-      (e.askComplete
-        ? '<button type="button" class="btn btn-accent l-complete" data-act="complete" data-id="' +
-          e.id +
-          '">Mark completed</button>'
-        : "") +
       "</div>" +
       '<div class="m-rate"><span class="m-rate-label">Your rating</span>' +
       U.stars(e) +

@@ -604,8 +604,7 @@
         r = S.inc(id);
       if (!r) return;
       sound("tick");
-      if (r.finished)
-        toast(a.title + ": all " + a.episodes + " episodes watched");
+      if (r.finished) afterComplete(r, S.anime(id));
       else
         toast(
           a.title + ": episode " + r.watched + " marked as watched",

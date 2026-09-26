@@ -30,10 +30,6 @@
 
   // Pieces shared by the list row and the card
   function title(e, cls) { return '<h2 class="m-title ' + (cls || "") + '"><a class="title-link" href="' + U.detailsHref(e) + '">' + esc(e.title) + "</a></h2>"; }
-  // The stepper shows "11 / 12" (or "EP Unknown"), so only the Mark completed button lives here
-  function progress(e) {
-    return (e.askComplete ? '<button type="button" class="btn btn-accent l-complete" data-act="complete" data-id="' + e.id + '">Mark completed</button>' : "");
-  }
   // Rating: a compact "★ 8.4 ⌄" button; the pane (below) lets you drag across the stars or type 1–10
   function fmtRating(n) { return (Math.round(n * 10) / 10).toFixed(1).replace(/^10\.0$/, "10"); }
   function rating(e) { return '<div class="m-rate"><span class="m-rate-label">Your rating</span>' + ratingBtn(e) + "</div>"; }
@@ -58,7 +54,7 @@
   function row(e) {
     return '<article class="card-sm list-row list-cols">' + U.art(e, { thumb: true }) +
       '<div class="l-title">' + title(e) + sub(e) + "</div>" +
-      '<div class="l-controls"><div class="l-eps">' + U.stepper(e) + progress(e) + "</div>" + rating(e) + status(e) + "</div>" +
+      '<div class="l-controls"><div class="l-eps">' + U.stepper(e) + "</div>" + rating(e) + status(e) + "</div>" +
       '<div class="l-actions">' + noteBtn(e) + del(e) + "</div>" +
       "</article>";
   }
@@ -68,7 +64,7 @@
       '<div class="ac-top"><a class="ac-media" href="' + U.detailsHref(e) + '" tabindex="-1" aria-hidden="true">' + U.art(e) + "</a>" + ratingBtn(e) + "</div>" +
       '<div class="ac-body">' +
         '<div class="ac-head">' + title(e, "ac-title") + sub(e) + "</div>" +
-        '<div class="ac-eps">' + U.stepper(e) + noteBtn(e) + "</div>" + progress(e) +
+        '<div class="ac-eps">' + U.stepper(e) + noteBtn(e) + "</div>" +
         '<div class="ac-foot">' + status(e) + del(e) + "</div>" +
       "</div></article>";
   }
