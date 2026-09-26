@@ -430,7 +430,7 @@
   font-size: 16px;
   line-height: 24px;
   font-weight: 800;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 .input {
   width: 100%;
@@ -464,7 +464,7 @@ textarea.input {
   font-size: 16px;
   line-height: 24px;
   color: var(--muted);
-  margin-top: 8px;
+  margin-top: 6px;
 }
 .error {
   display: flex;
@@ -674,15 +674,6 @@ textarea.input {
 .select {
   appearance: auto;
 }
-.lolli {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 16px;
-  border: 1.5px solid var(--ink);
-  border-radius: 16px;
-  background: var(--white);
-}
 .bit {
   position: absolute;
   top: -24px;
@@ -802,6 +793,9 @@ textarea {
 }
 .pick-wrap {
   position: relative;
+  /* the row keeps 16px of top padding for the cards' hover lift; pull it up so
+     the cards sit 16px under the heading instead of 40px */
+  margin-top: -24px;
 }
 .fade {
   position: absolute;
@@ -1093,6 +1087,22 @@ textarea {
   left: auto;
   right: -16px;
 }
+/* no room on either side: the preview opens over the card, centered on it
+   (JS sets left), rising slightly into place instead of sliding in sideways */
+.pick.centered .qi {
+  right: auto;
+  z-index: 4;
+  transform: translateY(8px);
+  box-shadow:
+    0 20px 48px rgba(15, 31, 92, 0.2),
+    0 2px 8px rgba(15, 31, 92, 0.08);
+}
+.pick.centered.is-open .qi {
+  transform: none;
+}
+.pick.centered .qi::before {
+  display: none; /* it covers the card, so no hover bridge is needed */
+}
 .qi-title {
   margin: 0;
   font-size: 18px;
@@ -1321,4 +1331,204 @@ textarea {
   height: 100%;
   object-fit: cover;
   opacity: 0.7;
+}
+
+/* ---------- poster with the title on a fade ----------
+   Used by every card view (Continue watching, pick cards, Library cards). The poster
+   fades out at the bottom (a mask, so there's no edge line) and the title sits on
+   that fade, anchored to the bottom: a two-line title grows up into the poster, so
+   cards never reserve an empty second line. The line right after (.card-sub, the
+   year) follows straight on, lined up with the title's left edge.
+   Markup: <div class="… has-cap">poster…<div class="card-cap"><h3>title</h3></div></div>
+           <p class="m-sub card-sub">2024</p> */
+.has-cap {
+  position: relative;
+}
+.has-cap .art {
+  -webkit-mask-image: linear-gradient(#000 45%, transparent 96%);
+  mask-image: linear-gradient(#000 45%, transparent 96%);
+}
+.has-cap .art .jp {
+  display: none; /* the placeholder art's name would sit under the title */
+}
+.card-cap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: 44px 12px 0;
+  pointer-events: none; /* the poster link underneath stays clickable */
+}
+.card-cap .title-link {
+  pointer-events: auto;
+}
+.card-cap h2,
+.card-cap h3 {
+  min-height: 0;
+  margin: 0;
+}
+.m-sub.card-sub,
+.card-sub {
+  margin-top: -6px;
+  padding-left: 12px;
+}
+
+/* ---------- confirmation pop-up (NEKAI.ui.confirm) ----------
+   For critical actions: log out, remove from list, clear Lolli's chat, delete account.
+   A native modal <dialog>, centered over a dimmed backdrop; fades and scales in and out. */
+.cdlg {
+  width: min(400px, calc(100vw - 32px));
+  padding: 28px 24px 20px;
+  border: 1.5px solid var(--ink);
+  border-radius: 20px;
+  background: var(--white);
+  color: var(--ink);
+  text-align: center;
+  box-shadow: 0 24px 60px rgba(15, 31, 92, 0.28);
+  animation: cdlgIn 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.cdlg::backdrop {
+  background: rgba(15, 31, 92, 0.42);
+  animation: cdlgFade 0.2s ease;
+}
+.cdlg.is-closing {
+  animation: cdlgOut 0.16s ease forwards;
+}
+.cdlg.is-closing::backdrop {
+  animation: cdlgFade 0.16s ease reverse forwards;
+}
+@keyframes cdlgIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+}
+@keyframes cdlgOut {
+  to {
+    opacity: 0;
+    transform: translateY(4px) scale(0.97);
+  }
+}
+@keyframes cdlgFade {
+  from {
+    opacity: 0;
+  }
+}
+.cdlg-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 12px;
+  border-radius: 50%;
+  background: #dce4f8;
+  color: var(--blue);
+}
+.cdlg.is-danger .cdlg-icon {
+  background: #ffe0cc;
+  color: var(--red-dark);
+}
+.cdlg-title {
+  margin: 0;
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+.cdlg-body {
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--muted);
+}
+.cdlg-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+.cdlg-actions .btn {
+  flex: 1 1 0;
+  min-width: 0;
+}
+/* destructive confirm: dark orange with white text (about 5:1 contrast) */
+.btn-danger {
+  background: var(--red-dark);
+  border-color: var(--ink);
+  color: #ffffff;
+}
+.btn-danger:hover {
+  background: #963700;
+}
+@media (max-width: 420px) {
+  .cdlg-actions {
+    flex-direction: column-reverse; /* the confirm button on top, cancel under it */
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cdlg,
+  .cdlg::backdrop,
+  .cdlg.is-closing,
+  .cdlg.is-closing::backdrop {
+    animation: none;
+  }
+}
+.opt-reduce-motion .cdlg,
+.opt-reduce-motion .cdlg::backdrop,
+.opt-reduce-motion .cdlg.is-closing,
+.opt-reduce-motion .cdlg.is-closing::backdrop {
+  animation: none;
+}
+
+/* ---------- chips on a poster's top-left corner ----------
+   e.g. "EP 1090" and "AIRING" side by side (the rating button takes the top-right) */
+.poster-chips {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 3; /* above the poster image */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: calc(100% - 96px); /* stay clear of the rating button */
+  pointer-events: none;
+}
+/* AIRING: the show is still coming out, so its count is "aired so far" */
+.air-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--blue);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(15, 31, 92, 0.2);
+}
+.air-chip i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--yellow); /* the palette's light orange: a small "live" dot */
+}
+/* in a line of text (Library list rows): "1999 • Airing • Action", a small peach pill
+   with dark-orange text (orange text alone wouldn't be readable enough on cream) */
+.air-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #ffe0cc;
+  color: var(--red-dark);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
 }

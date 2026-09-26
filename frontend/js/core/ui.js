@@ -249,19 +249,11 @@
         "</span></a>"
       );
     }).join("");
-    var cta = opts.lolliCta
-      ? '<a class="btn btn-accent self-start" href="' +
-        opts.lolliCta[0] +
-        '" style="padding:0 16px">' +
-        esc(opts.lolliCta[1]) +
-        "</a>"
-      : "";
     var lolliOn = st.lolli !== false;
+    // Lolli is a floating chat button now (js/core/lolli.js); the page's tip opens its chat
+    NEKAI.ui.lolliTip = { text: opts.lolli || "", cta: opts.lolliCta || null };
     var side = document.createElement("aside");
-    side.className =
-      "side" +
-      (ui.navOpen === false ? " is-collapsed" : "") +
-      (ui.lolliHidden ? " lolli-hidden" : "");
+    side.className = "side" + (ui.navOpen === false ? " is-collapsed" : "");
     side.setAttribute("aria-label", "Sidebar");
     side.innerHTML =
       '<div class="side-head">' +
@@ -278,26 +270,6 @@
       navLinks +
       "</nav>" +
       '<div class="side-foot">' +
-      (lolliOn
-        ? '<section class="lolli" aria-label="Lolli, your watch buddy"><div class="row gap-8" style="flex-wrap:nowrap">' +
-          '<button type="button" class="lolli-face" data-lolli-chat aria-label="Chat with Lolli" title="Chat with Lolli">' +
-          lolliSvg(40) +
-          "</button>" +
-          '<div class="grow"><div class="h3">Lolli</div><div class="caption muted">Your watch buddy</div></div>' +
-          '<button type="button" class="btn btn-ghost btn-icon" data-act="lolli-hide" aria-label="Hide Lolli’s tip">' +
-          icon("x", 16) +
-          "</button></div>" +
-          '<p class="small semibold">' +
-          esc(opts.lolli || "") +
-          "</p>" +
-          '<div class="row gap-8">' +
-          cta +
-          '<button type="button" class="btn btn-secondary lolli-ask" data-lolli-chat>Ask Lolli</button></div>' +
-          "</section>" +
-          '<button type="button" class="side-link lolli-mini" data-lolli-chat title="Chat with Lolli">' +
-          lolliSvg(32) +
-          '<span class="side-label">Lolli</span></button>'
-        : "") +
       '<a class="side-link" href="settings.html"' +
       (here === "settings.html" ? ' aria-current="page"' : "") +
       ' title="Settings">' +
@@ -324,11 +296,6 @@
       '<a class="btn btn-secondary btn-icon ml-auto" href="discover.html#q" aria-label="Search">' +
       icon("search") +
       "</a>" +
-      (lolliOn
-        ? '<button type="button" class="btn btn-secondary btn-icon lolli-top" data-lolli-chat aria-label="Chat with Lolli">' +
-          lolliSvg(32) +
-          "</button>"
-        : "") +
       '<a class="avatar" href="profile.html" aria-label="Your profile">' +
       AVATAR +
       "</a>";
@@ -351,6 +318,19 @@
     var main = $(".main");
     app.insertBefore(top, main);
     document.body.appendChild(tabs);
+    // Lolli: a floating chat button, bottom right (the chat itself is js/core/lolli.js)
+    if (lolliOn) {
+      var fab = document.createElement("button");
+      fab.type = "button";
+      fab.className = "lolli-fab";
+      fab.setAttribute("data-lolli-chat", "");
+      fab.setAttribute("aria-label", "Chat with Lolli");
+      fab.setAttribute("aria-expanded", "false");
+      fab.setAttribute("aria-controls", "lchat");
+      fab.title = "Chat with Lolli";
+      fab.innerHTML = '<span class="lolli-fab-face" aria-hidden="true">' + lolliSvg(44) + "</span>";
+      document.body.appendChild(fab);
+    }
     // On desktop the content panel scrolls by itself; focus it so arrow keys, Page Down and Space scroll it right away
     if (main && (!document.activeElement || document.activeElement === document.body)) main.focus({ preventScroll: true });
 
@@ -376,6 +356,76 @@
 
   /* ---------- toast with optional Undo ---------- */
   var toastTimer;
+  /* ---------- confirmation pop-up for critical actions ----------
+     confirmDialog({ title, body, confirm, cancel, danger, icon }) → Promise<boolean>.
+     A native <dialog> (showModal): it sits above everything, keeps focus inside,
+     Esc or the backdrop cancels, and focus goes back to whatever opened it. */
+  var dlgOpen = null;
+  function confirmDialog(o) {
+    o = o || {};
+    if (dlgOpen) dlgOpen.cancel();
+    var back = document.activeElement;
+    var d = document.createElement("dialog");
+    d.className = "cdlg" + (o.danger ? " is-danger" : "");
+    d.setAttribute("aria-labelledby", "cdlg-h");
+    d.setAttribute("aria-describedby", "cdlg-d");
+    d.innerHTML =
+      '<div class="cdlg-icon" aria-hidden="true">' + icon(o.icon || (o.danger ? "alert" : "logout"), 26, 2.4) + "</div>" +
+      '<h2 id="cdlg-h" class="cdlg-title">' + esc(o.title || "Are you sure?") + "</h2>" +
+      (o.body ? '<p id="cdlg-d" class="cdlg-body">' + esc(o.body) + "</p>" : "") +
+      '<div class="cdlg-actions">' +
+        '<button type="button" class="btn btn-secondary" data-cdlg="no">' + esc(o.cancel || "Cancel") + "</button>" +
+        '<button type="button" class="btn ' + (o.danger ? "btn-danger" : "btn-primary") + '" data-cdlg="yes">' + esc(o.confirm || "Confirm") + "</button>" +
+      "</div>";
+    document.body.appendChild(d);
+    return new Promise(function (resolve) {
+      var done = false;
+      function finish(ok) {
+        if (done) return;
+        done = true;
+        dlgOpen = null;
+        d.classList.add("is-closing"); // fade/scale out, then remove
+        setTimeout(function () {
+          if (d.open) d.close();
+          d.remove();
+          if (!ok && back && document.contains(back)) back.focus({ preventScroll: true });
+        }, reduceMotion() ? 0 : 160);
+        resolve(ok);
+      }
+      dlgOpen = { cancel: function () { finish(false); } };
+      d.addEventListener("click", function (ev) {
+        var b = ev.target.closest("[data-cdlg]");
+        if (b) finish(b.dataset.cdlg === "yes");
+        else if (ev.target === d) finish(false); // a click on the backdrop
+      });
+      d.addEventListener("cancel", function (ev) {
+        ev.preventDefault(); // Esc: close with the same animation
+        finish(false);
+      });
+      d.showModal();
+      // the safe choice gets focus, so a stray Enter doesn't confirm
+      d.querySelector('[data-cdlg="no"]').focus();
+    });
+  }
+  function reduceMotion() {
+    return (
+      document.documentElement.classList.contains("opt-reduce-motion") ||
+      matchMedia("(prefers-reduced-motion: reduce)").matches
+    );
+  }
+  function logOut() {
+    confirmDialog({
+      title: "Log out of NEKAI?",
+      body: "Your list, ratings and streak stay saved in this browser. Sign back in any time.",
+      confirm: "Log out",
+      icon: "logout",
+    }).then(function (ok) {
+      if (!ok) return;
+      S.setSignedIn(false);
+      location.href = "signin.html";
+    });
+  }
+
   function toast(msg, undo) {
     var region = $(".toast-region");
     if (!region) return;
@@ -538,6 +588,10 @@
       "</div>"
     );
   }
+  // "AIRING" chip for posters of shows that are still coming out
+  function airingChip(a) {
+    return a && a.airing ? '<span class="air-chip"><i aria-hidden="true"></i>Airing</span>' : "";
+  }
   function detailsHref(a) {
     return "#anime-" + a.id;
   }
@@ -554,9 +608,12 @@
       ' aria-label="One episode fewer">' +
       icon("minus", 20, 2.6) +
       "</button>" +
-      // Unknown total: the watched count with a small "EP Unknown" inside the counter (no extra line below)
-      (e.known
-        ? '<span class="step-val" aria-live="polite">' + esc(e.stepText) + "</span>"
+      // One line, like "7 / 12". Ongoing shows count against the episodes aired so far
+      // ("1,089 / 1,174"; the AIRING chip on the poster says it's still airing).
+      // Only a show with no total that isn't airing gets the small "EP Unknown" line.
+      (e.known || e.ongoing
+        ? '<span class="step-val" aria-live="polite">' + esc(e.stepText) +
+          (e.ongoing ? '<span class="sr"> episodes aired so far, still airing</span>' : "") + "</span>"
         : '<span class="step-val two" aria-live="polite">' + e.watched.toLocaleString("en-US") +
           '<small><span class="sr">episodes, total </span>EP Unknown</small></span>') +
       '<button type="button" class="step" data-act="inc" data-id="' +
@@ -670,10 +727,6 @@
         open ? "Collapse sidebar" : "Expand sidebar",
       );
     },
-    "lolli-hide": function () {
-      $(".side").classList.add("lolli-hidden");
-      S.setUi({ lolliHidden: true });
-    },
     inc: function (id) {
       var a = S.anime(id),
         r = S.inc(id);
@@ -701,12 +754,19 @@
       toast("Rated " + a.title + " " + n + "/10", undo);
     },
     logout: function () {
-      S.setSignedIn(false);
-      location.href = "signin.html";
+      logOut();
     },
     remove: function (id) {
       var a = S.anime(id);
-      toast(a.title + " removed from your list", S.remove(id));
+      confirmDialog({
+        title: "Remove " + a.title + "?",
+        body: "Its progress, rating and review will be removed from your Library.",
+        confirm: "Remove",
+        danger: true,
+        icon: "trash",
+      }).then(function (ok) {
+        if (ok) toast(a.title + " removed from your list", S.remove(id));
+      });
     },
     toggle: function (id) {
       var e = S.entry(id);
@@ -818,18 +878,19 @@
       a.id +
       '">' +
       '<div class="pick-card">' +
-      '<div class="pick-media"><a class="pick-hit" href="' +
+      // title on the poster's fade, year right under it (see .has-cap in components.css)
+      '<div class="pick-media has-cap"><a class="pick-hit" href="' +
       detailsHref(a) +
       '" tabindex="-1" aria-hidden="true">' +
       art(a) +
       "</a>" +
       matchBadge(a.match) +
-      "</div>" +
-      '<h3 class="pick-title"><a class="title-link" href="' +
+      '<div class="card-cap"><h3 class="pick-title"><a class="title-link" href="' +
       detailsHref(a) +
       '">' +
       esc(a.title) +
-      "</a></h3>" +
+      "</a></h3></div></div>" +
+      (a.year ? '<p class="m-sub card-sub">' + esc(a.year) + "</p>" : "") +
       '<div class="pick-stats"><span class="pick-score" aria-label="Community score ' +
       a.scoreText +
       ' out of 10">' +
@@ -1010,19 +1071,25 @@
         r = card.getBoundingClientRect();
       var qi = card.querySelector(".qi");
       qi.style.left = "";
-      if (row && row.classList.contains("pick-grid")) {
-        // Grid: open on whichever side fits; if neither does, slide the panel in over the card so it stays inside the grid
+      card.classList.remove("flip", "centered");
+      if (row) {
+        // Open on the right if the preview fits inside the row (rows and grids clip what spills
+        // past their edges), else on the left; if neither side has room (a card in the middle
+        // of a narrow row, e.g. beside the details panel), center it over the card instead,
+        // nudged to stay inside the row.
         var g = row.getBoundingClientRect(),
-          need = qi.offsetWidth + 16,
+          w = qi.offsetWidth,
+          need = w + 16,
           right = g.right - r.right >= need,
           left = r.left - g.left >= need;
-        card.classList.toggle("flip", !right && left);
-        if (!right && !left) qi.style.left = g.right - qi.offsetWidth - r.left + "px";
-      } else
-        card.classList.toggle(
-          "flip",
-          !!row && r.right + r.width * 1.54 > row.getBoundingClientRect().right,
-        );
+        if (!right && left) card.classList.add("flip");
+        else if (!right) {
+          var x = r.left + r.width / 2 - w / 2;
+          x = Math.max(g.left + 8, Math.min(g.right - w - 8, x));
+          card.classList.add("centered");
+          qi.style.left = x - r.left + "px";
+        }
+      }
       card.classList.add("is-open");
       var m = card.querySelector("[data-more]");
       if (m) m.setAttribute("aria-expanded", "true");
@@ -1211,6 +1278,8 @@
     AVATAR: AVATAR,
     shell: shell,
     toast: toast,
+    confirm: confirmDialog,
+    logOut: logOut,
     confetti: confetti,
     sound: sound,
     reducedMotion: reducedMotion,
@@ -1218,6 +1287,7 @@
     applySettings: applySettings,
     art: art,
     stepper: stepper,
+    airingChip: airingChip,
     stars: stars,
     statusSelect: statusSelect,
     scoreBadge: scoreBadge,

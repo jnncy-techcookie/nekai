@@ -16,6 +16,12 @@
   display: grid;
   padding: 0 16px;
 }
+/* EPISODES, YOUR RATING and STATUS sit centered over their controls */
+.list-head > span:nth-child(3),
+.list-head > span:nth-child(4),
+.list-head > span:nth-child(5) {
+  text-align: center;
+}
 .list-bar {
   position: relative;
   min-height: 44px;
@@ -347,6 +353,17 @@
 .list-row .m-rate-label {
   display: none;
 }
+/* each control fills its column, or sits in its middle, so it lines up with the centered label
+   (table layout only; narrower windows stack the controls, see below) */
+@media (min-width: 1281px) {
+  .list-cols > .l-controls > .l-eps,
+  .list-cols > .l-controls > .l-status {
+    width: 100%;
+  }
+  .list-cols > .l-controls > .m-rate {
+    justify-content: center;
+  }
+}
 .l-actions {
   display: flex;
   gap: 8px;
@@ -491,7 +508,7 @@
 /* ---------- year · genre line ---------- */
 .m-sub{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:0;font-size:14px;line-height:20px;font-weight:700;color:var(--muted)}
 .m-sub .m-dot{color:#B3B6C6}
-.ac-head{gap:2px;min-height:96px} /* room for a two-line title + a two-line year · genres line, so steppers line up across cards */
+.ac-head{gap:2px}
 .ac-eps{display:flex;align-items:center;gap:8px}
 .ac-eps .stepper{flex:1;min-width:0}
 
@@ -499,3 +516,30 @@
 /* Unknown total: watched count with a small "EP Unknown" inside the counter */
 .library-list .step-val.two{display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:16px}
 .library-list .step-val.two small{font-size:10px;line-height:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+
+/* Card view: the title sits on the poster's fade (.has-cap, components.css), so nothing
+   is reserved for a second title line. The poster is full-bleed here, so the title and
+   the year · genres line both line up with the card's 14px text inset. The stepper and
+   status row sit at the bottom, so they still line up across a row of cards. */
+.anime-card .card-cap {
+  padding-inline: 14px;
+}
+.anime-card .ac-body {
+  padding-top: 4px;
+}
+.anime-card .card-sub {
+  margin-top: 0;
+  padding-left: 0;
+}
+.anime-card .ac-eps {
+  margin-top: auto;
+}
+.anime-card .ac-foot {
+  margin-top: 0;
+}
+
+/* AIRING chip level with the rating button across the top of the poster */
+.anime-card .poster-chips {
+  top: 10px;
+  left: 10px;
+}

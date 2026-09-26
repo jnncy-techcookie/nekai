@@ -1,4 +1,4 @@
-/* Lolli chat: any [data-lolli-chat] button opens a chat panel. Questions go to
+/* Lolli chat: the floating Lolli button (and any other [data-lolli-chat] button) opens a chat box. Questions go to
  * the backend (/api/lolli/chat), which asks Gemini with a snapshot of the user's list.
  * The conversation is kept for this browser tab in sessionStorage.
  */
@@ -94,7 +94,11 @@
       '<div class="lchat-bubble">' + (role === "user" ? '<span class="sr">You: </span>' : '<span class="sr">Lolli: </span>') + html + "</div></div>";
   }
   function render() {
-    var html = bubble("lolli", "<p>Hi " + esc(S.state.profile.name) + "! I’m Lolli. Ask me for a recommendation, about your list and streak, or anything anime.</p>");
+    // Lolli's greeting carries this page's tip (streak reminders and the like) and its link
+    var tip = U.lolliTip || {};
+    var html = bubble("lolli", "<p>Hi " + esc(S.state.profile.name) + "! I’m Lolli. Ask me for a recommendation, about your list and streak, or anything anime.</p>" +
+      (tip.text ? "<p>" + esc(tip.text) + "</p>" : "") +
+      (tip.cta ? '<a class="btn btn-accent lchat-cta" href="' + esc(tip.cta[0]) + '">' + esc(tip.cta[1]) + "</a>" : ""));
     messages.forEach(function (m) {
       html += bubble(m.role, m.role === "user" ? "<p>" + esc(m.text).replace(/\n/g, "<br>") + "</p>" : format(m.text));
     });
@@ -112,7 +116,8 @@
   function build() {
     panel = document.createElement("section");
     panel.className = "lchat";
-    panel.hidden = true;
+    panel.id = "lchat";
+    panel.inert = true; // closed: out of the tab order until it opens
     panel.setAttribute("role", "dialog");
     panel.setAttribute("aria-labelledby", "lchat-h");
     panel.innerHTML =
@@ -154,11 +159,21 @@
       else if (act === "ask") ask(b.textContent);
       else if (act === "retry") send();
       else if (act === "clear") {
-        messages = [];
-        failed = "";
-        save();
-        render();
-        input.focus();
+        if (!messages.length && !failed) return; // nothing to clear
+        U.confirm({
+          title: "Start a new chat?",
+          body: "This clears your conversation with Lolli. It can’t be undone.",
+          confirm: "Clear chat",
+          danger: true,
+          icon: "trash",
+        }).then(function (ok) {
+          if (!ok) return;
+          messages = [];
+          failed = "";
+          save();
+          render();
+          input.focus();
+        });
       }
     });
     // Esc inside the chat closes only the chat. Listening on window in the capture phase
@@ -166,7 +181,7 @@
     window.addEventListener(
       "keydown",
       function (e) {
-        if (e.key !== "Escape" || panel.hidden || !panel.contains(document.activeElement)) return;
+        if (e.key !== "Escape" || !isOpen() || !panel.contains(document.activeElement)) return;
         e.stopPropagation();
         close();
       },
@@ -210,35 +225,52 @@
       .then(function () {
         busy = false;
         render();
-        if (!panel.hidden) input.focus();
+        if (isOpen()) input.focus();
       });
   }
 
-  /* ---------- open / close ---------- */
+  /* ---------- open / close ----------
+     The box stays in the page and animates with the .is-open class (see lolli-chat.css),
+     so opening and closing are both smooth. */
+  function fab() {
+    return document.querySelector(".lolli-fab");
+  }
+  function isOpen() {
+    return !!panel && panel.classList.contains("is-open");
+  }
+  function setFab(open) {
+    var b = fab();
+    if (!b) return;
+    b.setAttribute("aria-expanded", String(open));
+    b.inert = open; // hidden while the chat sits in its place
+  }
   function open(from) {
-    if (!panel) build();
+    var first = !panel;
+    if (first) build();
     opener = from || document.activeElement;
-    // Desktop: float beside the sidebar, whatever its width. Phones use a bottom sheet (CSS).
-    var side = document.querySelector(".side");
-    var right = side && side.offsetParent ? side.getBoundingClientRect().right : 0;
-    panel.style.setProperty("--lchat-left", right + 16 + "px");
-    panel.hidden = false;
-    document.documentElement.classList.add("lchat-open");
     render();
-    input.focus();
+    panel.inert = false;
+    if (first) void panel.offsetWidth; // let the closed state paint once so the first open animates too
+    panel.classList.add("is-open");
+    document.documentElement.classList.add("lchat-open");
+    setFab(true);
+    input.focus({ preventScroll: true });
   }
   function close() {
-    if (!panel || panel.hidden) return;
-    panel.hidden = true;
+    if (!isOpen()) return;
+    panel.classList.remove("is-open");
+    panel.inert = true;
     document.documentElement.classList.remove("lchat-open");
-    if (opener && document.contains(opener) && opener.offsetParent) opener.focus();
+    setFab(false);
+    var back = opener && document.contains(opener) && opener.offsetParent ? opener : fab();
+    if (back) back.focus({ preventScroll: true });
   }
 
   document.addEventListener("click", function (e) {
     var b = e.target.closest("[data-lolli-chat]");
     if (!b) return;
     e.preventDefault();
-    if (panel && !panel.hidden) close();
+    if (isOpen()) close();
     else open(b);
   });
 

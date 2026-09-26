@@ -51,18 +51,7 @@ body.paper {
   justify-content: center;
 }
 .side.is-collapsed .side-label,
-.side.is-collapsed .brand-word,
-.side.is-collapsed .lolli {
-  display: none;
-}
-.side .lolli-mini {
-  display: none;
-}
-.side.is-collapsed .lolli-mini,
-.side.lolli-hidden .lolli-mini {
-  display: flex;
-}
-.side.lolli-hidden .lolli {
+.side.is-collapsed .brand-word {
   display: none;
 }
 .brand {
@@ -115,23 +104,18 @@ body.paper {
   display: flex;
   flex-direction: column;
 }
-.lolli-mini {
-  background: transparent;
-  font-family: inherit;
-  cursor: pointer;
-  width: 100%;
-}
 
 .main {
   flex: 1 1 auto;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 64px;
-  padding: 48px var(--gutter) 64px;
+  gap: 40px;
+  padding: 28px var(--gutter) 40px;
+  container: main / inline-size; /* page layouts and the detail-panel reflow query this width */
 }
 .main.tight {
-  gap: 32px;
+  gap: 24px;
 }
 
 /* Mobile top bar + bottom tabs (hidden on desktop) */
@@ -319,6 +303,17 @@ body.paper {
 .side.is-collapsed .side-nav,
 .side.is-collapsed .side-foot{gap:4px}
 .side.is-collapsed .side-sep{margin:6px 0}
+
+/* ---------- compact sidebar ----------
+   Tighter nav: 44px rows (still a comfortable click target) with 4px between them,
+   less padding around the edges and a smaller profile row. */
+.side{padding:20px 14px 16px;gap:20px}
+.side-nav{gap:4px}
+.side-link{height:44px}
+.side-foot{gap:4px}
+.side-sep{margin:6px 0}
+.side-me{height:52px}
+.side-me .avatar{width:40px;height:40px}
 
 /* ---------- page switches without a glitch ----------
    Until the shell script builds the sidebar, hold its space so the page never

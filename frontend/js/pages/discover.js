@@ -184,7 +184,7 @@
     var types = ["TV", "Movie", "OVA", "ONA"].map(function (t) {
       return '<button type="button" class="chip" data-type="' + t + '" aria-pressed="' + !!ui.types[t] + '">' + (ui.types[t] ? icon("check", 16, 3) : "") + t + "</button>";
     }).join("");
-    var head = '<div class="sec-head"><h2 id="r-h" class="h2 sec-title" tabindex="-1"><span class="pill pill-blue">RESULTS</span>' + esc(ui.submitted) + "</h2>" +
+    var head = '<div class="sec-head"><h2 id="r-h" class="h2 sec-title" tabindex="-1">Results for “' + esc(ui.submitted) + "”</h2>" +
       '<span class="small muted semibold">' + (ui.searching ? "Searching Tenrai…" : "Showing " + ui.results.length + " anime") + "</span>" +
       '<button type="button" class="btn btn-ghost ml-auto" id="clear">Clear search</button></div>' +
       '<div class="results-toolbar"><div class="row gap-8" role="group" aria-label="Filter by type">' + types + '</div>' + pagination("top") + '</div>';
@@ -310,7 +310,9 @@
   function renderPopular() {
     U.$("#pop-sub").textContent = ui.popular || !ui.popFailed ? "The top-rated shows airing now on MyAnimeList." : "MyAnimeList is busy right now, so here are the top-rated titles in NEKAI’s catalog.";
     var list = ui.popular || Object.keys(D.catalog).map(S.anime).sort(function (a, b) { return (b.score || 0) - (a.score || 0); }).slice(0, 12);
-    U.pickRow(U.$("#popular"), list.map(function (a) { a = S.anime(a.id); a.match = S.match(a); return a; }), "Popular right now, scroll sideways", { lite: true, wide: true });
+    // "Not interested" (same as Nekai's Picks) hides a title here and from future picks
+    list = list.filter(function (a) { return !S.state.hidden[String(a.id)]; });
+    U.pickRow(U.$("#popular"), list.map(function (a) { a = S.anime(a.id); a.match = S.match(a); return a; }), "Popular right now, scroll sideways", { lite: true, wide: true, dismiss: true });
   }
   // If Tenrai is busy, say so rather than calling the sample titles "airing now", and try once more later
   function loadPopular(retry) {

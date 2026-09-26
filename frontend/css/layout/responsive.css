@@ -2,16 +2,13 @@
    RESPONSIVE
    ========================================================= */
 @media (max-width: 1280px) {
-  .home-top {
-    grid-template-columns: minmax(0, 1fr);
-  }
   .profile {
     grid-template-columns: minmax(0, 1fr);
   }
 }
 @media (max-width: 1100px) {
   :root {
-    --gutter: 32px;
+    --gutter: 24px;
   }
   .grid-4 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -57,6 +54,10 @@
   }
   .h2 {
     font-size: 20px;
+    line-height: 28px;
+  }
+  .sec-title {
+    font-size: 22px;
     line-height: 28px;
   }
   .body {
@@ -110,21 +111,6 @@
   .grid-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px;
-  }
-  .hero {
-    padding: 8px;
-  }
-  .hero .cart-label {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 16px;
-    padding: 16px;
-  }
-  .hero .art.lg {
-    width: 120px;
-  }
-  .hero .art.lg .jp {
-    font-size: 20px;
-    line-height: 28px;
   }
   .search-card {
     padding: 24px 16px;

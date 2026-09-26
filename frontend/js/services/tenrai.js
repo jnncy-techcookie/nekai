@@ -198,6 +198,7 @@
         function (r) {
           return {
             hasNext: !!(r.pagination && r.pagination.has_next_page),
+            lastPage: (r.pagination && r.pagination.last_visible_page) || 1,
             items: (r.data || []).map(function (e) {
               return {
                 n: e.mal_id,
@@ -210,6 +211,17 @@
           };
         },
       );
+    },
+    /* Episodes aired so far, for ongoing shows with no final count: the episode list
+       comes 100 per page, so the latest episode is the highest number on the last page */
+    airedCount: function (id) {
+      var self = this;
+      return self.episodes(id, 1).then(function (first) {
+        var last = first.lastPage > 1 ? self.episodes(id, first.lastPage) : Promise.resolve(first);
+        return last.then(function (p) {
+          return p.items.reduce(function (m, ep) { return Math.max(m, ep.n || 0); }, 0);
+        });
+      });
     },
     /* Fill in real poster images for titles we only have placeholder art for */
     hydrate: function (ids, onEach) {

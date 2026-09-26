@@ -17,6 +17,9 @@
 .gap-8 {
   gap: 8px;
 }
+.gap-12 {
+  gap: 12px;
+}
 .gap-16 {
   gap: 16px;
 }
@@ -65,8 +68,8 @@
 }
 .grid-fit {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 560px), 1fr));
-  gap: 32px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr));
+  gap: 24px;
   align-items: start;
 }
 .pad-24 {
@@ -113,6 +116,18 @@
   display: flex;
   align-items: center;
   gap: 16px;
+  /* same face as body copy like "Personalized from your genres…", but heavier */
+  font-family: "Arial Rounded MT Bold", "Trebuchet MS", Arial, sans-serif;
+  font-weight: 800;
+  font-size: 28px;
+  line-height: 34px;
+  /* Trebuchet tops out at bold (700); a hairline outline in the text color makes it heavier */
+  -webkit-text-stroke: 1px currentColor;
+  paint-order: stroke fill;
+}
+/* heading with a one-line description right under it */
+.sec-intro {
+  gap: 2px;
 }
 .page-actions {
   display: flex;

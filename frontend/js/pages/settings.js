@@ -8,7 +8,7 @@
 
   var SWITCHES = {
     experience: [["sound", "Sound effects", "Subtle sounds when you log an episode or finish a show."], ["confetti", "Completion confetti", "Celebrate the first time you mark an anime completed."],
-      ["lolli", "Lolli supporter", "Chat with Lolli, plus reminders, recommendations and encouragement in the sidebar."], ["streak", "Streak reminders", "A nudge from Lolli when your watch streak is about to end."]],
+      ["lolli", "Lolli supporter", "A floating chat button in the corner, with reminders, recommendations and encouragement."], ["streak", "Streak reminders", "A nudge from Lolli when your watch streak is about to end."]],
     access: [["motion", "Reduce motion", "Turns off confetti, tilts, fades and other animation."], ["text", "Larger text", "Increases body text from 18 to 20 pixels."],
       ["contrast", "Stronger outlines", "Draws 2px outlines on every card and control."]]
   };
@@ -28,7 +28,7 @@
     var b = e.target.closest("[data-sw]"); if (!b) return;
     var k = b.dataset.sw, patch = {}; patch[k] = !S.state.settings[k];
     S.setSettings(patch); U.applySettings(); renderSwitches();
-    if (k === "lolli") U.toast(patch[k] ? "Lolli is back in the sidebar" : "Lolli is off. Reload any page to hide the sidebar card.");
+    if (k === "lolli") U.toast(patch[k] ? "Lolli is back. Reload any page to see the chat button." : "Lolli is off. Reload any page to hide the chat button.");
   });
 
   /* ---------- profile form ---------- */
@@ -71,12 +71,20 @@
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
     U.toast("Your list is downloading as nekai-list.csv");
   });
-  U.$("#signout").addEventListener("click", function () { S.setSignedIn(false); location.href = "signin.html"; });
-  var dlg = U.$("#confirm");
-  U.$("#ask-delete").addEventListener("click", function () { dlg.hidden = false; U.$("#keep").focus(); });
-  U.$("#keep").addEventListener("click", function () { dlg.hidden = true; U.$("#ask-delete").focus(); });
-  dlg.addEventListener("keydown", function (e) { if (e.key === "Escape") { dlg.hidden = true; U.$("#ask-delete").focus(); } });
-  U.$("#delete").addEventListener("click", function () { S.reset(); location.href = "signin.html?deleted=1"; });
+  // Sign out and Delete account both ask first, in the shared confirmation pop-up
+  U.$("#signout").addEventListener("click", function () { U.logOut(); });
+  U.$("#ask-delete").addEventListener("click", function () {
+    U.confirm({
+      title: "Delete your account?",
+      body: "This permanently removes your watchlist, ratings, streaks and achievements from this browser. It can’t be undone.",
+      confirm: "Delete permanently",
+      cancel: "Keep my account",
+      danger: true,
+      icon: "trash",
+    }).then(function (ok) {
+      if (ok) { S.reset(); location.href = "signin.html?deleted=1"; }
+    });
+  });
 
   renderSwitches();
 })();

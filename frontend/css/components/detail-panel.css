@@ -467,11 +467,7 @@
    The page layouts switch columns with viewport media queries, which don't know the
    content just gave ~38% of the window to the panel. While it's open, these container
    queries apply the same narrower layouts based on .main's real width. */
-.app > .main {
-  container: main / inline-size;
-}
 @container main (max-width: 1040px) {
-  .dp-open .home-top,
   .dp-open .profile {
     grid-template-columns: minmax(0, 1fr);
   }

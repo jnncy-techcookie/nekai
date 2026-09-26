@@ -196,9 +196,14 @@
     var e = state.list[String(id)] || null;
     var watched = e ? e.watched : 0;
     var known = !!a.episodes;
+    // Ongoing shows have no final count; use the episodes aired so far when we've fetched it
+    var ongoing = !known && !!a.airing;
+    var aired = ongoing && a.airedEps ? a.airedEps : 0;
     var pct = known
       ? Math.min(100, Math.round((watched / a.episodes) * 100))
-      : 0;
+      : aired
+        ? Math.min(100, Math.round((watched / aired) * 100))
+        : 0;
     return Object.assign(a, {
       inList: !!e,
       status: e ? e.status : null,
@@ -207,6 +212,8 @@
       note: (e && e.note) || "",
       updatedAt: e ? e.updatedAt : 0,
       known: known,
+      ongoing: ongoing,
+      aired: aired,
       pct: pct,
       isDone: !!e && e.status === "completed",
       canInc:
@@ -220,10 +227,14 @@
         e.status !== "dropped",
       stepText: known
         ? watched + " / " + a.episodes
-        : watched.toLocaleString("en-US") + " eps",
+        : aired
+          ? watched.toLocaleString("en-US") + " / " + aired.toLocaleString("en-US")
+          : watched.toLocaleString("en-US") + " eps",
       progText: known
         ? "Episode " + watched + " of " + a.episodes + " · " + pct + "%"
-        : watched.toLocaleString("en-US") + " episodes · total unknown",
+        : aired
+          ? "Episode " + watched.toLocaleString("en-US") + " of " + aired.toLocaleString("en-US") + " aired so far · " + pct + "%"
+          : watched.toLocaleString("en-US") + " episodes · total unknown",
     });
   }
   function ids(filterFn) {

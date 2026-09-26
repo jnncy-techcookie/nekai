@@ -30,9 +30,9 @@
       </div>
 
       <div class="grid-fit">
-        <section aria-labelledby="acc-h" class="card pad-32">
-          <form id="profile-form" class="stack gap-24" novalidate>
-            <h2 id="acc-h" class="h2 sec-title"><span class="pill pill-red">ACCOUNT</span>Profile details</h2>
+        <section aria-labelledby="acc-h" class="card pad-24">
+          <form id="profile-form" class="stack gap-16" novalidate>
+            <h2 id="acc-h" class="h2 sec-title">Profile details</h2>
             <div>
               <label class="label" for="dn">Display name <span class="muted" style="font-weight:500">(required)</span></label>
               <input id="dn" name="display-name" class="input" type="text" autocomplete="nickname" required aria-describedby="dn-help dn-err">
@@ -57,18 +57,18 @@
           </form>
         </section>
 
-        <section aria-labelledby="exp-h" class="card pad-32 stack gap-16">
-          <h2 id="exp-h" class="h2 sec-title"><span class="pill pill-yellow">FUN</span>Experience</h2>
-          <div id="sw-exp" class="stack gap-16"></div>
+        <section aria-labelledby="exp-h" class="card pad-24 stack gap-8">
+          <h2 id="exp-h" class="h2 sec-title">Experience</h2>
+          <div id="sw-exp" class="stack gap-12"></div>
         </section>
 
-        <section aria-labelledby="a11y-h" class="card pad-32 stack gap-16">
-          <h2 id="a11y-h" class="h2 sec-title"><span class="pill pill-blue">ACCESS</span>Accessibility</h2>
-          <div id="sw-acc" class="stack gap-16"></div>
+        <section aria-labelledby="a11y-h" class="card pad-24 stack gap-8">
+          <h2 id="a11y-h" class="h2 sec-title">Accessibility</h2>
+          <div id="sw-acc" class="stack gap-12"></div>
         </section>
 
-        <section aria-labelledby="dat-h" class="card pad-32 stack gap-24">
-          <h2 id="dat-h" class="h2 sec-title"><span class="pill pill-ink">DATA</span>Your data</h2>
+        <section aria-labelledby="dat-h" class="card pad-24 stack gap-16">
+          <h2 id="dat-h" class="h2 sec-title">Your data</h2>
           <p class="small muted">NEKAI stores your list in this browser. Export it to keep a copy.</p>
           <div class="row gap-16">
             <button id="export" type="button" class="btn btn-secondary">Export my list (.csv)</button>
@@ -76,14 +76,6 @@
             <button id="ask-delete" type="button" class="btn btn-ghost" style="color:var(--red-dark)">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"></path></svg>Delete account
             </button>
-          </div>
-          <div id="confirm" class="danger" role="alertdialog" aria-labelledby="del-h" aria-describedby="del-d" hidden>
-            <h3 id="del-h" class="h3" style="color:var(--red-dark)">Delete your account?</h3>
-            <p id="del-d" class="small">This permanently removes your watchlist, ratings, streaks and achievements from this browser. It can’t be undone.</p>
-            <div class="row gap-16">
-              <button id="keep" type="button" class="btn btn-secondary">Keep my account</button>
-              <button id="delete" type="button" class="btn btn-primary">Delete permanently</button>
-            </div>
           </div>
         </section>
       </div>

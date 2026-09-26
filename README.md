@@ -26,7 +26,7 @@ Open [http://localhost:3000](http://localhost:3000). The frontend calls the back
 | `<page>#anime-<id>` | Anime details | There is no separate details page. Titles, posters and "View details" links (`#anime-<id>`, where `id` is the MyAnimeList ID) open the **detail panel** (`js/core/detail-panel.js`) as a split view beside the page: poster, stats, synopsis, watchlist controls, details, trailer and episodes. It sits next to the content from 1024px (1280px with the sidebar expanded) and takes the content's place on narrower screens. Close with the X, Esc or Back; Ctrl/⌘-click opens the same page in a new tab with the panel open |
 | `profile.html` | Profile | Level and XP, stats dashboard, favorite-genre mix, achievements |
 | `settings.html` | Settings | Profile form with validation, sound / confetti / Lolli / streak toggles, reduce motion, larger text, stronger outlines, CSV export, sign out, delete |
-| *(every page)* | Lolli chat | Click Lolli's face, **Ask Lolli**, the Lolli icon in the collapsed sidebar or the Lolli button in the phone top bar. Lolli answers with Google Gemini and knows your list, ratings, streak, XP and achievements |
+| *(every page)* | Lolli chat | Click the floating Lolli button at the bottom right of any page; the chat box grows out of it (click again, ×, or Esc to close). On phones it sits above the tab bar and the chat opens as a bottom sheet. Lolli's greeting includes the page's tip, such as a streak reminder. Lolli answers with Google Gemini and knows your list, ratings, streak, XP and achievements |
 | `signin.html` | Sign in / Create account | Validated forms with show-password and loading states |
 
 ## Project structure
@@ -60,7 +60,7 @@ nekai-anime-watchlist/
     └── js/
         ├── data/sample-data.js   sample catalog (keyed by real MyAnimeList IDs), seed list, picks, genre colors
         ├── core/store.js         localStorage state, list actions with undo, streak / XP / achievements / match %
-        ├── core/ui.js            icons, app shell (sidebar, mobile bars, Lolli), toasts, confetti, sound, shared components
+        ├── core/ui.js            icons, app shell (sidebar, mobile bars, floating Lolli button), toasts, confetti, sound, shared components
         ├── core/lolli.js         Lolli chat panel (sends your list summary to /api/lolli/chat)
         ├── core/detail-panel.js  the anime detail panel, a split view beside the page (opens from any #anime-<id> link)
         ├── services/tenrai.js     Tenrai client: rate-limited queue, 429 retry, normalisation
