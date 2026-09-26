@@ -121,10 +121,10 @@
     panel.setAttribute("role", "dialog");
     panel.setAttribute("aria-labelledby", "lchat-h");
     panel.innerHTML =
-      '<header class="lchat-head"><span class="lchat-face" aria-hidden="true">' + U.lolliSvg(40) + "</span>" +
+      '<header class="lchat-head"><span class="lchat-face" aria-hidden="true">' + U.lolliSvg(32) + "</span>" +
         '<div class="grow"><h2 id="lchat-h" class="h3">Lolli</h2><p class="caption">Your watch buddy</p></div>' +
-        '<button type="button" class="btn btn-ghost btn-icon" data-lchat="clear" aria-label="Start a new chat" title="New chat">' + icon("trash", 20) + "</button>" +
-        '<button type="button" class="btn btn-ghost btn-icon" data-lchat="close" aria-label="Close chat">' + icon("x", 20) + "</button></header>" +
+        '<button type="button" class="btn btn-ghost btn-icon" data-lchat="clear" aria-label="Start a new chat" title="New chat">' + icon("trash", 18) + "</button>" +
+        '<button type="button" class="btn btn-ghost btn-icon" data-lchat="close" aria-label="Close chat">' + icon("x", 18) + "</button></header>" +
       '<div class="lchat-log" role="log" aria-live="polite" aria-label="Conversation with Lolli" tabindex="0"></div>' +
       '<form class="lchat-form"><label class="sr" for="lchat-in">Message Lolli</label>' +
         '<textarea id="lchat-in" rows="1" maxlength="1000" placeholder="Ask Lolli anything about anime…" autocomplete="off"></textarea>' +
