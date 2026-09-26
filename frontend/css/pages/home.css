@@ -81,3 +81,26 @@
   font-size: 28px;
   line-height: 36px;
 }
+
+/* Continue watching cards: same hover lift and tilt as the pick cards */
+#continue .cart {
+  transition:
+    transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.18s ease;
+}
+#continue .cart:hover,
+#continue .cart:focus-within {
+  transform: translateY(-6px) rotate(-1deg);
+  box-shadow:
+    0 12px 28px rgba(15, 31, 92, 0.1),
+    0 2px 6px rgba(15, 31, 92, 0.06);
+}
+@media (prefers-reduced-motion: reduce) {
+  #continue .cart {
+    transition: none;
+  }
+  #continue .cart:hover,
+  #continue .cart:focus-within {
+    transform: none;
+  }
+}

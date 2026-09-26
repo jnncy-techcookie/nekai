@@ -841,6 +841,13 @@ textarea {
 .pick-arrow:hover {
   background: var(--yellow);
 }
+/* Center arrows on the cards, not on the row's extra space below them (16px top padding, P bottom padding): 50% + 8px - P/2 */
+.pick-row ~ .pick-arrow {
+  top: calc(50% - 40px);
+}
+.pick-row-tall ~ .pick-arrow {
+  top: calc(50% - 80px);
+}
 .pick-arrow.prev {
   left: 8px;
 }

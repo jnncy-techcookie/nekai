@@ -1027,20 +1027,19 @@
       fr = host.querySelector(".fade-r"),
       prev = host.querySelector(".prev"),
       next = host.querySelector(".next");
-    var scrolled = !!scroll;
+    // Arrows show whenever there's more to see that way (a mouse wheel can't scroll the row sideways)
     function sync() {
       var left = row.scrollLeft > 8,
         end = row.scrollLeft + row.clientWidth >= row.scrollWidth - 8;
       fl.hidden = !left;
       fr.hidden = end;
-      prev.hidden = !(scrolled && left);
-      next.hidden = !(scrolled && !end);
+      prev.hidden = !left;
+      next.hidden = end;
     }
     row.scrollLeft = scroll;
     row.addEventListener(
       "scroll",
       function () {
-        scrolled = true;
         if (openKey) closePanel(true);
         sync();
       },
