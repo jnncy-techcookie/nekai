@@ -21,7 +21,7 @@
     '<button type="button" class="dp-close" data-dp-close aria-label="Close details" title="Close (Esc)">' +
     icon("x", 20, 2.6) +
     "</button>" +
-    '<div class="dp-scroll my-list"><div id="dp-body"></div></div>' +
+    '<div class="dp-scroll library-list"><div id="dp-body"></div></div>' +
     "</aside>";
   var app = document.querySelector(".app");
   (app || document.body).appendChild(host);

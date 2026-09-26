@@ -5,7 +5,7 @@
      content reflows into what's left (see the container rules at the bottom).
    - 768–1023px: no room to split, so the panel takes the content's place.
    - Under 768px: same, under the mobile top bar, scrolling with the page.
-   The watchlist controls reuse the soft My Anime styles (.my-list) for the stepper,
+   The watchlist controls reuse the soft Library styles (.library-list) for the stepper,
    stars and status pill. */
 .dp-host {
   display: none;
@@ -422,7 +422,7 @@
   .dp-open .grid-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  /* My Anime table rows stack, as they do under 1280px */
+  /* Library table rows stack, as they do under 1280px */
   .dp-open .list-head {
     display: none;
   }

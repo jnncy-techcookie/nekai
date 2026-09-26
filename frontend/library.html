@@ -18,7 +18,7 @@
   <script src="js/services/tenrai.js" defer blocking="render"></script>
   <script src="js/core/ui.js" defer blocking="render"></script>
   <script src="js/core/detail-panel.js" defer blocking="render"></script>
-  <script src="js/pages/my-anime.js" defer blocking="render"></script>
+  <script src="js/pages/library.js" defer blocking="render"></script>
 </head>
 <body class="paper">
   <div class="app">
@@ -27,7 +27,7 @@
 
       <div class="page-actions">
         <div class="page-head">
-          <div class="page-title"><h1 class="h1 display-title">Library</h1><span class="jp-tag" aria-hidden="true">マイリスト</span></div>
+          <div class="page-title"><h1 class="h1 display-title">Library</h1><span class="jp-tag" aria-hidden="true">ライブラリ</span></div>
           <p id="total" class="body muted"></p>
         </div>
         <a class="btn btn-primary btn-add" href="discover.html"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Add anime</a>
@@ -58,7 +58,7 @@
           <div class="list-head list-cols table-head" aria-hidden="true"><span></span><span>TITLE</span><span>EPISODES</span><span>YOUR RATING</span><span>STATUS</span><span></span></div>
           <div id="view-toggle" class="view-toggle" role="group" aria-label="Layout"></div>
         </div>
-        <div id="panel" role="tabpanel" class="stack gap-16 my-list"></div>
+        <div id="panel" role="tabpanel" class="stack gap-16 library-list"></div>
       </div>
     </main>
   </div>

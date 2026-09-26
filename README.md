@@ -19,7 +19,7 @@ Open [http://localhost:3000](http://localhost:3000). The frontend calls the back
 | File (in `frontend/`) | Page | What it does |
 |---|---|---|
 | `index.html` | Home | Greeting, stats, continue-watching hero with episode stepper, streak, latest achievement, *Picked for you* row |
-| `library.html` | My Anime | Search, sort and filter by status (Watching / Plan to Watch / Completed / Dropped); change progress, rating (a "★ 8.4" button that opens a pane: drag across the stars or type 1–10, one decimal) and status inline; remove |
+| `library.html` | Library | Search, sort and filter by status (Watching / Plan to Watch / Completed / Dropped); change progress, rating (a "★ 8.4" button that opens a pane: drag across the stars or type 1–10, one decimal) and status inline; remove |
 | `discover.html` | Discover | Live Tenrai search with type and genre filters, *What should I watch next?* genre picker, Nekai's Picks, browse-by-genre signs |
 | `<page>#anime-<id>` | Anime details | There is no separate details page. Titles, posters and "View details" links (`#anime-<id>`, where `id` is the MyAnimeList ID) open the **detail panel** (`js/core/detail-panel.js`) as a split view beside the page: poster, stats, synopsis, watchlist controls, details, trailer and episodes. It sits next to the content from 1024px (1280px with the sidebar expanded) and takes the content's place on narrower screens. Close with the X, Esc or Back; Ctrl/⌘-click opens the same page in a new tab with the panel open |
 | `profile.html` | Profile | Level and XP, stats dashboard, favorite-genre mix, achievements |
@@ -99,7 +99,7 @@ The official palette is **cream, cobalt blue and orange**. The tokens in `css/ba
 | `--yellow` | `#FFA25C` | Light orange: selected nav, accents, score chips |
 | `--pink` / `--teal` / `--orange` | `#FFD3B3` / `#6F8FE8` / `#F7823A` | Peach, periwinkle, mid orange: stats, tags, signs |
 
-- **Type:** Dela Gothic One for display headings; The Last Shuriken (`.display-title`) for the Home greeting and name and the My Anime, Discover and Profile page titles; Kamikaze 3D Gradient is installed but unused; the body stack is `"Arial Rounded MT Bold", "Trebuchet MS", Arial, sans-serif`. Scale: 48 / 32 / 24 / 20 / 18 / 16 / 14.
+- **Type:** Dela Gothic One for display headings; The Last Shuriken (`.display-title`) for the Home greeting and name and the Library, Discover and Profile page titles; Kamikaze 3D Gradient is installed but unused; the body stack is `"Arial Rounded MT Bold", "Trebuchet MS", Arial, sans-serif`. Scale: 48 / 32 / 24 / 20 / 18 / 16 / 14.
 - **Spacing:** an 8 pt scale (8, 16, 24, 32, 48, 64).
 - **Strokes and shadows:** 1.5 px strokes. Shadows appear only on hovered and floating pick cards.
 - **Touch targets:** primary buttons 48 px; icon buttons (close, more, heart) at least 44 × 44.
@@ -107,7 +107,7 @@ The official palette is **cream, cobalt blue and orange**. The tokens in `css/ba
 
   | Width | Layout |
   |---|---|
-  | ≤ 1280 | Home and Profile go to a single column; My Anime list rows stack |
+  | ≤ 1280 | Home and Profile go to a single column; Library list rows stack |
   | ≤ 1100 | Tablet: 2-column stats |
   | ≤ 767 | Phone: the sidebar becomes a top bar plus bottom tabs, and the quick-info panel becomes a bottom sheet |
 

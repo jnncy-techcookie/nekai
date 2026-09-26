@@ -84,6 +84,11 @@
             });
             s.ratingScale = 10;
           }
+          // Preserve the saved view when upgrading to the Library setting name.
+          if (s.ui && Object.prototype.hasOwnProperty.call(s.ui, "myAnimeView")) {
+            if (s.ui.libraryView == null) s.ui.libraryView = s.ui.myAnimeView;
+            delete s.ui.myAnimeView;
+          }
           return Object.assign(seed(), s);
         }
       }

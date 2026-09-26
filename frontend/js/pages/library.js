@@ -1,4 +1,4 @@
-/* My Anime: search, sort and filter your list; update progress, rating and status inline */
+/* Library: search, sort and filter your list; update progress, rating and status inline */
 (function () {
   "use strict";
   var S = NEKAI.store, U = NEKAI.ui, D = NEKAI.data, esc = U.esc, icon = U.icon;
@@ -16,7 +16,7 @@
 
   var TABS = [["all", "All"], ["watching", "Watching"], ["plan", "Plan to Watch"], ["completed", "Completed"], ["dropped", "Dropped"]];
   var params = new URLSearchParams(location.search);
-  var ui = { tab: params.get("tab") || "watching", q: "", sort: "updated", view: S.state.ui.myAnimeView === "cards" ? "cards" : "list" };
+  var ui = { tab: params.get("tab") || "watching", q: "", sort: "updated", view: S.state.ui.libraryView === "cards" ? "cards" : "list" };
   var EMPTY = {
     dropped: "Shows you stop watching land here. You can pick them back up any time.", plan: "Save shows from Discover to build your queue.",
     completed: "Finish a show and it will appear here, with confetti.", watching: "Start something from your Plan to Watch list.", all: "Your list is empty. Add your first anime from Discover."
@@ -123,7 +123,7 @@
     '<button type="button" class="view-btn" data-view="cards" title="Card view">' + icon("grid", 18, 2.2) + '<span class="sr">Card view</span></button>';
   U.$("#view-toggle").addEventListener("click", function (e) {
     var b = e.target.closest("[data-view]"); if (!b || b.dataset.view === ui.view) return;
-    ui.view = b.dataset.view; S.setUi({ myAnimeView: ui.view }); switched = true; render();
+    ui.view = b.dataset.view; S.setUi({ libraryView: ui.view }); switched = true; render();
   });
   U.$("#panel").addEventListener("animationend", function (e) { if (e.target === e.currentTarget) e.currentTarget.classList.remove("tab-enter"); });
 
