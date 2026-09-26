@@ -8,6 +8,9 @@
 
   var ui = { types: {}, genre: "", results: [], submitted: "", searching: false, offline: false, error: "", sel: {}, finding: false, pick: null, pickNone: false };
 
+  var searchId = 0, PAGE_SIZE = 24;
+  ui.page = 1; ui.hasNext = false; ui.query = ""; ui.resultError = "";
+
   /* ---------- featured banners: swipe, dots, auto-advance ---------- */
   (function promo() {
     var track = U.$("#promo-track"), dotsEl = U.$("#promo-dots");
@@ -82,28 +85,56 @@
   }
 
   // Search by title, browse a genre, or both. An empty box with a genre browses that genre.
-  function doSearch() {
-    var q = U.$("#q").value.trim();
+  function doSearch(page) {
+    var paging = typeof page === "number";
+    var q = paging ? ui.query : U.$("#q").value.trim();
+    page = paging ? page : 1;
     if (q.length === 1 || (!q && !ui.genre)) {
-      if (!q && !ui.genre) { ui.submitted = ""; ui.results = []; renderResults(); }
+      if (!q && !ui.genre) { clearSearch(); }
       else { ui.error = "Type at least 2 characters to search."; renderSearch(); U.$("#q").focus(); }
       return;
     }
-    ui.error = ""; ui.searching = true; ui.offline = false;
-    ui.submitted = q ? "“" + q + "”" + (ui.genre ? " in " + ui.genre : "") : ui.genre;
+    var id = ++searchId;
+    ui.error = ""; ui.resultError = ""; ui.searching = true;
+    if (!paging) {
+      ui.offline = false; ui.page = 1; ui.hasNext = false; ui.results = [];
+      ui.query = q;
+      ui.submitted = q ? "“" + q + "”" + (ui.genre ? " in " + ui.genre : "") : ui.genre;
+    }
     renderSearch(); renderResults();
-    J.search(q, { type: typesOn(), genre: ui.genre }).then(function (list) {
-      S.cacheMany(list);
-      ui.results = list.map(function (a) { return S.anime(a.id); });
-    }).catch(function () {
-      ui.offline = true; ui.results = localSearch(q);
-    }).then(function () {
+    function localPage() {
+      var list = localSearch(q);
+      return { items: list.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), hasNext: list.length > page * PAGE_SIZE };
+    }
+    var request = paging && ui.offline ? Promise.resolve(localPage()) : J.search(q, { type: typesOn(), genre: ui.genre, page: page });
+    return request.catch(function () {
+      if (id !== searchId) return;
+      if (paging) { ui.resultError = "Couldn’t load that page. Please try again."; return; }
+      ui.offline = true;
+      return localPage();
+    }).then(function (result) {
+      if (id !== searchId) return;
+      if (result) {
+        S.cacheMany(result.items);
+        ui.results = result.items.map(function (a) { return S.anime(a.id); });
+        ui.page = page; ui.hasNext = result.hasNext;
+      }
       ui.searching = false; renderSearch(); renderResults();
+      if (paging) U.$("#r-h").focus({ preventScroll: true });
     });
   }
   function clearSearch() {
+    ++searchId;
     ui.submitted = ""; ui.results = []; ui.genre = ""; ui.types = {}; U.$("#q").value = "";
+    ui.page = 1; ui.hasNext = false; ui.query = ""; ui.searching = false; ui.offline = false; ui.error = ""; ui.resultError = "";
     renderSearch(); renderResults(); U.$("#q").focus();
+  }
+
+  function pagination(position) {
+    return '<nav class="results-pagination" aria-label="Results pages (' + position + ')">' +
+      '<button type="button" class="btn btn-secondary" data-page="' + (ui.page - 1) + '"' + (ui.searching || ui.page <= 1 ? ' disabled' : '') + ' aria-label="Previous page" title="Previous page">' + icon("chevL", 20, 2.6) + '</button>' +
+      '<span class="small semibold">Page ' + ui.page + '</span>' +
+      '<button type="button" class="btn btn-secondary" data-page="' + (ui.page + 1) + '"' + (ui.searching || !ui.hasNext ? ' disabled' : '') + ' aria-label="Next page" title="Next page">' + icon("chevR", 20, 2.6) + '</button></nav>';
   }
 
   function pill(value, label, ic) {
@@ -130,16 +161,19 @@
       return '<button type="button" class="chip" data-type="' + t + '" aria-pressed="' + !!ui.types[t] + '">' + (ui.types[t] ? icon("check", 16, 3) : "") + t + "</button>";
     }).join("");
     var head = '<div class="sec-head"><h2 id="r-h" class="h2 sec-title" tabindex="-1"><span class="pill pill-blue">RESULTS</span>' + esc(ui.submitted) + "</h2>" +
-      '<span class="small muted semibold">' + (ui.searching ? "Searching Tenrai…" : ui.results.length + " anime found") + "</span>" +
+      '<span class="small muted semibold">' + (ui.searching ? "Searching Tenrai…" : "Showing " + ui.results.length + " anime") + "</span>" +
       '<button type="button" class="btn btn-ghost ml-auto" id="clear">Clear search</button></div>' +
-      '<div class="row gap-8" role="group" aria-label="Filter by type">' + types + "</div>";
+      '<div class="results-toolbar"><div class="row gap-8" role="group" aria-label="Filter by type">' + types + '</div>' + pagination("top") + '</div>';
     var note = ui.offline && !ui.searching ? '<p class="notice" role="status">' + icon("wifiOff", 20) + "<span>Couldn’t reach the Tenrai API, so these results come from NEKAI’s built-in sample list. Check your connection and search again for everything on MyAnimeList.</span></p>" : "";
     var body;
     if (ui.searching) body = '<div class="grid-auto">' + SKEL + SKEL + SKEL + SKEL + "</div>";
     else if (ui.results.length) body = '<div class="grid-auto">' + ui.results.map(resultCard).join("") + "</div>";
     else body = '<div class="card empty"><div class="empty-top"><span class="pill pill-yellow">NO MATCH</span></div><div class="empty-body"><h3 class="h2">Nothing found for ' + esc(ui.submitted) +
       '</h3><p class="body muted" style="max-width:480px">Check the spelling, try the Japanese title, or clear the type and genre filters.</p><button type="button" class="btn btn-secondary" id="clear2">Clear search</button></div></div>';
-    U.render(host, head + note + body);
+    if (ui.resultError) note += '<p class="notice" role="alert">' + esc(ui.resultError) + '</p>';
+    if (!ui.searching && !ui.results.length && ui.hasNext) body = '<p class="body muted">No matches on this page. Select Next to keep browsing, or change the filters.</p>';
+    host.setAttribute("aria-busy", ui.searching);
+    U.render(host, head + note + body + pagination("bottom"));
   }
 
   /* ---------- "What should I watch next?" spin wheel ---------- */
@@ -276,6 +310,15 @@
     ui.genre = b.dataset.g; ui.error = ""; renderSearch(); doSearch();
   });
   U.$("#results").addEventListener("click", function (e) {
+    var pageButton = e.target.closest("[data-page]");
+    if (pageButton) {
+      var page = Number(pageButton.dataset.page);
+      if (!pageButton.disabled && !ui.searching && page >= 1 && (page < ui.page || ui.hasNext)) {
+        doSearch(page);
+        U.$("#results").scrollIntoView({ behavior: U.reducedMotion() ? "auto" : "smooth", block: "start" });
+      }
+      return;
+    }
     var t = e.target.closest("[data-type]");
     if (t) { ui.types[t.dataset.type] = !ui.types[t.dataset.type]; doSearch(); return; }
     if (e.target.id === "clear" || e.target.id === "clear2") clearSearch();

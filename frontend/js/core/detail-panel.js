@@ -62,6 +62,8 @@
       failed: false,
       eps: [],
       epsPage: 1,
+      epsViewPage: 1,
+      epsRetryPage: 1,
       epsNext: false,
       epsLoading: false,
       epsFailed: false,
@@ -246,10 +248,24 @@
       "Play trailer</span></button>"
     );
   }
+  var EPISODE_PAGE_SIZE = 50;
+  function pagedEpisodes(e) {
+    return st.showAll && (e.episodes > EPISODE_PAGE_SIZE || st.eps.length > EPISODE_PAGE_SIZE || st.epsNext);
+  }
+  function episodePagination(e) {
+    if (!pagedEpisodes(e)) return "";
+    var start = (st.epsViewPage - 1) * EPISODE_PAGE_SIZE;
+    var count = st.eps.length || Math.min(e.episodes || 0, EPISODE_PAGE_SIZE);
+    var end = Math.min(start + EPISODE_PAGE_SIZE, count);
+    return '<nav class="dp-ep-pagination" aria-label="Episode pages">' +
+      '<button type="button" class="btn btn-secondary" data-ep-page="' + (st.epsViewPage - 1) + '" aria-label="Previous episodes" title="Previous episodes"' + (st.epsLoading || st.epsViewPage === 1 ? ' disabled' : '') + '>' + icon("chevL", 18, 2.6) + '</button>' +
+      '<span class="small semibold" aria-live="polite">' + (end ? (start + 1) + ' - ' + end : 'Loading…') + '</span>' +
+      '<button type="button" class="btn btn-secondary" data-ep-page="' + (st.epsViewPage + 1) + '" aria-label="Next episodes" title="Next episodes"' + (st.epsLoading || (!st.epsNext && count <= start + EPISODE_PAGE_SIZE) ? ' disabled' : '') + '>' + icon("chevR", 18, 2.6) + '</button></nav>';
+  }
   function episodes(e) {
     var list = st.eps.slice();
     if (!list.length && e.episodes && !st.epsLoading)
-      for (var i = 1; i <= Math.min(e.episodes, 24); i++)
+      for (var i = 1; i <= Math.min(e.episodes, pagedEpisodes(e) ? EPISODE_PAGE_SIZE : 24); i++)
         list.push({ n: i, title: "", aired: "" });
     if (st.epsLoading && !st.eps.length)
       return (
@@ -259,7 +275,8 @@
       );
     if (!list.length)
       return '<p class="small muted">No episode list yet. It usually appears once the show starts airing.</p>';
-    var shown = st.showAll ? list : list.slice(0, 5);
+    var start = (st.epsViewPage - 1) * EPISODE_PAGE_SIZE;
+    var shown = pagedEpisodes(e) ? list.slice(start, start + EPISODE_PAGE_SIZE) : st.showAll ? list : list.slice(0, 5);
     var items = shown
       .map(function (x) {
         var watched = e.inList && e.watched >= x.n,
@@ -302,19 +319,20 @@
     if (list.length > 5 || st.epsNext) {
       more = !st.showAll
         ? '<button type="button" class="dp-link" id="dp-all-eps">Show all episodes</button>'
-        : st.epsNext
+        : st.epsNext && !pagedEpisodes(e)
           ? '<button type="button" class="dp-link" id="dp-more-eps">' +
             (st.epsLoading ? "Loading…" : "Load more episodes") +
             "</button>"
           : '<button type="button" class="dp-link" id="dp-fewer-eps">Show fewer</button>';
     }
-    return '<ol class="dp-eps">' + items + "</ol>" + more;
+    var failure = st.epsFailed ? '<p class="small muted" role="status">Couldn’t load episode details. <button type="button" class="dp-link" id="dp-retry-eps"' + (st.epsLoading ? ' disabled' : '') + '>Try again</button></p>' : '';
+    return '<ol class="dp-eps" aria-busy="' + st.epsLoading + '">' + items + "</ol>" + failure + more;
   }
-  function section(title, html) {
+  function section(title, html, controls) {
     return (
-      '<section class="dp-sec"><h3 class="dp-h">' +
+      '<section class="dp-sec">' + (controls ? '<div class="dp-ep-head">' : '') + '<h3 class="dp-h">' +
       title +
-      "</h3>" +
+      "</h3>" + (controls ? controls + '</div>' : '') +
       html +
       "</section>"
     );
@@ -365,6 +383,7 @@
               ? ' <span class="muted">· ' + e.episodes + "</span>"
               : ""),
           episodes(e),
+          episodePagination(e),
         ) +
         (st.failed
           ? '<p class="notice small" role="status">' +
@@ -396,27 +415,62 @@
           render();
         }
       });
-    loadEpisodes(id, 1);
+    var current = st;
+    loadEpisodes(id, 1).then(function (ok) {
+      if (ok && st === current && st.showAll && pagedEpisodes(S.entry(id))) changeEpisodePage(1);
+    });
   }
   function loadEpisodes(id, page) {
-    st.epsLoading = true;
+    var current = st;
+    current.epsLoading = true;
+    current.epsFailed = false;
     render();
-    J.episodes(id, page)
+    return J.episodes(id, page)
       .then(function (r) {
-        if (!st || st.id !== id) return;
-        st.eps = st.eps.concat(r.items);
-        st.epsNext = r.hasNext;
-        st.epsPage = page;
+        if (st !== current) return false;
+        current.eps = current.eps.concat(r.items);
+        current.epsNext = r.hasNext;
+        current.epsPage = page;
+        return true;
       })
       .catch(function () {
-        if (st && st.id === id) st.epsFailed = true;
+        if (st === current) current.epsFailed = true;
+        return false;
       })
-      .then(function () {
-        if (st && st.id === id) {
-          st.epsLoading = false;
+      .then(function (ok) {
+        if (st === current) {
+          current.epsLoading = false;
           render();
         }
+        return ok;
       });
+  }
+  function changeEpisodePage(page) {
+    if (!st || st.epsLoading || page < 1) return;
+    st.epsRetryPage = page;
+    var current = st, e = S.entry(st.id);
+    var start = (page - 1) * EPISODE_PAGE_SIZE;
+    var target = Math.min(page * EPISODE_PAGE_SIZE, e.episodes || Infinity);
+    function finish() {
+      if (st !== current) return;
+      if (current.eps.length > start || page === 1) current.epsViewPage = page;
+      render();
+      var heading = body.querySelector('.dp-ep-head');
+      if (heading) {
+        heading.setAttribute('tabindex', '-1');
+        heading.focus({ preventScroll: true });
+      }
+    }
+    function ensure() {
+      if (st !== current) return;
+      if (current.eps.length >= target || (current.eps.length && !current.epsNext)) { finish(); return; }
+      return loadEpisodes(current.id, current.eps.length ? current.epsPage + 1 : 1).then(function (ok) {
+        if (st !== current || !ok) return;
+        if (current.epsNext && current.eps.length < target) return ensure();
+        finish();
+      });
+    }
+    return ensure();
   }
 
   /* ---------- open / close ---------- */
@@ -515,7 +569,15 @@
       return;
     }
     var t = ev.target.closest("button");
-    if (!t || !st) return;
+    if (!t || !st || t.disabled) return;
+    if (t.hasAttribute("data-ep-page")) {
+      changeEpisodePage(Number(t.dataset.epPage));
+      return;
+    }
+    if (t.id === "dp-retry-eps") {
+      changeEpisodePage(st.epsRetryPage);
+      return;
+    }
     if (t.id === "dp-more") {
       st.more = !st.more;
       render();
@@ -526,10 +588,13 @@
     }
     if (t.id === "dp-all-eps") {
       st.showAll = true;
+      st.epsViewPage = 1;
       render();
+      if (pagedEpisodes(S.entry(st.id))) changeEpisodePage(1);
     }
     if (t.id === "dp-fewer-eps") {
       st.showAll = false;
+      st.epsViewPage = 1;
       render();
     }
     if (t.id === "dp-more-eps" && !st.epsLoading)

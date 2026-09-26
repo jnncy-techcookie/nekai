@@ -27,6 +27,7 @@ router.get("/anime", (req, res) => {
   const {
     q = "",
     limit = "24",
+    page = "1",
     type,
     genres,
     order_by = "members",
@@ -38,6 +39,7 @@ router.get("/anime", (req, res) => {
     typeof q !== "string" ||
     q.length > 120 ||
     !validNumber(limit, 25) ||
+    !validNumber(page, Number.MAX_SAFE_INTEGER) ||
     (type && !["tv", "movie", "ova", "ona"].includes(type)) ||
     (genres && !/^\d+(,\d+)*$/.test(genres)) ||
     !["members", "score"].includes(order_by) ||
@@ -51,6 +53,7 @@ router.get("/anime", (req, res) => {
   return send(res, "/anime", {
     q,
     limit,
+    page,
     type,
     genres,
     order_by,

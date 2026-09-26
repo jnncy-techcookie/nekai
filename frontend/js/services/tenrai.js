@@ -115,12 +115,13 @@
 
   NEKAI.tenrai = {
     normalize: normalize,
-    /* Search by title; opts.type = ["TV","Movie",...], opts.genre = genre name */
+    /* Search by title; opts.type = ["TV","Movie",...], opts.genre = genre name, opts.page = page number */
     search: function (q, opts) {
       opts = opts || {};
       var params = [
         "q=" + encodeURIComponent(q),
         "limit=24",
+        "page=" + (opts.page || 1),
         "sfw=true",
         "order_by=members",
         "sort=desc",
@@ -135,7 +136,7 @@
           list = list.filter(function (a) {
             return opts.type.indexOf(a.type) >= 0;
           });
-        return list;
+        return { items: list, hasNext: !!(r.pagination && r.pagination.has_next_page) };
       });
     },
     /* Top-scored titles for a set of genre names (used by the random picker) */

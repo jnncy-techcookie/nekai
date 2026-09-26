@@ -325,6 +325,28 @@
 }
 
 /* episodes */
+.dp-ep-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.dp-ep-head .dp-h { margin: 0; }
+.dp-ep-pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  white-space: nowrap;
+}
+.dp-ep-pagination .btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+
 .dp-eps {
   list-style: none;
   margin: 0;
