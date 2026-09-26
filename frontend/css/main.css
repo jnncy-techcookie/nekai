@@ -6,6 +6,7 @@
 @import url("base/base.css");
 @import url("components/components.css");
 @import url("components/detail-panel.css");
+@import url("components/lolli-chat.css");
 @import url("layout/shell.css");
 @import url("layout/helpers.css");
 @import url("pages/home.css");
