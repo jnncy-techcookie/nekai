@@ -5,7 +5,8 @@ const BUSY = [500, 503, 504];
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // messages: [{ role: "user" | "model", text }], oldest first, starting with a user turn
-async function askGemini(system, messages) {
+// config: extra generationConfig, e.g. { responseMimeType: "application/json", responseSchema }
+async function askGemini(system, messages, config) {
   const key = process.env.GEMINI_API_KEY;
 
   if (!key) {
@@ -24,9 +25,11 @@ async function askGemini(system, messages) {
   for (const model of models) {
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
-        return await generate(key, model, system, messages);
+        return await generate(key, model, system, messages, config);
       } catch (error) {
         lastError = error;
+        // Quota used up (429): each model has its own free-tier quota, so move on to the next one
+        if (error.status === 429) break;
         if (!BUSY.includes(error.status)) throw error;
         console.warn(`Gemini ${model} is busy (${error.status}), retrying`);
         await wait(800 * (attempt + 1));
@@ -36,7 +39,7 @@ async function askGemini(system, messages) {
   throw lastError;
 }
 
-async function generate(key, model, system, messages) {
+async function generate(key, model, system, messages, config) {
   const response = await fetch(
     API_URL + encodeURIComponent(model) + ":generateContent",
     {
@@ -48,7 +51,7 @@ async function generate(key, model, system, messages) {
           role: m.role,
           parts: [{ text: m.text }],
         })),
-        generationConfig: { temperature: 0.8, maxOutputTokens: 2048 },
+        generationConfig: { temperature: 0.8, maxOutputTokens: 2048, ...config },
       }),
       signal: AbortSignal.timeout(30000),
     },

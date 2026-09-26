@@ -319,7 +319,38 @@
   }
   loadPopular(true);
 
-  function renderPicks() { U.pickRow(U.$("#picks"), U.picks(), "Nekai’s Picks, scroll sideways", { lite: true, wide: true, dismiss: true }); }
+  /* ---------- Nekai's Picks: AI picks (services/recommend.js), curated picks until they arrive or if they fail ---------- */
+  var R = NEKAI.recommend;
+  function ago(t) {
+    var m = Math.round((Date.now() - t) / 60000);
+    return m < 1 ? "just now" : m < 60 ? m + " min ago" : Math.round(m / 60) + " h ago";
+  }
+  function renderPicks() {
+    var picks = U.picks(), busy = R.busy();
+    if (picks.length) U.pickRow(U.$("#picks"), picks, "Nekai’s Picks, scroll sideways", { lite: true, wide: true, dismiss: true });
+    else U.render(U.$("#picks"), '<p class="body muted">' + (busy ? "" : "You’ve added or hidden every pick. Select New picks for a fresh set.") + "</p>");
+    var ai = U.aiPicks(), msg = "";
+    if (busy) msg = '<span class="spinner" aria-hidden="true"></span><span>' + (ai ? "Updating your picks from your latest list…" : "The AI is reading your history and picking titles. This takes about 15 seconds; curated picks until then.") + "</span>";
+    else if (ui.recError) msg = "<span>" + esc(ui.recError) + (ai ? " Showing your last AI picks." : " Showing NEKAI’s curated picks instead.") + "</span>";
+    else if (ai) msg = icon("spark", 16) + "<span>AI picks from your history, updated " + ago(S.state.recs.at) + "</span>";
+    var st = U.$("#picks-status");
+    st.innerHTML = msg;
+    st.style.display = msg ? "" : "none"; // .row's display:flex would beat the hidden attribute
+    var b = U.$("#picks-new");
+    b.disabled = busy;
+    b.textContent = busy ? "Picking…" : "New picks";
+  }
+  function loadPicks(force) {
+    ui.recError = "";
+    var p = R.load(force);
+    renderPicks();
+    p.catch(function (err) {
+      ui.recError = err.message;
+      // The curated picks are staying, so fetch their real posters
+      J.hydrate(D.picks.map(function (x) { return String(x.id); }), function () { clearTimeout(t); t = setTimeout(renderPicks, 250); });
+    }).then(renderPicks);
+  }
+  var t;
 
   /* ---------- events ---------- */
   U.$(".disc-search-icon").innerHTML = icon("search", 20);
@@ -363,5 +394,7 @@
   S.subscribe(function () { renderResults(); renderPicker(); renderPicks(); renderPopular(); });
   renderSearch(); loadGenres(); renderResults(); renderPicker(); renderPopular(); renderPicks(); layoutWheel(HOME, 0);
   if (location.hash === "#q") U.$("#q").focus();
-  var t; J.hydrate(D.picks.map(function (p) { return String(p.id); }), function () { clearTimeout(t); t = setTimeout(renderPicks, 250); });
+  U.$("#picks-new").addEventListener("click", function () { loadPicks(true); });
+  // Only asks the AI when the list, a status, a rating or "Not interested" changed since the last picks
+  loadPicks(false);
 })();

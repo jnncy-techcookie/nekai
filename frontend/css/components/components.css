@@ -910,12 +910,14 @@ textarea {
 .pick .art .ep {
   display: none;
 }
-.match-green {
+/* Match % pill, tinted by tier: High 80%+, Medium 65–79%, Low under 65% */
+.match-pill {
   display: inline-flex;
   align-items: center;
   height: 28px;
   padding: 0 12px;
   border-radius: 999px;
+  border: 1px solid #b9c8f2;
   background: #dce4f8;
   color: #16307f;
   font-size: 14px;
@@ -924,12 +926,28 @@ textarea {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.pick-media .match-green {
+.match-tier {
+  margin-left: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.match-high {
+  border-color: #b9c8f2; /* keeps the pill distinct on cobalt posters */
+  background: var(--blue);
+  color: var(--white);
+}
+.match-low {
+  border-color: var(--line);
+  background: #efe6d3;
+  color: var(--muted);
+}
+.pick-media .match-pill {
   position: absolute;
   left: 8px;
   top: 8px;
   height: 32px;
-  border: 1px solid #b9c8f2;
 }
 
 

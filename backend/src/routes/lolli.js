@@ -1,22 +1,13 @@
 const router = require("express").Router();
 const { askGemini } = require("../services/gemini");
+const { rateLimiter } = require("../services/rate-limit");
 
 const MAX_TURNS = 12;
 const MAX_TEXT = 1000;
 const MAX_CONTEXT = 12000;
 
 // Protects the Gemini key from runaway use: 15 messages per minute per IP
-const LIMIT = 15;
-const WINDOW = 60 * 1000;
-const hits = new Map();
-
-function rateLimited(ip) {
-  const now = Date.now();
-  const recent = (hits.get(ip) || []).filter((t) => now - t < WINDOW);
-  recent.push(now);
-  hits.set(ip, recent);
-  return recent.length > LIMIT;
-}
+const rateLimited = rateLimiter(15, 60 * 1000);
 
 const SYSTEM = `You are Lolli, the lollipop-shaped watch buddy inside NEKAI, an anime watchlist web app.
 
