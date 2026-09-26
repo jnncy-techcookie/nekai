@@ -169,9 +169,47 @@
     ["profile.html", "Profile", "user"],
   ];
 
+  /* ---------- streak reminders + milestones ---------- */
+  var STREAK_MILESTONES = [3, 7, 14, 30, 50, 100, 365];
+  var REMIND_FROM_HOUR = 18; // "about to end": the evening of a day with nothing logged yet
+
+  // The reminder text when Streak reminders is on and a running streak has nothing logged today, else ""
+  function streakReminder() {
+    var st = S.streak();
+    if (!S.state.settings.streak || !st.current || st.loggedToday) return "";
+    return (
+      "Your " +
+      st.current +
+      "-day streak ends at midnight. Log one episode to keep it going!"
+    );
+  }
+  // After an action that may have logged today's first episode: the toast suffix, plus confetti on a milestone
+  function streakNews(res) {
+    if (!res || !res.streakUp) return "";
+    var n = S.streak().current;
+    if (STREAK_MILESTONES.indexOf(n) === -1)
+      return n > 1 ? " · Day " + n + " of your streak" : " · Streak started";
+    confetti();
+    sound("done");
+    return (
+      " · " +
+      n +
+      "-day streak!" +
+      (n === 7 ? " Week Streak badge earned" : "")
+    );
+  }
+
   function shell(opts) {
     // opts: { page: "index.html", lolli: "message", lolliCta: [href, label] }
     applySettings();
+    var reminder =
+      new Date().getHours() >= REMIND_FROM_HOUR ? streakReminder() : "";
+    if (reminder) {
+      opts = Object.assign({}, opts, {
+        lolli: reminder,
+        lolliCta: ["library.html", "Log an episode"],
+      });
+    }
     var app = $(".app");
     var ui = S.state.ui,
       st = S.state.settings,
@@ -224,17 +262,21 @@
       '<div class="side-foot">' +
       (lolliOn
         ? '<section class="lolli" aria-label="Lolli, your watch buddy"><div class="row gap-8" style="flex-wrap:nowrap">' +
+          '<button type="button" class="lolli-face" data-lolli-chat aria-label="Chat with Lolli" title="Chat with Lolli">' +
           lolliSvg(40) +
+          "</button>" +
           '<div class="grow"><div class="h3">Lolli</div><div class="caption muted">Your watch buddy</div></div>' +
-          '<button type="button" class="btn btn-ghost btn-icon" data-act="lolli-hide" aria-label="Hide Lolli">' +
+          '<button type="button" class="btn btn-ghost btn-icon" data-act="lolli-hide" aria-label="Hide Lolli’s tip">' +
           icon("x", 16) +
           "</button></div>" +
           '<p class="small semibold">' +
           esc(opts.lolli || "") +
           "</p>" +
+          '<div class="row gap-8">' +
           cta +
+          '<button type="button" class="btn btn-secondary lolli-ask" data-lolli-chat>Ask Lolli</button></div>' +
           "</section>" +
-          '<button type="button" class="side-link lolli-mini" data-act="lolli-show" title="Lolli has a tip">' +
+          '<button type="button" class="side-link lolli-mini" data-lolli-chat title="Chat with Lolli">' +
           lolliSvg(32) +
           '<span class="side-label">Lolli</span></button>'
         : "") +
@@ -264,6 +306,11 @@
       '<a class="btn btn-secondary btn-icon ml-auto" href="discover.html#q" aria-label="Search">' +
       icon("search") +
       "</a>" +
+      (lolliOn
+        ? '<button type="button" class="btn btn-secondary btn-icon lolli-top" data-lolli-chat aria-label="Chat with Lolli">' +
+          lolliSvg(32) +
+          "</button>"
+        : "") +
       '<a class="avatar" href="profile.html" aria-label="Your profile">' +
       AVATAR +
       "</a>";
@@ -294,6 +341,13 @@
     toasts.setAttribute("role", "status");
     toasts.setAttribute("aria-live", "polite");
     document.body.appendChild(toasts);
+    // Also nudge once a day with a toast, in case Lolli is hidden or turned off
+    if (reminder && ui.streakNudged !== S.dayKey()) {
+      S.setUi({ streakNudged: S.dayKey() });
+      setTimeout(function () {
+        toast(reminder);
+      }, 800);
+    }
 
     var skip = document.createElement("a");
     skip.className = "skip";
@@ -574,7 +628,11 @@
     }
     var c = S.counts().completed;
     toast(
-      a.title + " completed! Finisher badge " + Math.min(c, 10) + " / 10",
+      a.title +
+        " completed! Finisher badge " +
+        Math.min(c, 10) +
+        " / 10" +
+        streakNews(res),
       res && res.undo,
     );
   }
@@ -594,21 +652,17 @@
       $(".side").classList.add("lolli-hidden");
       S.setUi({ lolliHidden: true });
     },
-    "lolli-show": function () {
-      var side = $(".side");
-      side.classList.remove("lolli-hidden", "is-collapsed");
-      S.setUi({ lolliHidden: false, navOpen: true });
-    },
     inc: function (id) {
       var a = S.anime(id),
         r = S.inc(id);
       if (!r) return;
       sound("tick");
+      var news = streakNews(r);
       if (r.finished)
-        toast(a.title + ": all " + a.episodes + " episodes watched");
+        toast(a.title + ": all " + a.episodes + " episodes watched" + news);
       else
         toast(
-          a.title + ": episode " + r.watched + " marked as watched",
+          a.title + ": episode " + r.watched + " marked as watched" + news,
           r.undo,
         );
     },
@@ -1027,5 +1081,7 @@
     pickRow: pickRow,
     picks: picks,
     afterComplete: afterComplete,
+    streakReminder: streakReminder,
+    lolliSvg: lolliSvg,
   };
 })();

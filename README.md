@@ -12,6 +12,8 @@ npm install
 npm start
 ```
 
+To turn on the **Lolli chatbot**, copy `backend/.env.example` to `backend/.env` and set `GEMINI_API_KEY` (get one at [Google AI Studio](https://aistudio.google.com/apikey)). The key stays on the server; `.env` is gitignored. Without it, the rest of the app works and Lolli explains that it isn't set up.
+
 Open [http://localhost:3000](http://localhost:3000). The frontend calls the backend at `/api/tenrai`; the backend requests `https://api.tenrai.org/v1`. To deploy live anime search, deploy both the frontend and the Node.js backend.
 
 ## Pages
@@ -24,6 +26,7 @@ Open [http://localhost:3000](http://localhost:3000). The frontend calls the back
 | `<page>#anime-<id>` | Anime details | There is no separate details page. Titles, posters and "View details" links (`#anime-<id>`, where `id` is the MyAnimeList ID) open the **detail panel** (`js/core/detail-panel.js`) as a split view beside the page: poster, stats, synopsis, watchlist controls, details, trailer and episodes. It sits next to the content from 1024px (1280px with the sidebar expanded) and takes the content's place on narrower screens. Close with the X, Esc or Back; Ctrl/⌘-click opens the same page in a new tab with the panel open |
 | `profile.html` | Profile | Level and XP, stats dashboard, favorite-genre mix, achievements |
 | `settings.html` | Settings | Profile form with validation, sound / confetti / Lolli / streak toggles, reduce motion, larger text, stronger outlines, CSV export, sign out, delete |
+| *(every page)* | Lolli chat | Click Lolli's face, **Ask Lolli**, the Lolli icon in the collapsed sidebar or the Lolli button in the phone top bar. Lolli answers with Google Gemini and knows your list, ratings, streak, XP and achievements |
 | `signin.html` | Sign in / Create account | Validated forms with show-password and loading states |
 
 ## Project structure
@@ -36,7 +39,9 @@ nekai-anime-watchlist/
 │   └── src/
 │       ├── server.js          serves the frontend and /api/tenrai
 │       ├── routes/anime.js    validates anime requests
-│       └── services/tenrai.js queues and caches upstream requests
+│       ├── routes/lolli.js    Lolli chat: validates, rate-limits, builds the prompt
+│       ├── services/tenrai.js queues and caches upstream requests
+│       └── services/gemini.js calls the Gemini API (key from backend/.env)
 └── frontend/                  the browser interface
     ├── index.html, library.html, discover.html,
     │   profile.html, settings.html, signin.html
@@ -54,6 +59,7 @@ nekai-anime-watchlist/
         ├── data/sample-data.js   sample catalog (keyed by real MyAnimeList IDs), seed list, picks, genre colors
         ├── core/store.js         localStorage state, list actions with undo, streak / XP / achievements / match %
         ├── core/ui.js            icons, app shell (sidebar, mobile bars, Lolli), toasts, confetti, sound, shared components
+        ├── core/lolli.js         Lolli chat panel (sends your list summary to /api/lolli/chat)
         ├── core/detail-panel.js  the anime detail panel, a split view beside the page (opens from any #anime-<id> link)
         ├── services/tenrai.js     Tenrai client: rate-limited queue, 429 retry, normalisation
         └── pages/                one script per page
@@ -61,7 +67,7 @@ nekai-anime-watchlist/
 
 HTML pages sit at the root of `frontend/` so their URLs stay short and links between pages are plain file names.
 
-Scripts are classic `<script>` tags that share one `window.NEKAI` namespace. Serve the site through the backend so `/api/tenrai` is available. Each page loads them in dependency order: `data/sample-data.js`, `core/store.js`, `services/tenrai.js`, `core/ui.js`, then its own `pages/*.js`.
+Scripts are classic `<script>` tags that share one `window.NEKAI` namespace. Serve the site through the backend so `/api/tenrai` is available. Each page loads them in dependency order: `data/sample-data.js`, `core/store.js`, `services/tenrai.js`, `core/ui.js`, `core/lolli.js`, then its own `pages/*.js`.
 
 Add new styles to the file that matches their scope (a token, a shared component, a single page), and add any new stylesheet to `css/main.css` so it loads.
 
@@ -84,6 +90,9 @@ Add new styles to the file that matches their scope (a token, a shared component
 - **Match %** = 60% genre overlap with your viewing + 30% how highly you rate those genres + 10% finish-vs-drop history, mapped to 35–95%.
 - **XP** = 2 per episode + 50 per completed anime + 5 per rating. Every 500 XP is a level.
 - **Streak** counts consecutive days with at least one logged episode. Today stays open until midnight.
+  - Episodes are logged by **+1**, and by marking a *Watching* title completed (its remaining episodes count for today). *Plan to Watch → Completed* is treated as backfilling history and isn't logged. **−1** takes back one of today's episodes.
+  - The first episode of the day adds "Day N of your streak" to the toast; days 3, 7, 14, 30, 50, 100 and 365 get confetti and a sound.
+  - With *Settings → Streak reminders* on, from 6 pm Lolli warns on every page when a running streak has nothing logged today, and a toast repeats it once a day. With it off, Lolli leaves the streak alone.
 
 ## Design system
 

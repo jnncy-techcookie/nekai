@@ -8,7 +8,7 @@
 
   var SWITCHES = {
     experience: [["sound", "Sound effects", "Subtle sounds when you log an episode or finish a show."], ["confetti", "Completion confetti", "Celebrate the first time you mark an anime completed."],
-      ["lolli", "Lolli supporter", "Reminders, recommendations and encouragement in the sidebar."], ["streak", "Streak reminders", "A nudge from Lolli when your watch streak is about to end."]],
+      ["lolli", "Lolli supporter", "Chat with Lolli, plus reminders, recommendations and encouragement in the sidebar."], ["streak", "Streak reminders", "A nudge from Lolli when your watch streak is about to end."]],
     access: [["motion", "Reduce motion", "Turns off confetti, tilts, fades and other animation."], ["text", "Larger text", "Increases body text from 18 to 20 pixels."],
       ["contrast", "Stronger outlines", "Draws 2px outlines on every card and control."]]
   };

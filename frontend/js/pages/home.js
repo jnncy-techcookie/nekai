@@ -7,7 +7,9 @@
   var streak = S.streak();
   U.shell({
     page: "index.html",
-    lolli: streak.loggedToday ? "Nice! Today counts toward your " + streak.current + "-day streak."
+    // Streak nudges only when Settings → Streak reminders is on
+    lolli: !S.state.settings.streak ? "Welcome back! Pick up where you left off, or find something new in Discover."
+      : streak.loggedToday ? "Nice! Today counts toward your " + streak.current + "-day streak."
       : streak.current ? (streak.current === 1 ? "One day down!" : streak.current + " days in a row!") + " Log one episode today and your streak reaches " + (streak.current + 1) + "."
       : "Log an episode today to start a new streak."
   });

@@ -1,0 +1,228 @@
+/* =========================================================
+   LOLLI CHAT
+   Opens from any [data-lolli-chat] button (js/core/lolli.js).
+   Desktop: floats beside the sidebar. Phones: a bottom sheet (responsive.css).
+   ========================================================= */
+.lolli-face {
+  display: inline-flex;
+  flex-shrink: 0;
+  padding: 2px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+.lolli-face:hover {
+  transform: rotate(-8deg) scale(1.08);
+}
+.lolli-ask {
+  height: 40px;
+  padding: 0 16px;
+}
+.lolli-top {
+  background: var(--pink);
+}
+
+.lchat {
+  position: fixed;
+  left: var(--lchat-left, 16px);
+  bottom: 24px;
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  width: min(400px, calc(100vw - var(--lchat-left, 16px) - 16px));
+  height: min(600px, calc(100vh - 48px));
+  border: 1.5px solid var(--ink);
+  border-radius: 16px;
+  background: var(--cream);
+  box-shadow: 0 18px 40px rgba(15, 31, 92, 0.18);
+  overflow: hidden;
+  animation: lchatIn 0.18s ease-out;
+}
+.lchat[hidden] {
+  display: none;
+}
+@keyframes lchatIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+.lchat-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 8px 12px 16px;
+  background: var(--yellow);
+  border-bottom: 1.5px solid var(--ink);
+}
+.lchat-head .caption {
+  color: var(--ink);
+}
+.lchat-face {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 50%;
+  background: var(--white);
+  border: 1.5px solid var(--ink);
+}
+
+.lchat-log {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--paper);
+}
+.lchat-msg {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: 88%;
+}
+.lchat-user {
+  align-self: flex-end;
+}
+.lchat-avatar {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.lchat-bubble {
+  padding: 10px 14px;
+  border: 1.5px solid var(--ink);
+  border-radius: 16px 16px 16px 4px;
+  background: var(--white);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 22px;
+  overflow-wrap: anywhere;
+}
+.lchat-user .lchat-bubble {
+  border-radius: 16px 16px 4px 16px;
+  background: var(--blue);
+  color: var(--white);
+}
+.lchat-bubble p + p,
+.lchat-bubble p + ul,
+.lchat-bubble ul + p {
+  margin-top: 8px;
+}
+.lchat-bubble ul {
+  margin: 0;
+  padding-left: 20px;
+}
+.lchat-bubble li + li {
+  margin-top: 4px;
+}
+.is-error .lchat-bubble {
+  background: #ffe9d6;
+}
+.lchat-retry {
+  height: 36px;
+  margin-top: 8px;
+  padding: 0 12px;
+  border: 1.5px solid var(--ink);
+}
+
+.lchat-typing {
+  display: inline-flex;
+  gap: 4px;
+  padding: 6px 0;
+}
+.lchat-typing i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ink);
+  animation: lchatDot 1s infinite ease-in-out;
+}
+.lchat-typing i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.lchat-typing i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes lchatDot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+.lchat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-left: 36px;
+}
+.lchat-chips .chip {
+  height: auto;
+  min-height: 40px;
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.lchat-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 12px 12px 4px;
+  border-top: 1.5px solid var(--ink);
+}
+.lchat-form textarea {
+  flex: 1 1 auto;
+  min-height: 48px;
+  max-height: 120px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--ink);
+  border-radius: 12px;
+  background: var(--white);
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  line-height: 22px;
+  resize: none;
+}
+.lchat-note {
+  padding: 0 16px 10px;
+  text-align: center;
+}
+
+.opt-reduce-motion .lchat,
+.opt-reduce-motion .lchat-typing i,
+.opt-reduce-motion .lolli-face {
+  animation: none;
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lchat,
+  .lchat-typing i,
+  .lolli-face {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* Phones: the sidebar is gone, so the chat becomes a bottom sheet above the tab bar */
+@media (max-width: 767px) {
+  .lchat {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 45;
+    width: 100%;
+    height: min(85vh, 640px);
+    border-width: 1.5px 0 0;
+    border-radius: 16px 16px 0 0;
+  }
+}
