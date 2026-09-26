@@ -193,43 +193,35 @@
       review(e)
     );
   }
-  function reviewCount() {
-    return st.reviewDraft.length.toLocaleString("en-US") + " / 2,000";
+  // Review text box: holds the saved review until you type (st.reviewDraft stays null until then)
+  function reviewDraft(e) {
+    return st.reviewDraft != null ? st.reviewDraft : e.note || "";
   }
-  // Personal review: shown under the rating, edited in place (plain text, up to 2000 characters)
+  function reviewChanged(e) {
+    return reviewDraft(e).trim() !== (e.note || "");
+  }
+  function reviewCount(text) {
+    return text.length.toLocaleString("en-US") + " / 2,000";
+  }
+  // Personal review: always an editable box under the rating (plain text, up to 2000 characters).
+  // Save review saves a new review or an edit; saving an empty box deletes it.
   function review(e) {
-    if (st.reviewing) {
-      return (
-        '<div class="dp-field"><label class="dp-field-label" for="dp-review">Your review</label>' +
-        '<textarea id="dp-review" class="input dp-review-text" rows="4" maxlength="2000" aria-describedby="dp-review-count" placeholder="What did you think? Favorite moments, characters, how it made you feel…">' +
-        esc(st.reviewDraft) +
-        "</textarea>" +
-        '<span id="dp-review-count" class="small muted semibold">' +
-        reviewCount() +
-        "</span>" +
-        '<div class="row gap-8"><button type="button" id="dp-review-save" class="btn btn-primary">Save review</button>' +
-        '<button type="button" id="dp-review-cancel" class="btn btn-ghost">Cancel</button>' +
-        (e.note
-          ? '<button type="button" id="dp-review-del" class="btn btn-ghost ml-auto">Delete review</button>'
-          : "") +
-        "</div></div>"
-      );
-    }
-    if (e.note) {
-      return (
-        '<div class="dp-field"><span class="dp-field-label">Your review</span>' +
-        '<p class="dp-review">' +
-        esc(e.note) +
-        "</p>" +
-        '<button type="button" id="dp-review-edit" class="btn btn-secondary self-start">' +
-        icon("note", 18, 2.2) +
-        "Edit review</button></div>"
-      );
-    }
+    var draft = reviewDraft(e),
+      off = reviewChanged(e) ? "" : " disabled";
     return (
-      '<button type="button" id="dp-review-edit" class="btn btn-secondary self-start">' +
-      icon("note", 18, 2.2) +
-      "Write a review</button>"
+      '<div class="dp-field"><label class="dp-field-label" for="dp-review">Your review</label>' +
+      '<textarea id="dp-review" class="input dp-review-text" rows="4" maxlength="2000" aria-describedby="dp-review-count" placeholder="What did you think? Favorite moments, characters, how it made you feel…">' +
+      esc(draft) +
+      "</textarea>" +
+      '<span id="dp-review-count" class="small muted semibold">' +
+      reviewCount(draft) +
+      "</span>" +
+      '<div class="row gap-8"><button type="button" id="dp-review-save" class="btn btn-primary"' +
+      off +
+      ">Save review</button>" +
+      '<button type="button" id="dp-review-cancel" class="btn btn-ghost"' +
+      off +
+      ">Cancel</button></div></div>"
     );
   }
   function info(e) {
@@ -641,33 +633,23 @@
     }
     if (t.id === "dp-more-eps" && !st.epsLoading)
       loadEpisodes(st.id, st.epsPage + 1);
-    if (t.id === "dp-review-edit") {
-      st.reviewing = true;
-      st.reviewDraft = S.entry(st.id).note || "";
-      render();
-      var ta = document.getElementById("dp-review");
-      ta.focus();
-      ta.setSelectionRange(ta.value.length, ta.value.length);
-      return;
-    }
     if (t.id === "dp-review-cancel") {
-      st.reviewing = false;
+      st.reviewDraft = null; // back to the saved review
       render();
-      document.getElementById("dp-review-edit").focus();
+      document.getElementById("dp-review").focus();
       return;
     }
-    if (t.id === "dp-review-save" || t.id === "dp-review-del") {
+    if (t.id === "dp-review-save") {
       var had = S.entry(st.id).note,
-        text = t.id === "dp-review-del" ? "" : st.reviewDraft;
-      st.reviewing = false;
+        text = st.reviewDraft || "";
+      st.reviewDraft = null;
       var undo = S.setNote(st.id, text);
       U.toast(
         (text.trim() ? (had ? "Review updated for " : "Review saved for ") : "Review deleted for ") +
           S.anime(st.id).title,
         undo,
       );
-      var edit = document.getElementById("dp-review-edit");
-      if (edit) edit.focus();
+      document.getElementById("dp-review").focus();
       return;
     }
     if (t.id === "dp-add") {
@@ -684,7 +666,10 @@
   host.addEventListener("input", function (ev) {
     if (ev.target.id === "dp-review" && st) {
       st.reviewDraft = ev.target.value;
-      document.getElementById("dp-review-count").textContent = reviewCount();
+      var off = !reviewChanged(S.entry(st.id));
+      document.getElementById("dp-review-count").textContent = reviewCount(st.reviewDraft);
+      document.getElementById("dp-review-save").disabled = off;
+      document.getElementById("dp-review-cancel").disabled = off;
     }
   });
   host.addEventListener("change", function (ev) {

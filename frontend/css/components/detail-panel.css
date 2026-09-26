@@ -316,17 +316,6 @@
   font-weight: 700;
   color: var(--ink);
 }
-.dp-review {
-  margin: 0;
-  padding: 12px 14px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--white);
-  font-size: 15px;
-  line-height: 22px;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
 .dp-review-text {
   min-height: 112px;
   padding: 12px 14px;

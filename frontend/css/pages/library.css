@@ -491,7 +491,7 @@
 /* ---------- year · genre line ---------- */
 .m-sub{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:0;font-size:14px;line-height:20px;font-weight:700;color:var(--muted)}
 .m-sub .m-dot{color:#B3B6C6}
-.ac-head{gap:2px;min-height:70px} /* room for a two-line title + the year line, so steppers line up across cards */
+.ac-head{gap:2px;min-height:96px} /* room for a two-line title + a two-line year · genres line, so steppers line up across cards */
 .ac-eps{display:flex;align-items:center;gap:8px}
 .ac-eps .stepper{flex:1;min-width:0}
 

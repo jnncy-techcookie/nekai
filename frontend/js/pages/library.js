@@ -38,9 +38,9 @@
         U.star(16, e.rating ? "#F25C05" : "#E6DCC7") + (e.rating ? "<span>" + fmtRating(e.rating) + "</span>" : '<span class="rp-none">Rate</span>') + icon("chevD", 16, 2.6) + "</button>";
   }
   function status(e) { return '<div class="l-status" data-status="' + e.status + '"><label class="sr" for="st-' + e.id + '">Status for ' + esc(e.title) + "</label>" + U.statusSelect(e, "st-" + e.id) + "</div>"; }
-  // "2019 • Action" under the title
+  // "2019 • Action • Adventure • Fantasy" under the title (up to 3 genres)
   function sub(e) {
-    var bits = [e.year, e.mainGenre].filter(Boolean).map(esc);
+    var bits = [e.year].concat((e.genres || []).slice(0, 3)).filter(Boolean).map(esc);
     return bits.length ? '<p class="m-sub">' + bits.join('<span class="m-dot" aria-hidden="true">•</span>') + "</p>" : "";
   }
   function del(e) { return '<button type="button" class="m-del" data-act="remove" data-id="' + e.id + '" aria-label="Remove ' + esc(e.title) + ' from your list" title="Remove from list">' + icon("trash", 18) + "</button>"; }
