@@ -286,9 +286,14 @@
   background: var(--white);
   box-shadow: 0 0 0 2px var(--blue);
 }
+/* the AI disclaimer: small, regular weight, faded so it stays out of the way */
 .lchat-note {
-  padding: 0 16px 10px;
+  padding: 2px 16px 10px;
   text-align: center;
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 400;
+  color: rgba(15, 31, 92, 0.5);
 }
 
 /* ---------- reduced motion: a plain fade, no pop ---------- */
