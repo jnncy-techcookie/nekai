@@ -94,7 +94,7 @@
     U.$("#cont-count").textContent = "View all " + S.counts().watching;
     U.render(U.$("#continue"), rest.length ? '<div class="grid-auto">' + rest.map(contCard).join("") + "</div>"
       : '<p class="body muted">Nothing else in progress. Pick something from <a href="library.html">Plan to Watch</a>.</p>');
-    U.pickRow(U.$("#picks"), U.picks(), "Picked for you, scroll sideways");
+    U.pickRow(U.$("#picks"), U.picks(), "Picked for you, scroll sideways", { lite: true, wide: true, dismiss: true });
   }
 
   S.subscribe(render);
