@@ -622,22 +622,6 @@ NEKAI.data = {
     37521:
       "Thorfinn grows up among the mercenaries who killed his father, fighting for their leader Askeladd in exchange for the right to challenge him to a duel. As Viking raids push into England, his need for revenge collides with the ambitions of a young prince and with a harder question: what does it really mean to be a warrior?",
   },
-  genreIds: {
-    Action: 1,
-    Adventure: 2,
-    Comedy: 4,
-    Mystery: 7,
-    Drama: 8,
-    Fantasy: 10,
-    Horror: 14,
-    Romance: 22,
-    "Sci-Fi": 24,
-    Sports: 30,
-    "Slice of Life": 36,
-    Supernatural: 37,
-    Suspense: 41,
-    Thriller: 41,
-  },
   genreColors: {
     Action: { bg: "#FFE0CC", fg: "#9A3800" },
     Adventure: { bg: "#FDEBDD", fg: "#8A3A00" },
@@ -659,14 +643,4 @@ NEKAI.data = {
     completed: { label: "Completed", color: "#1F3FA6" },
     dropped: { label: "Dropped", color: "#4A5378" },
   },
-  pickerGenres: [
-    "Action",
-    "Comedy",
-    "Romance",
-    "Fantasy",
-    "Adventure",
-    "Slice of Life",
-    "Mystery",
-    "Horror",
-  ],
 };

@@ -6,7 +6,7 @@
 
   U.shell({ page: "discover.html", lolli: "Not sure what to watch? Pick a genre or two below and I’ll find something you haven’t seen.", lolliCta: ["#picker", "Try it"] });
 
-  var ui = { types: {}, genres: [], genreList: null, genreFailed: false, genreNote: "", showAll: false, results: [], submitted: "", searching: false, offline: false, error: "", sel: {}, finding: false, pick: null, pickNone: false };
+  var ui = { types: {}, genreList: null, genreFailed: false, results: [], submitted: "", searching: false, offline: false, error: "", finding: false, pick: null, pickNone: false, pickOffline: false, poolSize: {} };
 
   var searchId = 0, PAGE_SIZE = 24;
   ui.page = 1; ui.hasNext = false; ui.query = ""; ui.resultError = "";
@@ -54,25 +54,30 @@
   })();
 
   /* ---------- search + genre pills ---------- */
-  // Genres come from Tenrai: the 8 with the most anime get pills, the full list lives in the More menu
+  // Genres come from Tenrai: the 8 with the most anime get pills, All Genres opens a box with every genre.
+  // Two filters use this: the search filter at the top (TOP) and the spin wheel's (WHEEL). Each keeps its own picks.
+  // el: prefix of its #…-pills / #…-box / #…-note elements; btn: prefix of its button ids;
+  // top: show the 8 biggest genres as pills (the wheel shows only All Genres plus the genres you picked)
   var TOP_GENRES = 8, MAX_GENRES = 5;
+  var TOP = { ids: [], open: false, note: "", el: "genre", btn: "g", top: true, onChange: function () { ui.error = ""; doSearch(); } };
+  var WHEEL = { ids: [], open: false, note: "", el: "wheel", btn: "w", top: false, onChange: function () { changeGenres(); } };
   function byName(a, b) { return a.name.localeCompare(b.name); }
   function genreById(id) { return (ui.genreList || []).filter(function (g) { return g.id === id; })[0]; }
-  function genreNames() { return ui.genres.map(function (id) { var g = genreById(id); return g ? g.name : ""; }).filter(Boolean); }
+  function genreNames(f) { return f.ids.map(function (id) { var g = genreById(id); return g ? g.name : ""; }).filter(Boolean); }
   function topGenres() {
     return (ui.genreList || []).slice().sort(function (a, b) { return b.count - a.count || byName(a, b); }).slice(0, TOP_GENRES).sort(byName);
   }
   function loadGenres() {
-    ui.genreFailed = false; renderSearch();
-    J.genres().then(function (list) { ui.genreList = list.sort(byName); renderSearch(); })
-      .catch(function () { ui.genreFailed = true; renderSearch(); });
+    ui.genreFailed = false; renderGenres(TOP); renderGenres(WHEEL);
+    J.genres().then(function (list) { ui.genreList = list.sort(byName); renderGenres(TOP); renderPicker(); })
+      .catch(function () { ui.genreFailed = true; renderGenres(TOP); renderGenres(WHEEL); });
   }
-  function toggleGenre(id) {
-    var i = ui.genres.indexOf(id);
-    if (i >= 0) ui.genres.splice(i, 1);
-    else if (ui.genres.length >= MAX_GENRES) { ui.genreNote = "You can pick up to " + MAX_GENRES + " genres. Remove one to add another."; renderSearch(); return; }
-    else ui.genres.push(id);
-    ui.genreNote = ""; ui.error = ""; renderSearch(); doSearch();
+  function toggleGenre(f, id) {
+    var i = f.ids.indexOf(id);
+    if (i >= 0) f.ids.splice(i, 1);
+    else if (f.ids.length >= MAX_GENRES) { f.note = "You can pick up to " + MAX_GENRES + " genres. Remove one to add another."; renderGenres(f); return; }
+    else f.ids.push(id);
+    f.note = ""; renderGenres(f); f.onChange();
   }
 
   var SKEL = '<div class="cart" aria-hidden="true"><div class="skel" style="aspect-ratio:3/4;background:#26336A"></div><div class="cart-label"><div class="skel" style="height:16px;width:80%"></div><div class="skel" style="height:16px;width:56%"></div><div class="skel" style="height:48px;margin-top:16px"></div></div></div>';
@@ -80,7 +85,7 @@
   function typesOn() { return Object.keys(ui.types).filter(function (t) { return ui.types[t]; }); }
   function localSearch(q) {
     q = q.toLowerCase();
-    var types = typesOn(), names = genreNames();
+    var types = typesOn(), names = genreNames(TOP);
     return Object.keys(D.catalog).map(S.anime).filter(function (a) {
       if (q && (a.title + " " + a.jp + " " + a.studio).toLowerCase().indexOf(q) < 0) return false;
       if (types.length && types.indexOf(a.type) < 0) return false;
@@ -94,9 +99,9 @@
     var paging = typeof page === "number";
     var q = paging ? ui.query : U.$("#q").value.trim();
     page = paging ? page : 1;
-    var genreLabel = genreNames().join(" + ");
-    if (q.length === 1 || (!q && !ui.genres.length)) {
-      if (!q && !ui.genres.length) { clearSearch(); }
+    var genreLabel = genreNames(TOP).join(" + ");
+    if (q.length === 1 || (!q && !TOP.ids.length)) {
+      if (!q && !TOP.ids.length) { clearSearch(); }
       else { ui.error = "Type at least 2 characters to search."; renderSearch(); U.$("#q").focus(); }
       return;
     }
@@ -112,7 +117,7 @@
       var list = localSearch(q);
       return { items: list.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), hasNext: list.length > page * PAGE_SIZE };
     }
-    var request = paging && ui.offline ? Promise.resolve(localPage()) : J.search(q, { type: typesOn(), genres: ui.genres, page: page });
+    var request = paging && ui.offline ? Promise.resolve(localPage()) : J.search(q, { type: typesOn(), genres: TOP.ids, page: page });
     return request.catch(function () {
       if (id !== searchId) return;
       if (paging) { ui.resultError = "Couldn’t load that page. Please try again."; return; }
@@ -131,9 +136,9 @@
   }
   function clearSearch() {
     ++searchId;
-    ui.submitted = ""; ui.results = []; ui.genres = []; ui.genreNote = ""; ui.types = {}; U.$("#q").value = "";
+    ui.submitted = ""; ui.results = []; TOP.ids = []; TOP.note = ""; ui.types = {}; U.$("#q").value = "";
     ui.page = 1; ui.hasNext = false; ui.query = ""; ui.searching = false; ui.offline = false; ui.error = ""; ui.resultError = "";
-    renderSearch(); renderResults(); U.$("#q").focus();
+    renderSearch(); renderGenres(TOP); renderResults(); U.$("#q").focus();
   }
 
   function pagination(position) {
@@ -144,8 +149,8 @@
   }
 
   // Pills and box items share one toggle; stable ids keep keyboard focus through re-renders
-  function genreButton(g, cls, prefix) {
-    var on = ui.genres.indexOf(g.id) >= 0, full = !on && ui.genres.length >= MAX_GENRES;
+  function genreButton(f, g, cls, prefix) {
+    var on = f.ids.indexOf(g.id) >= 0, full = !on && f.ids.length >= MAX_GENRES;
     return '<button type="button" id="' + prefix + g.id + '" class="' + cls + (full ? " is-full" : "") + '" data-gid="' + g.id + '" aria-pressed="' + on + '">' +
       (on ? icon("check", 16, 3) : "") + esc(g.name) + "</button>";
   }
@@ -155,26 +160,28 @@
     q.setAttribute("aria-busy", ui.searching);
     err.hidden = !ui.error; err.lastChild.textContent = ui.error;
     U.$("#q-kbd").innerHTML = ui.searching ? '<span class="spinner" aria-hidden="true"></span>' : (/Mac|iPhone|iPad/.test(navigator.platform) ? "⌘ K" : "Ctrl K");
-    var pills = U.$("#genre-pills"), box = U.$("#genre-box"), note = U.$("#genre-note");
+  }
+  function renderGenres(f) {
+    var pills = U.$("#" + f.el + "-pills"), box = U.$("#" + f.el + "-box"), note = U.$("#" + f.el + "-note");
     // All Genres opens and closes the box that lists every genre
-    var all = '<button type="button" id="g-all" class="gpill" data-gall aria-controls="genre-box" aria-expanded="' + ui.showAll + '"' + (ui.genreList ? "" : " disabled") + ">" +
+    var all = '<button type="button" id="' + f.btn + '-all" class="gpill" data-gall aria-controls="' + f.el + '-box" aria-expanded="' + f.open + '"' + (ui.genreList ? "" : " disabled") + ">" +
       icon("grid", 18, 2.2) + "All Genres" + icon("chevD", 16, 2.6) + "</button>";
     if (!ui.genreList) {
       U.render(pills, all + (ui.genreFailed
-        ? '<span class="small muted semibold">Couldn’t load genres from Tenrai.</span><button type="button" id="g-retry" class="gpill gpill-more" data-gretry>Try again</button>'
+        ? '<span class="small muted semibold">Couldn’t load genres from Tenrai.</span><button type="button" id="' + f.btn + '-retry" class="gpill gpill-more" data-gretry>Try again</button>'
         : '<span class="small muted semibold" role="status">Loading genres…</span>'));
       box.hidden = true; note.hidden = true;
       return;
     }
-    var top = topGenres(), topIds = top.map(function (g) { return g.id; });
+    var top = f.top ? topGenres() : [], topIds = top.map(function (g) { return g.id; });
     // Genres picked in the box also get a pill, so every active filter stays visible
-    var extra = ui.genres.filter(function (id) { return topIds.indexOf(id) < 0; }).map(genreById).filter(Boolean).sort(byName);
-    U.render(pills, all + top.concat(extra).map(function (g) { return genreButton(g, "gpill", "g-"); }).join(""));
-    box.hidden = !ui.showAll;
-    if (ui.showAll) U.render(box, '<div class="genre-box-head"><span class="eyebrow">ALL GENRES</span><span class="small muted semibold">' +
-      ui.genres.length + " of " + MAX_GENRES + " picked</span></div>" +
-      '<div class="genre-box-list">' + ui.genreList.map(function (g) { return genreButton(g, "chip", "gb-"); }).join("") + "</div>");
-    note.hidden = !ui.genreNote; note.textContent = ui.genreNote;
+    var extra = f.ids.filter(function (id) { return topIds.indexOf(id) < 0; }).map(genreById).filter(Boolean).sort(byName);
+    U.render(pills, all + top.concat(extra).map(function (g) { return genreButton(f, g, "gpill", f.btn + "-"); }).join(""));
+    box.hidden = !f.open;
+    if (f.open) U.render(box, '<div class="genre-box-head"><span class="eyebrow">ALL GENRES</span><span class="small muted semibold">' +
+      f.ids.length + " of " + MAX_GENRES + " picked</span></div>" +
+      '<div class="genre-box-list">' + ui.genreList.map(function (g) { return genreButton(f, g, "chip", f.btn + "b-"); }).join("") + "</div>");
+    note.hidden = !f.note; note.textContent = f.note;
   }
 
   function renderResults() {
@@ -203,17 +210,34 @@
   }
 
   /* ---------- "What should I watch next?" spin wheel ---------- */
-  function selected() { return Object.keys(ui.sel).filter(function (g) { return ui.sel[g]; }); }
-  // Unseen titles; with no genres selected, anything goes
-  function pool(extra) {
-    var sel = selected(), ids = {};
-    Object.keys(D.catalog).forEach(function (id) { ids[id] = 1; });
-    (extra || []).forEach(function (a) { ids[a.id] = 1; });
-    return Object.keys(ids).map(S.entry).filter(function (e) {
-      return e && e.status !== "watching" && e.status !== "completed" && e.status !== "dropped" &&
-        (!sel.length || e.genres.some(function (g) { return sel.indexOf(g) >= 0; }));
+  // A pick must be something you haven't started, finished or dropped, and have every selected genre
+  function unseen(e) { return e && e.status !== "watching" && e.status !== "completed" && e.status !== "dropped"; }
+  function hasAll(e, names) { return names.every(function (n) { return e.genres.indexOf(n) >= 0; }); }
+  function eligible(list, names) {
+    return list.map(function (a) { return S.entry(a.id); }).filter(function (e) {
+      return unseen(e) && hasAll(e, names) && e.id !== ui.lastPick;
     });
   }
+  // Tenrai: anime with ALL the selected genres (or any anime at all), from a random page of the whole list.
+  // A page where everything is already on your list gets retried on another random page, then page 1.
+  function livePool(ids, names) {
+    var key = ids.join(",");
+    return J.browse(ids, 1).then(function (first) {
+      ui.poolSize[key] = first.total;
+      var pages = [1 + Math.floor(Math.random() * first.lastPage), 1 + Math.floor(Math.random() * first.lastPage), 1];
+      function next(i) {
+        var page = pages[i];
+        return (page === 1 ? Promise.resolve(first) : J.browse(ids, page)).then(function (res) {
+          S.cacheMany(res.items);
+          var ok = eligible(res.items, names);
+          return ok.length || i === pages.length - 1 ? ok : next(i + 1);
+        });
+      }
+      return next(0);
+    });
+  }
+  // Offline: NEKAI's built-in sample list, same rules
+  function localPool(names) { return eligible(Object.keys(D.catalog).map(S.anime), names); }
 
   // The wheel is a long strip of identical mystery cards (assets/images/mystery-anime.png). Each spin snaps back to HOME
   // (invisible, since every card looks the same) and glides forward to a random stop.
@@ -270,12 +294,12 @@
 
   function find() {
     if (ui.finding) return;
-    var sel = selected();
-    ui.finding = true; ui.pick = null; ui.pickNone = false; renderPicker();
-    var live = sel.length ? J.byGenres(sel).then(function (list) { S.cacheMany(list); return list; }).catch(function () { return []; }) : Promise.resolve([]);
+    var ids = WHEEL.ids.slice(), names = genreNames(WHEEL);
+    ui.finding = true; ui.pick = null; ui.pickNone = false; ui.pickOffline = false; renderPicker();
+    var live = livePool(ids, names).catch(function () { ui.pickOffline = true; return localPool(names); });
     // The wheel stops on its own schedule; if Tenrai is slow, the center card waits face-down
     Promise.all([live, spin()]).then(function (r) {
-      var p = pool(r[0]), others = p.filter(function (e) { return e.id !== ui.lastPick; }), list = others.length ? others : p;
+      var list = r[0];
       ui.finding = false;
       if (list.length) { var e = list[Math.floor(Math.random() * list.length)]; ui.pick = ui.lastPick = e.id; reveal(r[1], S.entry(e.id)); }
       else ui.pickNone = true;
@@ -283,14 +307,13 @@
     });
   }
   function renderPicker() {
-    var sel = selected();
-    U.render(U.$("#genres"), D.pickerGenres.map(function (g) {
-      return '<button type="button" class="chip" data-genre="' + esc(g) + '" aria-pressed="' + !!ui.sel[g] + '">' + (ui.sel[g] ? icon("check", 16, 3) : "") + esc(g) + "</button>";
-    }).join(""));
+    var names = genreNames(WHEEL), size = ui.poolSize[WHEEL.ids.join(",")];
+    renderGenres(WHEEL);
     var b = U.$("#find");
     b.disabled = ui.finding; b.setAttribute("aria-busy", ui.finding);
     b.innerHTML = ui.finding ? '<span class="spinner" aria-hidden="true"></span>Spinning…' : icon("play", 18) + (ui.pick ? "Spin again" : "Spin for an anime");
-    U.$("#find-help").textContent = (sel.length ? sel.join(", ") : "Any genre") + " · " + pool().length + "+ titles in the pool";
+    U.$("#find-help").textContent = (names.length ? names.join(" + ") + " · the pick will have all of these genres" : "Any genre · a random pick from all of MyAnimeList") +
+      (size != null ? " · " + size.toLocaleString("en-US") + " anime match" : "");
     var out = U.$("#pick-out");
     if (ui.pick && !ui.finding) {
       var e = S.entry(ui.pick);
@@ -301,8 +324,10 @@
           '<button type="button" class="btn ' + (e.inList ? "btn-accent" : "btn-primary btn-add") + '" data-act="toggle" data-id="' + e.id + '" aria-pressed="' + e.inList + '">' + (e.inList ? "✓ " + D.statuses[e.status].label : "Add to Library") + "</button>" +
           '<a class="btn btn-secondary" href="' + U.detailsHref(e) + '">View details</a></div></div>');
     } else if (ui.pickNone && !ui.finding) {
-      U.render(out, '<div class="prompt" role="status" style="background:#FFE9D6;border-color:var(--ink);color:var(--ink)">You’ve seen every match for these genres. Add another genre to widen the pool.</div>');
+      U.render(out, '<div class="prompt" role="status" style="background:#FFE9D6;border-color:var(--ink);color:var(--ink)">' +
+        (names.length ? "No anime you haven’t seen has all of these genres: " + esc(names.join(", ")) + ". Remove a genre to widen the pool." : "Couldn’t find an anime you haven’t seen. Spin again.") + "</div>");
     } else out.innerHTML = "";
+    if (ui.pickOffline && !ui.finding) out.insertAdjacentHTML("beforeend", '<p class="notice small" role="status">' + icon("wifiOff", 18) + "<span>Couldn’t reach Tenrai, so this pick came from NEKAI’s built-in sample list.</span></p>");
   }
   function changeGenres() { if (!ui.finding) { ui.pick = null; ui.pickNone = false; resetFace(); } renderPicker(); }
 
@@ -361,19 +386,24 @@
   document.addEventListener("keydown", function (e) {
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); U.$("#q").focus(); U.$("#q").select(); }
   });
-  function genreClick(e) {
-    var b = e.target.closest("[data-gid],[data-gall],[data-gretry]"); if (!b) return;
-    if (b.hasAttribute("data-gretry")) { loadGenres(); return; }
-    if (b.hasAttribute("data-gall")) { ui.showAll = !ui.showAll; renderSearch(); return; }
-    toggleGenre(Number(b.dataset.gid));
+  function bindGenres(f) {
+    function click(e) {
+      var b = e.target.closest("[data-gid],[data-gall],[data-gretry]"); if (!b) return;
+      if (b.hasAttribute("data-gretry")) { loadGenres(); return; }
+      if (b.hasAttribute("data-gall")) { f.open = !f.open; renderGenres(f); return; }
+      toggleGenre(f, Number(b.dataset.gid));
+    }
+    var pills = U.$("#" + f.el + "-pills"), all = "#" + f.btn + "-all";
+    pills.addEventListener("click", click);
+    U.$("#" + f.el + "-box").addEventListener("click", click);
+    // Close the box on Escape or a click outside it
+    function close(refocus) { if (!f.open) return; f.open = false; renderGenres(f); if (refocus) U.$(all).focus(); }
+    // A toggled genre re-renders before this runs, so a detached target still counts as inside the box
+    document.addEventListener("click", function (e) { if (e.target.isConnected && !e.target.closest("#" + f.el + "-box," + all)) close(false); });
+    pills.closest(".genre-filter").addEventListener("keydown", function (e) { if (e.key === "Escape" && f.open) { e.stopPropagation(); close(true); } });
   }
-  U.$("#genre-pills").addEventListener("click", genreClick);
-  U.$("#genre-box").addEventListener("click", genreClick);
-  // Close the box on Escape or a click outside it
-  function closeBox(refocus) { if (!ui.showAll) return; ui.showAll = false; renderSearch(); if (refocus) U.$("#g-all").focus(); }
-  // A toggled genre re-renders before this runs, so a detached target still counts as inside the box
-  document.addEventListener("click", function (e) { if (e.target.isConnected && !e.target.closest("#genre-box,#g-all")) closeBox(false); });
-  U.$(".genre-filter").addEventListener("keydown", function (e) { if (e.key === "Escape" && ui.showAll) { e.stopPropagation(); closeBox(true); } });
+  bindGenres(TOP);
+  bindGenres(WHEEL);
   U.$("#results").addEventListener("click", function (e) {
     var pageButton = e.target.closest("[data-page]");
     if (pageButton) {
@@ -388,7 +418,6 @@
     if (t) { ui.types[t.dataset.type] = !ui.types[t.dataset.type]; doSearch(); return; }
     if (e.target.id === "clear" || e.target.id === "clear2") clearSearch();
   });
-  U.$("#genres").addEventListener("click", function (e) { var b = e.target.closest("[data-genre]"); if (b) { ui.sel[b.dataset.genre] = !ui.sel[b.dataset.genre]; changeGenres(); } });
   U.$("#find").addEventListener("click", find);
 
   S.subscribe(function () { renderResults(); renderPicker(); renderPicks(); renderPopular(); });

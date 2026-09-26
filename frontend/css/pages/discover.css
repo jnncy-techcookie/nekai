@@ -274,6 +274,11 @@
   .genre-pills::-webkit-scrollbar {
     display: none;
   }
+  /* inside the wheel's card: stay within its padding */
+  #picker .genre-pills {
+    margin: 0;
+    padding: 2px 0;
+  }
   .gpill {
     flex-shrink: 0;
   }

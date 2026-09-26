@@ -63,12 +63,13 @@
       <section id="picker" aria-labelledby="pk-h" class="card pad-32 stack gap-24">
         <div class="stack gap-8">
           <h2 id="pk-h" class="h2 sec-title"><span class="pill pill-red">RANDOM</span>What should I watch next?</h2>
-          <p class="body muted">Spin the wheel for something you haven’t seen. Pick genres to narrow it down, or leave them all off for anything. We’ll skip what you’ve watched or dropped.</p>
+          <p class="body muted">Spin the wheel for something you haven’t seen. Pick up to 5 genres and the pick will have all of them, or leave them off for a completely random anime. We’ll skip what you’ve watched or dropped.</p>
         </div>
-        <fieldset>
-          <legend class="sr">Genres</legend>
-          <div id="genres" class="row gap-8"></div>
-        </fieldset>
+        <div class="genre-filter">
+          <div id="wheel-pills" class="genre-pills" role="group" aria-label="Genres for the wheel, pick up to 5"></div>
+          <div id="wheel-box" class="genre-box" role="group" aria-label="All genres" hidden></div>
+          <p id="wheel-note" class="small semibold genre-note" role="status" hidden></p>
+        </div>
         <div class="wheel">
           <span class="wheel-pointer" aria-hidden="true"></span>
           <div class="wheel-viewport" aria-hidden="true"><div id="wheel-track" class="wheel-track"></div></div>
