@@ -10,6 +10,7 @@
   var queue = Promise.resolve();
   var last = 0;
   var memo = {};
+  var seasonJobs = {}; // season chains being worked out, so two callers share one walk
 
   function wait(ms) {
     return new Promise(function (r) {
@@ -110,7 +111,24 @@
           (j.trailer.images.maximum_image_url ||
             j.trailer.images.large_image_url)) ||
         "",
+      rel: relations(j.relations),
     };
+  }
+  // MyAnimeList keeps each season as its own entry, linked by Prequel / Sequel; the other
+  // anime links (side stories, spin-offs, movies…) are kept for the panel's "Also" line
+  function relations(list) {
+    if (!list || !list.length) return undefined;
+    var out = { prequel: [], sequel: [], other: [] };
+    list.forEach(function (r) {
+      (r.entry || []).forEach(function (x) {
+        if (x.type !== "anime") return;
+        if (r.relation === "Prequel") out.prequel.push(x.mal_id);
+        else if (r.relation === "Sequel") out.sequel.push(x.mal_id);
+        else if (r.relation !== "Character" && r.relation !== "Other")
+          out.other.push({ id: x.mal_id, name: x.name, relation: r.relation });
+      });
+    });
+    return out;
   }
 
   NEKAI.tenrai = {
@@ -222,6 +240,61 @@
           return p.items.reduce(function (m, ep) { return Math.max(m, ep.n || 0); }, 0);
         });
       });
+    },
+    /* Seasons: walk the Prequel / Sequel links from a show and number the TV (and ONA)
+       entries in order. Movies and specials in between are stepped over. The chain is
+       saved on every season (seasonNo, seasonCount, seasonIds) and reused for a week. */
+    seasons: function (id) {
+      var self = this, S = NEKAI.store, D = NEKAI.data;
+      var cached = S.anime(id);
+      if (cached && cached.seasonsAt && Date.now() - cached.seasonsAt < 7 * 864e5)
+        return Promise.resolve(cached.seasonIds || [Number(id)]);
+      if (seasonJobs[id]) return seasonJobs[id];
+      var isSeason = function (a) { return a.type === "TV" || a.type === "ONA"; };
+      var keepBits = function (a) {
+        // remember enough to show a chip (title, poster, type); curated sample titles keep their names
+        var bits = { id: a.id, type: a.type, image: a.image, year: a.year, rel: a.rel };
+        if (!D.catalog[String(a.id)]) bits.title = a.title;
+        S.cacheAnime(bits);
+      };
+      function walk(start, dir, acc, hops) {
+        var next = start.rel && start.rel[dir][0];
+        if (!next || hops >= 10) return Promise.resolve(acc);
+        return self.full(next).then(function (a) {
+          keepBits(a);
+          if (isSeason(a)) dir === "prequel" ? acc.unshift(a.id) : acc.push(a.id);
+          return walk(a, dir, acc, hops + 1);
+        }).catch(function () { return acc; });
+      }
+      var job = self.full(id).then(function (start) {
+        keepBits(start);
+        if (!isSeason(start)) return [];
+        return walk(start, "prequel", [], 0).then(function (before) {
+          return walk(start, "sequel", [], 0).then(function (after) {
+            var ids = before.concat([start.id], after);
+            ids.forEach(function (sid, i) {
+              S.cacheAnime({ id: sid, seasonNo: i + 1, seasonCount: ids.length, seasonIds: ids, seasonsAt: Date.now() });
+            });
+            return ids;
+          });
+        });
+      });
+      seasonJobs[id] = job;
+      job.then(function () { delete seasonJobs[id]; }, function () { delete seasonJobs[id]; });
+      return job;
+    },
+    /* Find seasons for a list of shows, one at a time (for the S2 / S3 badges) */
+    fillSeasons: function (ids, onEach) {
+      var self = this;
+      var todo = ids.filter(function (id) {
+        var a = NEKAI.store.anime(id);
+        return a && !(a.seasonsAt && Date.now() - a.seasonsAt < 7 * 864e5);
+      }).slice(0, 25);
+      return todo.reduce(function (p, id) {
+        return p.then(function () {
+          return self.seasons(id).then(function () { if (onEach) onEach(id); }).catch(function () {});
+        });
+      }, Promise.resolve());
     },
     /* Fill in real poster images for titles we only have placeholder art for */
     hydrate: function (ids, onEach) {

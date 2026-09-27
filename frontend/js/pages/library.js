@@ -29,7 +29,7 @@
   };
 
   // Pieces shared by the list row and the card
-  function title(e, cls) { return '<h2 class="m-title ' + (cls || "") + '"><a class="title-link" href="' + U.detailsHref(e) + '">' + esc(e.title) + "</a></h2>"; }
+  function title(e, cls) { return '<h2 class="m-title ' + (cls || "") + '"><a class="title-link" href="' + U.detailsHref(e) + '">' + esc(e.title) + "</a>" + U.seasonBadge(e) + "</h2>"; }
   // Rating: a compact "★ 8.4 ⌄" button; it and its pane come from js/core/panes.js
   function rating(e) { return '<div class="m-rate"><span class="m-rate-label">Your rating</span>' + U.ratingBtn(e) + "</div>"; }
   function status(e) { return '<div class="l-status" data-status="' + e.status + '"><label class="sr" for="st-' + e.id + '">Status for ' + esc(e.title) + "</label>" + U.statusSelect(e, "st-" + e.id) + "</div>"; }
@@ -66,7 +66,6 @@
   function render() {
     var c = S.counts(), all = S.ids();
     var label = TABS.filter(function (t) { return t[0] === ui.tab; })[0][1];
-    U.$("#total").textContent = all.length + " anime across your lists. Update progress, ratings and status right here.";
     // Build the tabs once, then update them in place so the selected color can transition
     var tabs = U.$("#tabs");
     if (!tabs.children.length) U.render(tabs, TABS.map(function (t) {
@@ -87,7 +86,7 @@
     var cards = ui.view === "cards";
     bar.hidden = !rows.length;
     bar.classList.toggle("is-cards", cards);
-    U.$$("[data-view]", bar).forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.view === ui.view); });
+    U.$$("[data-view]", U.$("#view-toggle")).forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.view === ui.view); });
     if (rows.length) {
       U.render(panel, cards ? '<div class="card-grid">' + rows.map(card).join("") + "</div>" : rows.map(row).join(""));
     } else {
@@ -109,8 +108,8 @@
   // List / Cards layout toggle, remembered with the other UI preferences
   var bar = U.$("#list-bar");
   U.$("#view-toggle").innerHTML =
-    '<button type="button" class="view-btn" data-view="list" title="List view">' + icon("list", 18, 2.2) + '<span class="sr">List view</span></button>' +
-    '<button type="button" class="view-btn" data-view="cards" title="Card view">' + icon("grid", 18, 2.2) + '<span class="sr">Card view</span></button>';
+    '<button type="button" class="view-btn" data-view="list" title="List view">' + icon("list", 16, 2.2) + '<span class="sr">List view</span></button>' +
+    '<button type="button" class="view-btn" data-view="cards" title="Card view">' + icon("grid", 16, 2.2) + '<span class="sr">Card view</span></button>';
   U.$("#view-toggle").addEventListener("click", function (e) {
     var b = e.target.closest("[data-view]"); if (!b || b.dataset.view === ui.view) return;
     ui.view = b.dataset.view; S.setUi({ libraryView: ui.view }); switched = true; render();
@@ -135,4 +134,6 @@
   S.subscribe(render);
   render();
   var t; NEKAI.tenrai.hydrate(S.ids(), function () { clearTimeout(t); t = setTimeout(render, 250); });
+  // work out which season each show is (for the S2 / S3 badges), a few at a time
+  var ts; NEKAI.tenrai.fillSeasons(S.ids(), function () { clearTimeout(ts); ts = setTimeout(render, 300); });
 })();

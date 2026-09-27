@@ -24,7 +24,8 @@
   color: #faf3e6;
   overflow: hidden;
 }
-.hello::before {
+.hello::before,
+.pf-banner::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -652,6 +653,9 @@
 /* ---------- Continue watching cards ----------
    Same look as the Nekai's Picks cards (.pick-card): white card, light outline,
    inset rounded poster, lift on hover. The counter is Library's soft pill (.library-list). */
+.sec-head + #continue {
+  margin-top: -22px; /* cards sit 12px under the heading, not the section's 24px gap */
+}
 .cw-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));

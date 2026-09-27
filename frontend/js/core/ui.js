@@ -588,6 +588,12 @@
       "</div>"
     );
   }
+  // "S2" badge beside the title of a show's second (third…) season; season 1 has none
+  function seasonBadge(a) {
+    return a && a.seasonNo > 1
+      ? ' <span class="season-badge" title="Season ' + a.seasonNo + '">S' + a.seasonNo + "</span>"
+      : "";
+  }
   // "AIRING" chip for posters of shows that are still coming out
   function airingChip(a) {
     return a && a.airing ? '<span class="air-chip"><i aria-hidden="true"></i>Airing</span>' : "";
@@ -889,7 +895,7 @@
       detailsHref(a) +
       '">' +
       esc(a.title) +
-      "</a></h3></div></div>" +
+      "</a>" + seasonBadge(S.anime(a.id) || a) + "</h3></div></div>" +
       (a.year ? '<p class="m-sub card-sub">' + esc(a.year) + "</p>" : "") +
       '<div class="pick-stats"><span class="pick-score" aria-label="Community score ' +
       a.scoreText +
@@ -1288,6 +1294,7 @@
     art: art,
     stepper: stepper,
     airingChip: airingChip,
+    seasonBadge: seasonBadge,
     stars: stars,
     statusSelect: statusSelect,
     scoreBadge: scoreBadge,

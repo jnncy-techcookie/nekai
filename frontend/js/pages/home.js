@@ -103,7 +103,7 @@
         '<a class="cw-poster" href="' + U.detailsHref(e) + '" tabindex="-1" aria-hidden="true">' + U.art(e, { lg: true }) + "</a>" +
         U.ratingBtn(e) +
         (e.airing ? '<div class="poster-chips">' + U.airingChip(e) + "</div>" : "") +
-        '<div class="cw-cap"><h3 id="cw-h" class="cw-title"><a class="title-link" href="' + U.detailsHref(e) + '">' + esc(e.title) + "</a></h3>" +
+        '<div class="cw-cap"><h3 id="cw-h" class="cw-title"><a class="title-link" href="' + U.detailsHref(e) + '">' + esc(e.title) + "</a>" + U.seasonBadge(e) + "</h3>" +
           (e.jp ? '<p class="cw-jp" lang="ja">' + esc(e.jp) + "</p>" : "") + "</div>" +
       "</div>" +
       '<div class="cw-body">' +
@@ -165,7 +165,7 @@
       // the title sits on a fade at the bottom of the poster, so a second line grows up into it
       '<div class="cw-card-media has-cap"><a class="pick-hit" href="' + U.detailsHref(e) + '" tabindex="-1" aria-hidden="true">' + U.art(e) + "</a>" +
         '<div class="poster-chips"><span class="cw-ep">EP ' + next + "</span>" + U.airingChip(e) + "</div>" +
-        '<div class="card-cap"><h3 class="pick-title"><a class="title-link" href="' + U.detailsHref(e) + '">' + esc(e.title) + "</a></h3></div></div>" +
+        '<div class="card-cap"><h3 class="pick-title"><a class="title-link" href="' + U.detailsHref(e) + '">' + esc(e.title) + "</a>" + U.seasonBadge(e) + "</h3></div></div>" +
       (e.year ? '<p class="m-sub card-sub">' + esc(e.year) + "</p>" : "") +
       (tags ? '<div class="pick-tags" role="list" aria-label="Genres">' + tags + "</div>" : "") +
       // the progress text is gone, so the bar carries it for screen readers
@@ -206,6 +206,12 @@
         render();
       }).catch(function () {});
     });
+
+  // Work out which season each show you're watching is (for the S2 / S3 badges)
+  var seasonsPending;
+  NEKAI.tenrai.fillSeasons(S.ids(function (e) { return e.status === "watching"; }), function () {
+    clearTimeout(seasonsPending); seasonsPending = setTimeout(render, 300);
+  });
 
   // Swap placeholder art for real posters from Tenrai, a few at a time
   var pending;

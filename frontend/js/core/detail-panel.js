@@ -90,38 +90,49 @@
         : e.statusText
           ? "Finished"
           : "";
-    // Each cell: a small label (what the number is), the value, and optional detail underneath
-    var cell = function (ic, label, top, sub) {
+    // Four quiet fields: a small label, the value with its icon beside it, and a detail line
+    // (kept even when empty, so every value sits at the same height)
+    var cell = function (label, value, sub, extra, prefix) {
       return (
-        '<div class="dp-stat">' +
-        ic +
-        '<div><span class="dp-label">' +
-        esc(label) +
-        "</span><strong>" +
-        esc(top) +
-        "</strong>" +
-        (sub ? "<span>" + esc(sub) + "</span>" : "") +
-        "</div></div>"
+        '<div class="dp-stat' + (extra ? " " + extra : "") + '">' +
+        '<span class="dp-label">' + esc(label) + "</span>" +
+        '<strong class="dp-val">' + (prefix || "") + esc(value) + "</strong>" +
+        '<span class="dp-sub">' + (sub ? esc(sub) : "&nbsp;") + "</span>" +
+        "</div>"
       );
     };
     return (
       '<div class="dp-stats">' +
-      cell(
-        U.star(22, "#F25C05"),
-        "Score",
-        e.scoreText,
-        e.members ? compact(e.members) + " members" : "",
-      ) +
-      cell(icon("tv", 20, 2.2), "Type", e.type || "TV", "") +
-      cell(
-        icon("film", 20, 2.2),
-        "Episodes",
-        e.episodes ? String(e.episodes) : "?",
-        "",
-      ) +
-      cell(icon("calendar", 20, 2.2), "Year", e.year || "–", status) +
+      cell("Score", e.scoreText, e.members ? compact(e.members) + " members" : "Not rated yet", "is-score", U.star(16, "#F25C05")) +
+      cell("Type", e.type || "TV", "", "", icon("tv", 14, 2.4)) +
+      cell("Episodes", e.episodes ? e.episodes.toLocaleString("en-US") : e.ongoing && e.aired ? e.aired.toLocaleString("en-US") : "?", e.episodes ? "" : e.airing ? "so far" : "", "", icon("film", 14, 2.4)) +
+      cell("Year", e.year || "–", status, e.airing ? "is-airing" : "", icon("calendar", 14, 2.4)) +
       "</div>"
     );
+  }
+  // Seasons: one chip per season in order. The one you're viewing is orange; seasons you've
+  // completed are muted grey with a check; one you're watching (not this one) has an orange dot
+  function seasons(e) {
+    var ids = e.seasonIds || [];
+    var chips = ids.map(function (sid, i) {
+      var s = S.entry(sid) || {};
+      var here = Number(sid) === Number(e.id);
+      var cls = here ? " is-current" : s.status === "completed" ? " is-done" : "";
+      var mark = s.status === "completed" ? icon("check", 14, 3)
+        : s.status === "watching" && !here ? '<span class="dp-season-dot" aria-hidden="true"></span>' : "";
+      var said = s.status === "completed" ? ", completed" : s.status === "watching" ? ", watching" : "";
+      return '<a class="dp-season' + cls + '" href="#anime-' + sid + '"' + (here ? ' aria-current="true"' : "") +
+        ' title="' + esc(s.title || "Season " + (i + 1)) + '" aria-label="Season ' + (i + 1) + said + '">' + mark + "Season " + (i + 1) + "</a>";
+    }).join("");
+    // "Also: Side Story · Summary · Summary 2": numbered when a kind repeats; the real name shows on hover
+    var seen = {};
+    var also = ((e.rel && e.rel.other) || []).slice(0, 4).map(function (o) {
+      seen[o.relation] = (seen[o.relation] || 0) + 1;
+      var label = o.relation + (seen[o.relation] > 1 ? " " + seen[o.relation] : "");
+      return '<a href="#anime-' + o.id + '" title="' + esc(o.name) + '">' + esc(label) + "</a>";
+    });
+    return '<div class="dp-seasons">' + chips + "</div>" +
+      (also.length ? '<p class="dp-also">Also: ' + also.join('<span aria-hidden="true"> · </span>') + "</p>" : "");
   }
   function synopsis(e) {
     if (!e.synopsis)
@@ -168,29 +179,25 @@
         "Add to Library</button></div>"
       );
     }
-    // Episodes, then Status, then Your rating, then the review
+    // Status and your rating side by side, then episodes, then your review
     return (
+      '<div class="dp-lib-row">' +
+        '<div class="dp-field dp-grow"><label class="dp-field-label" for="dp-st">Status</label>' +
+        '<div class="l-status" data-status="' + e.status + '">' + U.statusSelect(e, "dp-st") + "</div></div>" +
+        '<div class="dp-field"><span class="dp-field-label">Rating</span>' + U.ratingBtn(e) + "</div>" +
+      "</div>" +
       '<div class="dp-field"><span class="dp-field-label" id="dp-eps-label">Episodes</span>' +
-      '<div class="dp-prog" role="group" aria-labelledby="dp-eps-label">' +
-      U.stepper(e) +
-      "</div></div>" +
-      '<div class="dp-field"><label class="dp-field-label" for="dp-st">Status</label>' +
-      '<div class="ac-foot"><div class="l-status" data-status="' +
-      e.status +
-      '">' +
-      U.statusSelect(e, "dp-st") +
-      "</div>" +
-      '<button type="button" class="m-del" data-act="remove" data-id="' +
-      e.id +
-      '" aria-label="Remove ' +
-      esc(e.title) +
-      ' from your list" title="Remove from list">' +
-      icon("trash", 18) +
-      "</button></div></div>" +
-      '<div class="m-rate"><span class="m-rate-label">Your rating</span>' +
-      U.stars(e) +
-      "</div>" +
+      '<div class="dp-prog" role="group" aria-labelledby="dp-eps-label">' + U.stepper(e) + "</div></div>" +
       review(e)
+    );
+  }
+  // The "Your library" card: your own space, softly raised, headed like the panel's other sections
+  function libraryCard(e) {
+    return (
+      '<section class="dp-lib" aria-labelledby="dp-lib-h">' +
+      '<h3 id="dp-lib-h" class="dp-h">Your library</h3>' +
+      watchlist(e) +
+      "</section>"
     );
   }
   // Review text box: holds the saved review until you type (st.reviewDraft stays null until then)
@@ -209,19 +216,15 @@
     var draft = reviewDraft(e),
       off = reviewChanged(e) ? "" : " disabled";
     return (
-      '<div class="dp-field"><label class="dp-field-label" for="dp-review">Your review</label>' +
-      '<textarea id="dp-review" class="input dp-review-text" rows="4" maxlength="2000" aria-describedby="dp-review-count" placeholder="What did you think? Favorite moments, characters, how it made you feel…">' +
+      '<div class="dp-field"><div class="dp-field-head"><label class="dp-field-label" for="dp-review">Your review</label>' +
+      '<span id="dp-review-count" class="dp-count">' + reviewCount(draft) + "</span></div>" +
+      '<textarea id="dp-review" class="dp-review-text" rows="4" maxlength="2000" aria-describedby="dp-review-count" placeholder="What did you think? Favorite moments, characters, how it made you feel…">' +
       esc(draft) +
       "</textarea>" +
-      '<span id="dp-review-count" class="small muted semibold">' +
-      reviewCount(draft) +
-      "</span>" +
-      '<div class="row gap-8"><button type="button" id="dp-review-save" class="btn btn-primary"' +
-      off +
-      ">Save review</button>" +
-      '<button type="button" id="dp-review-cancel" class="btn btn-ghost"' +
-      off +
-      ">Cancel</button></div></div>"
+      // Save / Cancel are dimmed until the review differs from what's saved
+      '<div class="dp-review-actions">' +
+      '<button type="button" id="dp-review-cancel" class="btn btn-ghost"' + off + ">Cancel</button>" +
+      '<button type="button" id="dp-review-save" class="btn btn-primary"' + off + ">Save review</button></div></div>"
     );
   }
   function info(e) {
@@ -251,6 +254,8 @@
       "</dl>"
     );
   }
+  var FULLSCREEN_ICON =
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path></svg>';
   function trailer(e) {
     if (!e.trailer)
       return (
@@ -262,13 +267,20 @@
             : "No trailer on MyAnimeList yet.") +
         "</p>"
       );
+    var yt = "https://www.youtube.com/watch?v=" + encodeURIComponent(e.trailer);
     if (st.trailerOn)
       return (
-        '<div class="trailer"><iframe src="https://www.youtube-nocookie.com/embed/' +
+        '<div class="dp-trailer">' +
+        // fullscreen is granted to the player; our own Full screen button works even where YouTube's is blocked
+        '<div class="trailer" id="dp-trailer-frame"><iframe src="https://www.youtube-nocookie.com/embed/' +
         encodeURIComponent(e.trailer) +
         '?autoplay=1&rel=0" title="' +
         esc(e.title) +
-        ' trailer" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>'
+        ' trailer" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>' +
+        '<div class="dp-trailer-bar">' +
+        '<button type="button" class="dp-trailer-btn" id="dp-trailer-fs">' + FULLSCREEN_ICON + "Full screen</button>" +
+        '<a class="dp-trailer-btn" href="' + yt + '" target="_blank" rel="noopener">' + icon("external", 16, 2.2) + "Watch on YouTube</a>" +
+        "</div></div>"
       );
     return (
       '<button type="button" class="trailer" id="dp-play" aria-label="Play the official trailer for ' +
@@ -277,9 +289,8 @@
       (e.trailerThumb
         ? '<img class="trailer-thumb" src="' + esc(e.trailerThumb) + '" alt="">'
         : "") +
-      '<span class="trailer-play">' +
-      icon("playc", 28, 2) +
-      "Play trailer</span></button>"
+      '<span class="dp-play-btn" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"></path></svg></span>' +
+      '<span class="dp-trailer-cap" aria-hidden="true"><strong>Official trailer</strong><span>YouTube</span></span></button>'
     );
   }
   var EPISODE_PAGE_SIZE = 50;
@@ -317,8 +328,8 @@
           next = e.inList && !watched && x.n === e.watched + 1;
         return (
           '<li class="dp-ep' +
-          (watched ? " watched" : "") +
-          '"><span class="dp-ep-n" aria-hidden="true">' +
+          (watched ? " watched" : next ? " next" : "") +
+          '"><span class="dp-ep-n" aria-hidden="true">E' +
           x.n +
           "</span>" +
           '<div style="min-width:0"><p class="dp-ep-t">' +
@@ -341,7 +352,7 @@
           ) +
           "</div>" +
           (watched
-            ? '<span class="dp-ep-tag done">✓ Watched</span>'
+            ? '<span class="dp-ep-check" role="img" aria-label="Watched">' + icon("check", 14, 3) + "</span>"
             : next
               ? '<span class="dp-ep-tag">Up next</span>'
               : "") +
@@ -392,14 +403,19 @@
           : U.art(e, { noImg: true })) +
         "</div>" +
         '<div class="dp-pad">' +
-        '<div class="dp-head"><h2 id="dp-title" class="dp-title">' +
+        // poster overlapping the banner, title beside it (the AniList / Letterboxd header pattern)
+        '<div class="dp-head"><div class="dp-poster" aria-hidden="true">' +
+        (e.image ? '<img src="' + esc(e.image) + '" alt="">' : U.art(e, { noImg: true })) +
+        '</div><div class="dp-head-text"><h2 id="dp-title" class="dp-title">' +
         esc(e.title) +
         "</h2>" +
         (e.jp ? '<p class="dp-jp">' + esc(e.jp) + "</p>" : "") +
-        "</div>" +
+        (e.seasonCount > 1 ? '<p class="dp-season-of">Season ' + e.seasonNo + " of " + e.seasonCount + "</p>" : "") +
+        "</div></div>" +
         stats(e) +
+        (e.seasonIds && e.seasonIds.length > 1 ? section("Seasons", seasons(e)) : "") +
         (e.genres.length
-          ? '<div class="dp-genres"><span class="dp-label">Genres</span><div class="dp-tags">' +
+          ? '<div class="dp-genres"><h3 class="dp-h">Genres</h3><div class="dp-tags">' +
             e.genres
               .map(function (g) {
                 return '<span class="dp-tag">' + esc(g) + "</span>";
@@ -408,7 +424,7 @@
             "</div></div>"
           : "") +
         section("Synopsis", synopsis(e)) +
-        section("Your Library", watchlist(e)) +
+        libraryCard(e) +
         section("Details", info(e)) +
         section("Trailer", trailer(e)) +
         section(
@@ -448,6 +464,9 @@
           st.loading = false;
           render();
         }
+        return J.seasons(id).then(function () {
+          if (st && st.id === id) render();
+        }).catch(function () {});
       });
     var current = st;
     loadEpisodes(id, 1).then(function (ok) {
@@ -615,6 +634,12 @@
     if (t.id === "dp-more") {
       st.more = !st.more;
       render();
+    }
+    if (t.id === "dp-trailer-fs") {
+      var frame = document.getElementById("dp-trailer-frame");
+      var go = frame && (frame.requestFullscreen || frame.webkitRequestFullscreen);
+      if (go) go.call(frame);
+      return;
     }
     if (t.id === "dp-play") {
       st.trailerOn = true;

@@ -18,6 +18,7 @@
   <script src="js/services/tenrai.js" defer blocking="render"></script>
   <script src="js/core/ui.js" defer blocking="render"></script>
   <script src="js/core/lolli.js" defer blocking="render"></script>
+  <script src="js/core/panes.js" defer blocking="render"></script>
   <script src="js/core/detail-panel.js" defer blocking="render"></script>
   <script src="js/pages/profile.js" defer blocking="render"></script>
 </head>
@@ -25,28 +26,35 @@
   <div class="app">
     <main id="main" class="main tight" tabindex="-1">
       <noscript><p class="notice">NEKAI needs JavaScript turned on to load your profile.</p></noscript>
-      <div class="page-head">
-        <div class="page-title"><h1 class="h1 display-title">Profile</h1><span class="jp-tag" aria-hidden="true">プロフィール</span></div>
-        <p class="body muted">Your viewing record, level and achievements.</p>
-      </div>
+      <!-- Profile, after Letterboxd's pattern: a banner header with the avatar, name and a
+           strip of headline numbers; posters and achievements in the main column; level,
+           genres and your library in a narrow sidebar -->
+      <h1 class="sr">Profile</h1>
+      <section id="me" class="pf-hero" aria-labelledby="me-h"></section>
 
-      <div class="profile">
-        <div class="stack gap-32">
-          <section id="me" aria-labelledby="me-h" class="card" style="overflow:hidden"></section>
-          <section id="level" aria-labelledby="lv-h" class="card pad-32 stack gap-16" style="background:var(--cream)"></section>
-        </div>
-        <div class="stack gap-32" style="min-width:0">
-          <dl id="stats" class="grid-stats"></dl>
-          <section aria-labelledby="gm-h" class="card pad-32 stack gap-24">
-            <h2 id="gm-h" class="h2 sec-title">Favorite genres</h2>
-            <div id="mix" class="stack gap-24"></div>
-            <p class="caption muted">Based on the genres of anime you’ve started, finished or dropped.</p>
+      <div class="pf-grid">
+        <div class="pf-main">
+          <section aria-labelledby="top-h" class="pf-sec">
+            <div class="sec-head"><h2 id="top-h" class="h2 sec-title">Your top rated</h2><a class="btn btn-ghost ml-auto" href="library.html?tab=all">View Library</a></div>
+            <div id="top" class="pf-posters"></div>
           </section>
-          <section aria-labelledby="ac-h" class="card pad-32 stack gap-24">
+          <section aria-labelledby="ac-h" class="pf-sec">
             <div class="sec-head"><h2 id="ac-h" class="h2 sec-title">Achievements</h2><span id="ach-count" class="small muted semibold ml-auto"></span></div>
-            <ul id="ach" class="ach"></ul>
+            <ul id="ach" class="ach pf-card"></ul>
           </section>
         </div>
+        <aside class="pf-side" aria-label="Level, genres and library">
+          <section id="level" aria-labelledby="lv-h" class="pf-card"></section>
+          <section aria-labelledby="gm-h" class="pf-card">
+            <h2 id="gm-h" class="pf-side-h">Favorite genres</h2>
+            <div id="mix" class="stack gap-16"></div>
+            <p class="caption muted">From the genres of anime you’ve started, finished or dropped.</p>
+          </section>
+          <section aria-labelledby="lib-h" class="pf-card">
+            <h2 id="lib-h" class="pf-side-h">Your Library</h2>
+            <ul id="lib" class="pf-lib"></ul>
+          </section>
+        </aside>
       </div>
     </main>
   </div>

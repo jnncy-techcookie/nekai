@@ -51,9 +51,17 @@
     '<div class="rp-foot"><span id="rp-hint">Drag across the stars, or type 1–10</span><button type="button" class="rp-clear">Clear</button></div>';
   document.body.appendChild(rp);
   var rpInput = rp.querySelector("#rp-input"), rpStars = rp.querySelector(".rp-stars"), rpErr = rp.querySelector("#rp-err");
-  var RP = { id: null, preview: 0, keyTimer: null };
+  var RP = { id: null, preview: 0, keyTimer: null, btn: null, inPanel: false };
 
-  function anchor() { return RP.id ? document.querySelector('[data-rate-open="' + RP.id + '"]') : null; }
+  // The same anime can have two Rate buttons on screen (a Library row and the details panel):
+  // anchor to the one that was clicked, or after a re-render, its replacement in the same place
+  function anchor() {
+    if (!RP.id) return null;
+    if (RP.btn && document.contains(RP.btn)) return RP.btn;
+    var all = Array.prototype.slice.call(document.querySelectorAll('[data-rate-open="' + RP.id + '"]'));
+    RP.btn = all.filter(function (b) { return !!b.closest(".dp") === RP.inPanel; })[0] || all[0] || null;
+    return RP.btn;
+  }
   function paint(v, fromTyping) {
     RP.preview = v;
     Array.prototype.forEach.call(rpStars.children, function (s, i) {
@@ -103,7 +111,7 @@
     var a = anchor();
     clearTimeout(RP.keyTimer);
     if (a) a.setAttribute("aria-expanded", "false");
-    rp.hidden = true; RP.id = null;
+    rp.hidden = true; RP.id = null; RP.btn = null;
     if (returnFocus && a) a.focus({ preventScroll: true });
   }
   function commit(v) {
@@ -164,7 +172,16 @@
 
   document.addEventListener("click", function (ev) {
     var b = ev.target.closest("[data-rate-open]");
-    if (b) { if (RP.id === b.dataset.rateOpen) closeRating(false); else openRating(b.dataset.rateOpen, ev.detail === 0); return; }
+    if (b) {
+      if (RP.id === b.dataset.rateOpen && RP.btn === b) closeRating(false);
+      else {
+        if (RP.id) closeRating(false);
+        RP.btn = b;
+        RP.inPanel = !!b.closest(".dp");
+        openRating(b.dataset.rateOpen, ev.detail === 0);
+      }
+      return;
+    }
     if (RP.id && !rp.contains(ev.target)) closeRating(false);
   });
   document.addEventListener("keydown", function (ev) { if (ev.key === "Escape" && RP.id) { ev.stopPropagation(); closeRating(true); } }, true);
