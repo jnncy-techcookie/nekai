@@ -21,9 +21,13 @@
       .sort(function (a, b) { return b.updatedAt - a.updatedAt; });
   }
 
+  // A brand-new account's first visit: "Welcome," instead of "Welcome back,"
+  var firstVisit = !!S.state.firstHome;
+  U.$(".greet-hello").textContent = firstVisit ? "Welcome," : "Welcome back,";
+  S.seenHome();
   function renderIntro() {
     var c = S.counts(), st = S.streak();
-    U.$("#who").textContent = S.state.profile.name;
+    U.$("#who").textContent = String(S.state.profile.name || "").trim().split(/\s+/)[0]; // first name only
     U.$("#intro-sub").textContent = c.watching + " anime in progress" + (st.current ? " and a " + st.current + "-day watch streak. Keep it going!" : ". Log an episode to start a streak.");
     renderStatus(c);
   }
@@ -153,7 +157,7 @@
   function genreTags(e) {
     return (e.genres || []).slice(0, 3).map(function (g) {
       var c = NEKAI.data.genreColors[g] || { bg: "#EDE4D2", fg: "#4A5378" };
-      return '<span role="listitem" class="gtag" style="background:' + c.bg + ";color:" + c.fg + '">' + esc(g) + "</span>";
+      return '<span role="listitem" class="gtag gtag-' + U.genreTone(c) + '" style="background:' + c.bg + ";color:" + c.fg + '">' + esc(g) + "</span>";
     }).join("");
   }
 
@@ -194,6 +198,11 @@
 
   S.subscribe(render);
   render();
+
+  // A new account (genres picked, nothing added yet): ask for AI picks from those genres now,
+  // so "Picked for you" isn't the generic starter list. Saved picks are reused for a day.
+  var R = NEKAI.recommend;
+  if (R && !S.ids().length && (S.state.favGenres || []).length && !R.fresh()) R.load(false).catch(function () { /* the curated picks stay */ });
 
   // Ongoing shows: fetch how many episodes have aired so far (for the progress bar and counter),
   // refreshed every few hours since a new episode can come out any week

@@ -90,7 +90,7 @@
     if (rows.length) {
       U.render(panel, cards ? '<div class="card-grid">' + rows.map(card).join("") + "</div>" : rows.map(row).join(""));
     } else {
-      U.render(panel, q ? U.emptyState("NO MATCH", "Nothing in " + label + " matches “" + ui.q + "”", "Check the spelling or look in All.", '<button type="button" class="btn btn-secondary" id="clear-q">Clear search</button>')
+      U.render(panel, q ? U.emptyState("NO MATCH", "Nothing in " + label + " matches “" + ui.q + "”", "Check the spelling or look in All.", '<button type="button" class="btn btn-secondary" id="clear-q">Clear search</button>', { icon: "search" })
         : U.emptyState("ALL CLEAR", "No anime in " + label + " yet", EMPTY[ui.tab], '<a class="btn btn-secondary" href="discover.html">Browse Discover</a>'));
     }
     if (switched) {

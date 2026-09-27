@@ -44,7 +44,7 @@
     return Object.keys(list).sort().map(function (id) {
       var note = snippet(list[id].note);
       return id + ":" + list[id].status + ":" + (list[id].rating || 0) + (note ? ":" + hash(note) : "");
-    }).join(",") + "|" + Object.keys(S.state.hidden).sort().join(",");
+    }).join(",") + "|" + Object.keys(S.state.hidden).sort().join(",") + "|" + (S.state.favGenres || []).join(",");
   }
   function fresh() {
     var r = S.state.recs;
@@ -63,6 +63,8 @@
         history: history(),
         exclude: Object.keys(S.state.list).concat(hidden).map(Number).slice(0, 300),
         notInterested: hidden.map(S.anime).filter(Boolean).map(function (a) { return a.title; }).slice(0, 50),
+        // nothing added or rated yet: the genres picked at sign-up are the starting point
+        favoriteGenres: S.ids().length ? [] : (S.state.favGenres || []).slice(0, 3),
       }),
     })
       .then(function (res) {

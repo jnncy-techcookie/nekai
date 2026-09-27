@@ -4,12 +4,165 @@
 .switch-row {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 16px;
   padding-top: 12px;
 }
 .switch-state {
-  width: 32px;
+  width: 28px;
   text-align: right;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 800;
+  color: var(--muted);
+}
+
+/* ---------- Settings page: soft surfaces, no outlines, one size down ---------- */
+.set-page .card {
+  border: 0;
+  border-radius: 18px;
+  box-shadow: 0 2px 10px rgb(var(--shadow-rgb) / 0.06);
+}
+html.theme-dark .set-page .card {
+  box-shadow: var(--dark-ring);
+}
+.set-page .card.pad-24 {
+  padding: 20px 22px;
+}
+.set-page .sec-title {
+  font-size: 19px;
+  line-height: 24px;
+}
+.set-page .sec-title::before {
+  height: 19px;
+}
+.set-page .page-head .body {
+  font-size: 15px;
+}
+/* form fields: a soft filled box, a blue ring on focus */
+.set-page .label {
+  margin-bottom: 4px;
+  font-size: 14px;
+  line-height: 20px;
+}
+.set-page .input {
+  height: 42px;
+  padding: 0 14px;
+  border: 1.5px solid transparent;
+  border-radius: 10px;
+  background: var(--tint);
+  font-size: 15px;
+}
+.set-page textarea.input {
+  height: auto;
+  padding: 10px 14px;
+  line-height: 21px;
+}
+.set-page .input:hover {
+  background: var(--tint-2);
+}
+.set-page .input:focus {
+  outline: 0;
+  border-color: var(--blue);
+  background: var(--white);
+}
+.set-page .input[aria-invalid="true"] {
+  border-color: var(--red-dark);
+  background: var(--peach-tint);
+}
+.set-page .help,
+.set-page .error {
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 18px;
+}
+.set-page .small {
+  font-size: 14px;
+  line-height: 20px;
+}
+/* buttons: filled, no outline, a little smaller */
+.set-page .btn {
+  height: 40px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+.set-page .btn-primary {
+  border-color: transparent;
+}
+.set-danger {
+  color: var(--accent-text);
+}
+.set-danger:hover {
+  background: var(--peach-tint);
+  color: var(--accent-text);
+}
+/* switch rows: smaller titles and hints, a lighter switch without an outline */
+.set-page .switch-row .h3 {
+  font-size: 15px;
+  line-height: 20px;
+}
+.set-page .switch-row .small {
+  font-size: 13px;
+  line-height: 18px;
+}
+.set-page .switch {
+  width: 44px;
+  height: 26px;
+  border: 0;
+}
+.set-page .switch .knob {
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  box-shadow: 0 1px 3px rgb(var(--shadow-rgb) / 0.3);
+}
+.set-page .switch[aria-checked="true"] {
+  background: var(--blue);
+}
+.set-page .switch[aria-checked="true"] .knob {
+  left: 21px;
+  background: #faf3e6;
+}
+.set-page .divider {
+  border-top: 1px solid var(--line); /* a quiet solid rule between switch rows */
+}
+
+/* two stacked columns so no card leaves a gap under a shorter neighbour */
+.set-cols {
+  align-items: start;
+}
+.set-col {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+/* Back to where Settings was opened from */
+.set-back {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 6px;
+  height: 34px;
+  margin-bottom: 12px;
+  padding: 0 12px 0 8px;
+  border-radius: 999px;
+  background: var(--tint);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+.set-back[hidden] {
+  display: none;
+}
+.set-back:hover {
+  background: var(--tint-2);
+  color: var(--ink);
+}
+.set-back:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
 }

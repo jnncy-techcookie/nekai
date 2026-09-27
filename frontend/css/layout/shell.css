@@ -76,6 +76,39 @@ body.paper {
   font-size: 20px;
   line-height: 24px;
 }
+/* the cat logo replaces the old ネ tile */
+.brand-logo {
+  width: 44px;
+  height: 44px;
+  background: none;
+  border-radius: 50%;
+  transform: none;
+}
+.brand-logo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* the NEKAI wordmark image (replaces the typed name) */
+.brand-wordmark {
+  display: inline-flex;
+  align-items: center;
+}
+.brand-wordmark img {
+  display: block;
+  width: auto;
+  height: 24px;
+}
+.brand-logo .logo-d,
+.brand-wordmark .logo-d,
+html.theme-dark .brand-logo .logo-l,
+html.theme-dark .brand-wordmark .logo-l {
+  display: none;
+}
+html.theme-dark .brand-logo .logo-d,
+html.theme-dark .brand-wordmark .logo-d {
+  display: block;
+}
 .brand-word {
   font-family: "Dela Gothic One", sans-serif;
   font-size: 24px;
@@ -203,8 +236,8 @@ body.paper {
   line-height: 24px;
   font-weight: 700;
   box-shadow:
-    0 12px 28px rgba(15, 31, 92, 0.24),
-    0 2px 6px rgba(15, 31, 92, 0.12);
+    0 12px 28px rgb(var(--shadow-rgb) / 0.24),
+    0 2px 6px rgb(var(--shadow-rgb) / 0.12);
   animation: toastIn 0.32s cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
 }
 .toast-msg {
@@ -288,7 +321,7 @@ body.paper {
 .side-sep{margin:4px 0;border:0;border-top:1.5px solid var(--line)}
 .side-me{padding:0 8px;gap:16px}
 .side-logout{width:100%;background:transparent;font-family:inherit;color:var(--muted);cursor:pointer}
-.side-logout:hover{background:#FFE0CC;color:var(--red-dark)}
+.side-logout:hover{background:var(--peach-tint);color:var(--accent-text)}
 /* Collapsed: the profile circle shrinks to icon size */
 .side.is-collapsed .side-me{height:48px;padding:0 12px}
 .side.is-collapsed .avatar{width:24px;height:24px;border-width:1.5px}
@@ -296,7 +329,7 @@ body.paper {
 
 /* Collapse button: a plain icon like the nav items (no outline or white fill), same 24px icon */
 .side-toggle{border:0;border-radius:10px;background:transparent;transition:background-color .12s ease}
-.side-toggle:hover{background:rgba(15,31,92,.08)}
+.side-toggle:hover{background:rgb(var(--ink-rgb) / .08)}
 /* Collapsed rail: icons sit closer together */
 .side.is-collapsed{gap:12px}
 .side.is-collapsed .side-head{gap:4px}
@@ -392,8 +425,8 @@ body.paper {
     outline: none;
     background-color: var(--paper);
     background-image:
-      linear-gradient(#e8dec9 1px, transparent 1px),
-      linear-gradient(90deg, #e8dec9 1px, transparent 1px);
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
     background-size: 32px 32px;
     background-position: -1px -1px;
     background-attachment: local; /* the grid scrolls with the content */
@@ -412,4 +445,66 @@ body.paper {
   .opt-strong .app > .main {
     box-shadow: inset 0 0 0 1.5px var(--ink);
   }
+}
+
+/* Dark mode toggle in the sidebar: icon, label and a small switch on the right */
+.side-theme {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  color: var(--ink);
+  cursor: pointer;
+}
+.side-theme:hover {
+  background: rgb(var(--ink-rgb) / 0.06);
+}
+.theme-ico {
+  display: inline-flex;
+}
+.side-switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 34px;
+  height: 20px;
+  margin-left: auto;
+  border-radius: 999px;
+  background: var(--tint-2);
+  transition: background-color 0.2s ease;
+}
+.side-switch span {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--white);
+  box-shadow: 0 1px 3px rgb(var(--shadow-rgb) / 0.3);
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.side-theme[aria-pressed="true"] .side-switch {
+  background: var(--blue);
+}
+.side-theme[aria-pressed="true"] .side-switch span {
+  transform: translateX(14px);
+  background: #faf3e6;
+}
+.side.is-collapsed .side-switch {
+  display: none;
+}
+.side-theme:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+/* while switching themes, colors ease over instead of snapping */
+html.theme-anim,
+html.theme-anim *,
+html.theme-anim *::before,
+html.theme-anim *::after {
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease !important;
 }

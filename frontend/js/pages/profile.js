@@ -46,12 +46,14 @@
           '<h2 id="me-h" class="pf-name">' + esc(p.name) + "</h2>" +
           '<p class="pf-handle">@' + esc(p.handle) + " · Member since " + p.since + "</p>" +
           (p.bio ? '<p class="pf-bio">' + esc(p.bio) + "</p>" : "") +
-          '<div class="row gap-8">' + top.map(function (g, i) { return '<span class="tag" style="background:' + tagCols[i][0] + ";color:" + tagCols[i][1] + '">' + esc(g.name) + "</span>"; }).join("") + "</div>" +
         "</div>" +
-        '<div class="pf-actions"><a class="btn btn-secondary" href="settings.html">' + icon("edit", 18) + "Edit profile</a>" +
-        '<button type="button" id="share" class="btn btn-secondary">' + icon("share", 18) + "Share list</button></div>" +
+        '<div class="pf-actions"><a class="btn btn-soft" href="settings.html">' + icon("edit", 18) + "Edit profile</a>" +
+        '<button type="button" id="share" class="btn btn-soft">' + icon("share", 18) + "Share list</button></div>" +
       "</div>" +
-      '<dl class="pf-nums">' + nums.map(function (n) { return "<div><dd>" + n[0] + "</dd><dt>" + n[1] + "</dt></div>"; }).join("") + "</dl>";
+      '<dl class="pf-nums">' + nums.map(function (n) { return "<div><dd>" + n[0] + "</dd><dt>" + n[1] + "</dt></div>"; }).join("") +
+        // top genres fill the rest of the strip, right after Best streak
+        (top.length ? '<div class="pf-nums-genres"><dd>' + top.map(function (g, i) { return '<span class="tag" style="background:' + tagCols[i][0] + ";color:" + tagCols[i][1] + '">' + esc(g.name) + "</span>"; }).join("") + "</dd><dt>Top genres</dt></div>" : "") +
+      "</dl>";
 
     // your five top rated
     var rated = entries.filter(function (e) { return e.rating > 0; })
@@ -78,7 +80,7 @@
       return '<li class="' + (a.earned ? "" : "locked") + '"><span class="ach-badge" aria-hidden="true" style="' + (a.earned ? "background:" + a.bg + ";color:" + (a.bg === "#1F3FA6" ? "#FFFBF2" : "#0F1F5C") : "") + '">' + esc(a.glyph) +
         (a.earned ? "" : '<span class="ach-lock">' + icon("lock", 12, 2.6) + "</span>") + "</span>" +
         '<span class="small bold">' + esc(a.name) + '</span><span class="caption muted" style="font-weight:500">' + esc(a.desc) + "</span>" +
-        (a.earned ? '<span class="pf-earned">' + icon("check", 12, 3) + "Earned</span>" : '<span class="caption bold" style="color:var(--blue)">' + esc(a.progress) + "</span>") + "</li>";
+        (a.earned ? '<span class="pf-earned">' + icon("check", 12, 3) + "Earned</span>" : '<span class="caption bold" style="color:var(--blue-text)">' + esc(a.progress) + "</span>") + "</li>";
     }).join("");
   }
 

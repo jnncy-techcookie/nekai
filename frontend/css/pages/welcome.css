@@ -1,0 +1,329 @@
+/* =========================================================
+   WELCOME: a new account picks 3 genres
+   A single card on the graph paper: a seigaiha band across the top, the question in the
+   display face, and a grid of genre tiles, each with its genre icon. Picked tiles fill
+   orange with their order (1, 2, 3); a bar at the bottom fills as you go.
+   ========================================================= */
+.ob {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 32px 16px 48px;
+}
+.ob-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ob-card {
+  position: relative;
+  width: min(100%, 920px);
+  overflow: hidden;
+  padding: 0 32px 28px;
+  border-radius: 24px;
+  background: var(--white);
+  box-shadow: 0 12px 40px rgb(var(--shadow-rgb) / 0.1);
+}
+html.theme-dark .ob-card {
+  box-shadow: var(--dark-ring), 0 16px 48px rgb(0 0 0 / 0.4);
+}
+/* the seigaiha band across the top, like the Home welcome banner */
+.ob-card::before {
+  content: "";
+  display: block;
+  height: 72px;
+  margin: 0 -32px 28px;
+  --wf: var(--blue); /* wave fill */
+  --wl: #3553b8; /* wave line, a shade lighter */
+  background-color: var(--wf);
+  background-image:
+    radial-gradient(circle at 100% 150%, var(--wf) 24%, var(--wl) 24%, var(--wl) 28%, var(--wf) 28%, var(--wf) 36%, var(--wl) 36%, var(--wl) 40%, transparent 40%, transparent),
+    radial-gradient(circle at 0 150%, var(--wf) 24%, var(--wl) 24%, var(--wl) 28%, var(--wf) 28%, var(--wf) 36%, var(--wl) 36%, var(--wl) 40%, transparent 40%, transparent),
+    radial-gradient(circle at 50% 100%, var(--wl) 10%, var(--wf) 10%, var(--wf) 23%, var(--wl) 23%, var(--wl) 30%, var(--wf) 30%, var(--wf) 43%, var(--wl) 43%, var(--wl) 50%, var(--wf) 50%, var(--wf) 63%, var(--wl) 63%, var(--wl) 71%, transparent 71%, transparent),
+    radial-gradient(circle at 100% 50%, var(--wl) 5%, var(--wf) 5%, var(--wf) 15%, var(--wl) 15%, var(--wl) 20%, var(--wf) 20%, var(--wf) 29%, var(--wl) 29%, var(--wl) 34%, var(--wf) 34%, var(--wf) 44%, var(--wl) 44%, var(--wl) 49%, transparent 49%, transparent),
+    radial-gradient(circle at 0 50%, var(--wl) 5%, var(--wf) 5%, var(--wf) 15%, var(--wl) 15%, var(--wl) 20%, var(--wf) 20%, var(--wf) 29%, var(--wl) 29%, var(--wl) 34%, var(--wf) 34%, var(--wf) 44%, var(--wl) 44%, var(--wl) 49%, transparent 49%, transparent);
+  background-size: 64px 32px;
+}
+
+.ob-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 24px;
+}
+.ob-kicker {
+  margin: 0;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+.ob-title {
+  margin: 0;
+  font-size: 44px;
+  line-height: 48px;
+  color: var(--ink);
+}
+.ob-sub {
+  margin: 0;
+  max-width: 560px;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--muted);
+}
+
+/* ---------- genre tiles ---------- */
+.ob-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.ob-g {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 76px;
+  padding: 12px;
+  border: 1.5px solid transparent;
+  border-radius: 16px;
+  background: var(--tint);
+  color: var(--ink);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.18s ease;
+}
+.ob-g:hover {
+  transform: translateY(-2px);
+  border-color: var(--line);
+}
+.ob-g:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+/* the genre's icon on a small rounded square in the tile's tone */
+.ob-stamp {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  transform: rotate(-4deg);
+  transition: transform 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+}
+.tone-0 .ob-stamp {
+  background: var(--blue-tint);
+  color: var(--blue-text);
+}
+.tone-1 .ob-stamp {
+  background: var(--peach-tint);
+  color: var(--accent-text);
+}
+.tone-2 .ob-stamp {
+  background: var(--blue-tint);
+  color: var(--blue-deep-text);
+}
+.tone-3 .ob-stamp {
+  background: var(--peach-tint);
+  color: var(--red-dark);
+}
+html.theme-dark .tone-3 .ob-stamp {
+  color: var(--accent-text);
+}
+.ob-g-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.ob-g-name {
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 800;
+}
+.ob-g-hint {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  color: var(--muted);
+}
+/* picked: orange fill, navy stamp, its order in the corner */
+.ob-g[aria-pressed="true"] {
+  background: var(--yellow);
+  border-color: var(--yellow);
+  color: var(--navy);
+  transform: translateY(-2px);
+}
+.ob-g[aria-pressed="true"] .ob-stamp {
+  background: var(--navy);
+  color: #faf3e6;
+  transform: rotate(0deg) scale(1.04);
+}
+.ob-g[aria-pressed="true"] .ob-g-hint {
+  color: rgb(15 31 92 / 0.72);
+}
+.ob-order {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #faf3e6;
+  font-size: 12px;
+  font-weight: 800;
+  animation: obPop 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.4);
+}
+@keyframes obPop {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+}
+/* three picked: the rest step back until one is un-picked */
+.ob-g[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.ob-g[aria-disabled="true"]:hover {
+  transform: none;
+  border-color: transparent;
+}
+
+/* ---------- footer: progress + continue ---------- */
+.ob-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+.ob-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1 1 240px;
+  min-width: 0;
+  max-width: 360px;
+}
+.ob-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--tint-2);
+  overflow: hidden;
+}
+.ob-bar span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--red);
+  transition: width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.ob-count {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.ob-go {
+  height: 48px;
+  padding: 0 22px;
+  border-color: transparent;
+  font-size: 15px;
+}
+.ob-go svg {
+  margin-left: 2px;
+}
+
+@media (max-width: 860px) {
+  .ob-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .ob {
+    padding: 20px 12px 32px;
+    gap: 16px;
+  }
+  .ob-card {
+    padding: 0 18px 20px;
+    border-radius: 20px;
+  }
+  .ob-card::before {
+    height: 56px;
+    margin: 0 -18px 20px;
+  }
+  .ob-title {
+    font-size: 32px;
+    line-height: 36px;
+  }
+  .ob-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .ob-g {
+    min-height: 68px;
+    gap: 10px;
+    padding: 10px;
+  }
+  .ob-stamp {
+    width: 40px;
+    height: 40px;
+  }
+  .ob-stamp svg {
+    width: 20px;
+    height: 20px;
+  }
+  .ob-g-hint {
+    display: none;
+  }
+  .ob-foot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .ob-progress {
+    max-width: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ob-g,
+  .ob-stamp,
+  .ob-bar span {
+    transition: none;
+  }
+  .ob-g:hover,
+  .ob-g[aria-pressed="true"] {
+    transform: none;
+  }
+  .ob-order {
+    animation: none;
+  }
+}
+.opt-reduce-motion .ob-g,
+.opt-reduce-motion .ob-g[aria-pressed="true"],
+.opt-reduce-motion .ob-g:hover {
+  transform: none;
+}
+.opt-reduce-motion .ob-order {
+  animation: none;
+}

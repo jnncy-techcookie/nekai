@@ -69,8 +69,11 @@
         motion: false,
         text: false,
         contrast: false,
+        dark: false,
       },
       signedIn: true,
+      favGenres: [], // the 3 genres picked at sign-up: the AI's starting point before any history
+      onboarding: false, // true from sign-up until those genres are picked
     };
   }
 
@@ -440,6 +443,41 @@
       Object.assign(state.profile, patch);
       emit();
     },
+    /* A brand-new account: an empty library, the new profile, and the genre picker still to do.
+       The previous data in this browser is kept under a backup key. Settings carry over. */
+    startFresh: function (profile) {
+      try {
+        var prev = localStorage.getItem(KEY);
+        if (prev) localStorage.setItem(KEY + ":backup", prev);
+      } catch (e) {}
+      var settings = state.settings, cache = state.anime;
+      state = seed();
+      state.list = {};
+      state.log = {};
+      state.earned = {};
+      state.hidden = {};
+      state.recs = null;
+      state.anime = cache;
+      state.settings = settings;
+      Object.assign(state.profile, { bio: "" }, profile);
+      state.favGenres = [];
+      state.onboarding = true;
+      state.firstHome = true; // Home greets with "Welcome," once, then "Welcome back,"
+      state.signedIn = true;
+      save();
+    },
+    // Home has greeted a new account once
+    seenHome: function () {
+      if (!state.firstHome) return;
+      state.firstHome = false;
+      save();
+    },
+    // The genres picked at sign-up (finishes onboarding)
+    setFavGenres: function (list) {
+      state.favGenres = list.slice(0, 3);
+      state.onboarding = false;
+      emit();
+    },
     setSignedIn: function (v) {
       state.signedIn = v;
       save();
@@ -665,7 +703,12 @@
           }
         });
       });
-      if (!total) return 50;
+      if (!total) {
+        var fav = state.favGenres || [];
+        if (!fav.length) return 50;
+        var hits = (a.genres || []).filter(function (g) { return fav.indexOf(g) >= 0; }).length;
+        return [48, 68, 80, 90][Math.min(3, hits)];
+      }
       // Overlap: how much of your viewing the title's genres cover, relative to your top three genres
       var top3 = Object.keys(count)
         .map(function (g) {

@@ -68,8 +68,9 @@
     setTimeout(function () {
       var patch = { email: em.value.trim() };
       if (mode === "register") { patch.name = nm.value.trim(); patch.handle = nm.value.trim().toLowerCase().replace(/[^a-z0-9]+/g, ""); patch.since = new Date().getFullYear(); }
+      if (mode === "register") { S.startFresh(patch); location.href = "welcome.html"; return; }
       S.setProfile(patch); S.setSignedIn(true);
-      location.href = "index.html";
+      location.href = S.state.onboarding ? "welcome.html" : "index.html";
     }, 600);
   });
 

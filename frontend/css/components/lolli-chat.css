@@ -11,8 +11,8 @@
 /* ---------- floating button ---------- */
 .lolli-fab {
   position: fixed;
-  right: 24px;
-  bottom: 24px;
+  right: 36px;
+  bottom: 36px;
   z-index: 46;
   display: grid;
   place-items: center;
@@ -21,23 +21,23 @@
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: var(--pink);
+  background: transparent; /* the robot itself is the button, like a sticker */
   color: var(--ink);
   cursor: pointer;
-  box-shadow:
-    0 10px 24px rgba(15, 31, 92, 0.22),
-    0 2px 6px rgba(15, 31, 92, 0.12);
+  filter:
+    drop-shadow(0 0 10px rgba(247, 130, 58, 0.45))
+    drop-shadow(0 8px 14px rgb(var(--shadow-rgb) / 0.22));
   transition:
     transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
-    box-shadow 0.2s ease,
+    filter 0.2s ease,
     background-color 0.2s ease,
     opacity 0.16s ease 0.14s; /* after closing: reappears as the chat shrinks into it */
 }
 .lolli-fab:hover {
-  transform: translateY(-3px) scale(1.04);
-  box-shadow:
-    0 14px 30px rgba(15, 31, 92, 0.26),
-    0 3px 8px rgba(15, 31, 92, 0.14);
+  transform: translateY(-3px) scale(1.06);
+  filter:
+    drop-shadow(0 0 16px rgba(247, 130, 58, 0.6))
+    drop-shadow(0 12px 18px rgb(var(--shadow-rgb) / 0.26));
 }
 .lolli-fab:active {
   transform: scale(0.95);
@@ -48,6 +48,40 @@
 }
 .lolli-fab-face {
   display: inline-flex;
+}
+.lolli-fab-face .lolli-img {
+  width: 64px;
+  height: 64px;
+}
+html.theme-dark .lolli-fab {
+  filter:
+    drop-shadow(0 0 12px rgba(255, 162, 92, 0.55))
+    drop-shadow(0 0 28px rgba(255, 162, 92, 0.22));
+}
+html.theme-dark .lolli-fab:hover {
+  filter:
+    drop-shadow(0 0 16px rgba(255, 162, 92, 0.75))
+    drop-shadow(0 0 34px rgba(255, 162, 92, 0.3));
+}
+/* floating: while the chat is closed, Lolli drifts gently up and down */
+.lolli-fab-face {
+  animation: lolliFloat 4s ease-in-out infinite;
+}
+@keyframes lolliFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+.lchat-open .lolli-fab-face,
+.opt-reduce-motion .lolli-fab-face {
+  animation: none;
+}
+.lolli-img {
+  display: block;
 }
 /* while the chat is open, the button shrinks away: the chat takes its corner */
 .lchat-open .lolli-fab {
@@ -62,8 +96,8 @@
 /* ---------- chat box: grows out of the button ---------- */
 .lchat {
   position: fixed;
-  right: 24px;
-  bottom: 24px; /* the same corner as the Lolli button */
+  right: 36px;
+  bottom: 36px; /* the same corner as the Lolli button */
   z-index: 47;
   display: flex;
   flex-direction: column;
@@ -71,10 +105,10 @@
   height: min(600px, calc(100vh - 48px));
   border: 0;
   border-radius: 20px;
-  background: #faf3e6;
+  background: var(--cream);
   box-shadow:
-    0 24px 60px rgba(15, 31, 92, 0.22),
-    0 4px 12px rgba(15, 31, 92, 0.1);
+    0 24px 60px rgb(var(--shadow-rgb) / 0.22),
+    0 4px 12px rgb(var(--shadow-rgb) / 0.1);
   overflow: hidden;
   /* grows from the button's center: both sit 24px from the corner, the button is 64px */
   transform-origin: calc(100% - 32px) calc(100% - 32px);
@@ -139,9 +173,6 @@
 }
 .lchat-face {
   display: inline-flex;
-  padding: 2px;
-  border-radius: 50%;
-  background: var(--pink);
 }
 
 .lchat-log {
@@ -171,7 +202,7 @@
   border: 0;
   border-radius: 18px 18px 18px 6px;
   background: var(--white);
-  box-shadow: 0 2px 8px rgba(15, 31, 92, 0.08);
+  box-shadow: 0 2px 8px rgb(var(--shadow-rgb) / 0.08);
   color: var(--ink);
   font-size: 15px;
   line-height: 22px;
@@ -181,7 +212,7 @@
   border-radius: 18px 18px 6px 18px;
   background: var(--blue);
   box-shadow: none;
-  color: var(--white);
+  color: #faf3e6;
 }
 .lchat-bubble p + p,
 .lchat-bubble p + ul,
@@ -196,15 +227,15 @@
   margin-top: 4px;
 }
 .is-error .lchat-bubble {
-  background: #ffe9d6;
+  background: var(--peach-tint);
 }
 .lchat-retry {
   height: 36px;
   margin-top: 8px;
   padding: 0 12px;
   border: 0;
-  background: #ffe0cc;
-  color: var(--red-dark);
+  background: var(--peach-tint);
+  color: var(--accent-text);
 }
 
 .lchat-typing {
@@ -251,7 +282,7 @@
   line-height: 20px;
   border: 0;
   border-radius: 14px;
-  background: #ffe0cc;
+  background: var(--peach-tint);
   color: var(--ink);
   transition: background-color 0.15s ease;
 }
@@ -279,7 +310,7 @@
   padding: 13px 16px;
   border: 0;
   border-radius: 24px;
-  background: #f3ead7;
+  background: var(--tint);
   transition:
     background-color 0.15s ease,
     box-shadow 0.15s ease;
@@ -301,7 +332,7 @@
   font-size: 11px;
   line-height: 16px;
   font-weight: 400;
-  color: rgba(15, 31, 92, 0.5);
+  color: rgb(var(--ink-rgb) / 0.5);
 }
 
 /* ---------- reduced motion: a plain fade, no pop ---------- */
@@ -338,13 +369,20 @@
   .lchat-typing i {
     animation: none;
   }
+  .lolli-fab-face {
+    animation: none;
+  }
 }
 
 /* ---------- phones: the button sits above the tab bar; the chat is a bottom sheet ---------- */
 @media (max-width: 767px) {
   .lolli-fab {
-    right: 16px;
-    bottom: 96px; /* clear the 80px tab bar */
+    right: 20px;
+    bottom: 104px; /* clear the 80px tab bar */
+    width: 56px;
+    height: 56px;
+  }
+  .lolli-fab-face .lolli-img {
     width: 56px;
     height: 56px;
   }

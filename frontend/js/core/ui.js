@@ -76,6 +76,7 @@
       '<circle cx="12" cy="12" r="9"></circle><path d="M8 14q4 4 8 0M9 9.5h.01M15 9.5h.01"></path>',
     arrow: '<path d="M4 12h14"></path><path d="M13 6l6 6-6 6"></path>',
     moon: '<path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"></path>',
+    sun: '<circle cx="12" cy="12" r="4"></circle><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4"></path>',
     swords:
       '<path d="M4 4l9 9M20 4l-9 9"></path><path d="M6.5 14.5l3 3M17.5 14.5l-3 3M5 19l2.5-2.5M19 19l-2.5-2.5"></path>',
     mountain:
@@ -116,6 +117,7 @@
   }
   var STAR =
     "M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z";
+  // colors go in style (not attributes) so theme variables like var(--white) work
   function star(size, fill, stroke) {
     return (
       '<svg width="' +
@@ -124,34 +126,42 @@
       size +
       '" viewBox="0 0 24 24" aria-hidden="true"><path d="' +
       STAR +
-      '" fill="' +
+      '" style="fill:' +
       fill +
-      '"' +
-      (stroke
-        ? ' stroke="#0F1F5C" stroke-width="1.5" stroke-linejoin="round"'
-        : "") +
+      (stroke ? ';stroke:var(--ink)" stroke-width="1.5" stroke-linejoin="round"' : '"') +
       "></path></svg>"
     );
   }
   var AVATAR =
     '<svg width="32" height="32" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="16" r="11" fill="#FAF3E6" stroke="#0F1F5C" stroke-width="2.2"></circle><path d="M5 13c2-7 16-9 20-1c-5-1-8-4-9-5c-2 3-6 5-11 6z" fill="#0F1F5C"></path><circle cx="11.5" cy="17" r="1.4" fill="#0F1F5C"></circle><circle cx="18.5" cy="17" r="1.4" fill="#0F1F5C"></circle><path d="M12.5 21.5q2.5 2 5 0" stroke="#0F1F5C" stroke-width="1.8" fill="none" stroke-linecap="round"></path></svg>';
+  // Lolli's face: the robot image (assets/images/lolli.png), at n px
   function lolliSvg(n) {
-    return (
-      '<svg width="' +
-      n +
-      '" height="' +
-      n +
-      '" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 28v10" stroke="#0F1F5C" stroke-width="2.5" stroke-linecap="round"></path><circle cx="20" cy="16" r="13" fill="#FFD3B3" stroke="#0F1F5C" stroke-width="1.5"></circle><path d="M20 16a4 4 0 118 0 8 8 0 11-16 0" fill="none" stroke="#FFFBF2" stroke-width="2.2" stroke-linecap="round"></path><circle cx="15" cy="17" r="1.6" fill="#0F1F5C"></circle><circle cx="25" cy="17" r="1.6" fill="#0F1F5C"></circle><path d="M18 21q2 1.6 4 0" stroke="#0F1F5C" stroke-width="1.5" fill="none" stroke-linecap="round"></path></svg>'
-    );
+    return '<img class="lolli-img" src="assets/images/lolli.png" alt="" width="' + n + '" height="' + n + '">';
   }
 
+
   /* ---------- settings applied to <html> ---------- */
+  // NEKAI's cat logo: the light version (orange) or the dark one (navy), swapped by the theme
+  var LOGO =
+    '<span class="brand-mark brand-logo" aria-hidden="true">' +
+    '<img class="logo-l" src="assets/images/logo-light.png" alt="" width="44" height="44">' +
+    '<img class="logo-d" src="assets/images/logo-dark.png" alt="" width="44" height="44"></span>' +
+    // the NEKAI wordmark: orange + navy on light, orange + cream on dark
+    '<span class="brand-word brand-wordmark" aria-hidden="true">' +
+    '<img class="logo-l" src="assets/images/logo-text-light.png?v=2" alt="" width="104" height="24">' +
+    '<img class="logo-d" src="assets/images/logo-text-dark.png?v=2" alt="" width="105" height="24"></span>';
   function applySettings() {
     var st = S.state.settings,
       h = document.documentElement;
-    h.classList.toggle("opt-large-text", !!st.text);
-    h.classList.toggle("opt-strong", !!st.contrast);
+    h.classList.remove("opt-large-text", "opt-strong"); // Larger text and Stronger outlines were retired
     h.classList.toggle("opt-reduce-motion", !!st.motion);
+    h.classList.toggle("theme-dark", !!st.dark);
+    // every theme button (sidebar, phone top bar) shows the current state
+    Array.prototype.forEach.call(document.querySelectorAll("[data-act=theme]"), function (b) {
+      b.setAttribute("aria-pressed", !!st.dark);
+      var i = b.querySelector(".theme-ico");
+      if (i) i.innerHTML = icon(st.dark ? "sun" : "moon");
+    });
   }
   function reducedMotion() {
     return (
@@ -218,6 +228,8 @@
   });
 
   function shell(opts) {
+    // A new account picks its 3 genres before anything else
+    if (S.state.onboarding) { location.replace("welcome.html"); return; }
     // opts: { page: "index.html", lolli: "message", lolliCta: [href, label] }
     applySettings();
     var reminder =
@@ -257,7 +269,7 @@
     side.setAttribute("aria-label", "Sidebar");
     side.innerHTML =
       '<div class="side-head">' +
-      '<a class="brand" href="index.html" aria-label="NEKAI home"><span class="brand-mark">ネ</span><span class="brand-word">NEKAI</span></a>' +
+      '<a class="brand" href="index.html" aria-label="NEKAI home">' + LOGO + "</a>" +
       '<button type="button" class="side-toggle" data-act="nav" aria-expanded="' +
       (ui.navOpen !== false) +
       '" aria-label="' +
@@ -270,7 +282,10 @@
       navLinks +
       "</nav>" +
       '<div class="side-foot">' +
-      '<a class="side-link" href="settings.html"' +
+      '<button type="button" class="side-link side-theme" data-act="theme" aria-pressed="' + !!S.state.settings.dark + '" title="Dark mode">' +
+      '<span class="theme-ico">' + icon(S.state.settings.dark ? "sun" : "moon") + "</span>" +
+      '<span class="side-label">Dark mode</span><span class="side-switch" aria-hidden="true"><span></span></span></button>' +
+      '<a class="side-link" href="settings.html" data-nav-settings' +
       (here === "settings.html" ? ' aria-current="page"' : "") +
       ' title="Settings">' +
       icon("gear") +
@@ -288,12 +303,18 @@
       '<span class="side-label">Log out</span></button>' +
       "</div>";
     app.insertBefore(side, app.firstChild);
+    // Settings opened from here shows no Back button; from anywhere else (e.g. Edit profile) it does
+    side.addEventListener("click", function (e) {
+      if (!e.target.closest("[data-nav-settings]")) return;
+      try { sessionStorage.setItem("nekai:settingsFromNav", "1"); } catch (err) { /* storage unavailable */ }
+    });
 
     var top = document.createElement("header");
     top.className = "mtop";
     top.innerHTML =
-      '<a class="brand" href="index.html" aria-label="NEKAI home"><span class="brand-mark">ネ</span><span class="brand-word">NEKAI</span></a>' +
-      '<a class="btn btn-secondary btn-icon ml-auto" href="discover.html#q" aria-label="Search">' +
+      '<a class="brand" href="index.html" aria-label="NEKAI home">' + LOGO + "</a>" +
+      '<button type="button" class="btn btn-secondary btn-icon ml-auto" data-act="theme" aria-pressed="' + !!S.state.settings.dark + '" aria-label="Dark mode"><span class="theme-ico">' + icon(S.state.settings.dark ? "sun" : "moon") + "</span></button>" +
+      '<a class="btn btn-secondary btn-icon" href="discover.html#q" aria-label="Search">' +
       icon("search") +
       "</a>" +
       '<a class="avatar" href="profile.html" aria-label="Your profile">' +
@@ -589,6 +610,10 @@
     );
   }
   // "S2" badge beside the title of a show's second (third…) season; season 1 has none
+  // A genre tag's color family, so dark mode can restyle it (light mode keeps the inline colors)
+  function genreTone(c) {
+    return /^#[89]A/i.test(c.fg) ? "orange" : /^#1[6F]/i.test(c.fg) ? "blue" : "neutral";
+  }
   function seasonBadge(a) {
     return a && a.seasonNo > 1
       ? ' <span class="season-badge" title="Season ' + a.seasonNo + '">S' + a.seasonNo + "</span>"
@@ -650,7 +675,7 @@
         ' out of 10" aria-pressed="' +
         (i * 2 === e.rating) +
         '">' +
-        star(24, e.rating >= i * 2 - 0.5 ? "#FFA25C" : "#FFFBF2", true) +
+        star(24, e.rating >= i * 2 - 0.5 ? "#FFA25C" : "var(--white)", true) +
         "</button>";
     }
     return h + "</div>";
@@ -662,7 +687,7 @@
       '" class="input select status-select" data-act="status" data-id="' +
       e.id +
       '" style="color:' +
-      (e.status ? D.statuses[e.status].color : "#0F1F5C") +
+      (e.status ? "var(--status-" + e.status + ")" : "var(--ink)") +
       '">' +
       Object.keys(D.statuses)
         .map(function (k) {
@@ -683,25 +708,27 @@
   function scoreBadge(a) {
     return (
       '<span class="score" title="Community score from Tenrai (MyAnimeList)">' +
-      star(16, "#0F1F5C") +
+      star(16, "currentColor") +
       esc(a.scoreText) +
       '<span class="caption muted">Tenrai</span></span>'
     );
   }
-  function emptyState(pill, title, body, actionHtml) {
+  // Empty state ("nothing here"): icon, small eyebrow, the message and its actions.
+  // opts.icon picks the icon (default inbox), opts.tag the heading level (default h2).
+  function emptyState(pill, title, body, actionHtml, opts) {
+    opts = opts || {};
+    var tag = opts.tag || "h2";
     return (
-      '<div class="card empty"><div class="empty-top"><span class="pill pill-yellow">' +
+      '<div class="empty"><span class="empty-icon" aria-hidden="true">' +
+      icon(opts.icon || "inbox", 26, 2.2) +
+      '</span><p class="empty-kicker">' +
       esc(pill) +
-      '</span></div><div class="empty-body">' +
-      '<span class="empty-icon">' +
-      icon("inbox", 32) +
-      '</span><h2 class="h2">' +
+      "</p><" + tag + ' class="empty-title">' +
       esc(title) +
-      '</h2><p class="body muted" style="max-width:448px">' +
-      esc(body) +
-      "</p>" +
-      (actionHtml || "") +
-      "</div></div>"
+      "</" + tag + ">" +
+      (body ? '<p class="empty-text">' + esc(body) + "</p>" : "") +
+      (actionHtml ? '<div class="empty-actions">' + actionHtml + "</div>" : "") +
+      "</div>"
     );
   }
 
@@ -722,6 +749,17 @@
     );
   }
   var actions = {
+    // Dark mode: saved with the other settings; colors ease over briefly so the switch isn't a flash
+    theme: function () {
+      var h = document.documentElement;
+      if (!reducedMotion()) {
+        h.classList.add("theme-anim");
+        clearTimeout(actions.themeT);
+        actions.themeT = setTimeout(function () { h.classList.remove("theme-anim"); }, 400);
+      }
+      S.setSettings({ dark: !S.state.settings.dark });
+      applySettings();
+    },
     nav: function () {
       var side = $(".side"),
         open = side.classList.toggle("is-collapsed") === false;
@@ -869,7 +907,7 @@
       .map(function (g) {
         var c = D.genreColors[g] || { bg: "#EDE4D2", fg: "#4A5378" };
         return (
-          '<span role="listitem" class="gtag" style="background:' +
+          '<span role="listitem" class="gtag gtag-' + genreTone(c) + '" style="background:' +
           c.bg +
           ";color:" +
           c.fg +
@@ -1277,6 +1315,7 @@
 
   NEKAI.ui = {
     esc: esc,
+    genreTone: genreTone,
     $: $,
     $$: $$,
     icon: icon,
