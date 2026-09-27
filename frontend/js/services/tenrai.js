@@ -157,37 +157,18 @@
         return { items: list, hasNext: !!(r.pagination && r.pagination.has_next_page) };
       });
     },
-    /* Top-scored titles for a set of genre names (used by the random picker) */
-    byGenres: function (names) {
-      var idsParam = names
-        .map(function (n) {
-          return NEKAI.data.genreIds[n];
-        })
-        .filter(Boolean);
-      if (!idsParam.length) return Promise.resolve([]);
-      // Query one genre at a time and merge results from all selected genres
-      return Promise.all(
-        idsParam.map(function (gid) {
-          return request(
-            "/anime?genres=" +
-              gid +
-              "&order_by=score&sort=desc&limit=25&sfw=true&min_score=7.5",
-          ).then(function (r) {
-            return (r.data || []).map(normalize);
-          });
-        }),
-      ).then(function (lists) {
-        var seen = {},
-          out = [];
-        lists.forEach(function (l) {
-          l.forEach(function (a) {
-            if (!seen[a.id]) {
-              seen[a.id] = 1;
-              out.push(a);
-            }
-          });
-        });
-        return out;
+    /* One page (25) of anime that have ALL the given genre ids, most popular first; no ids = every anime.
+       Used by the spin wheel, which picks a random page. */
+    browse: function (genreIds, page) {
+      var params = ["limit=25", "page=" + (page || 1), "sfw=true", "order_by=members", "sort=desc"];
+      if (genreIds && genreIds.length) params.push("genres=" + genreIds.join(","));
+      return request("/anime?" + params.join("&")).then(function (r) {
+        var pg = r.pagination || {};
+        return {
+          items: (r.data || []).map(normalize),
+          lastPage: pg.last_visible_page || 1,
+          total: (pg.items && pg.items.total) || (r.data || []).length,
+        };
       });
     },
     /* Every anime genre on MyAnimeList with its title count: [{ id, name, count }] */
