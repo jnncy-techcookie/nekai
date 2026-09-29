@@ -299,6 +299,30 @@
 .pf-xp-cap strong {
   color: var(--ink);
 }
+/* where the XP came from: one row per source, then the total */
+.pf-xp-from {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.pf-xp-from li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(15, 31, 92, 0.08);
+}
+.pf-xp-from .muted {
+  font-weight: 600;
+}
+.pf-xp-from .pf-xp-total {
+  border-bottom: 0;
+  font-weight: 800;
+}
 
 /* sidebar: genres */
 .genre-bar {

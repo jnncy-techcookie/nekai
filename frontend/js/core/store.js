@@ -26,24 +26,28 @@
     return dayKey(d);
   }
 
-  function seed() {
+  // A fresh state. demo: fill it with the sample list and watch history (the first visit only);
+  // without it the list, log and badges start empty, as for a new account or after deleting data.
+  function seed(demo) {
     var list = {};
-    var now = Date.now();
-    D.seedList.forEach(function (s, i) {
-      list[s.id] = {
-        status: s.status,
-        watched: s.watched,
-        rating: s.rating * 2, // sample data is written out of 5; ratings are stored out of 10
-        updatedAt: now - i * 3600e3,
-        completedOnce: s.status === "completed",
-      };
-    });
-    // A believable watch history: a 5-day streak ending yesterday,
-    // a 14-day run last month and one 12-episode binge day.
     var log = {};
-    for (var i = 1; i <= 5; i++) log[daysAgo(i)] = 2 + (i % 3);
-    for (var j = 30; j < 44; j++) log[daysAgo(j)] = 1 + (j % 2);
-    log[daysAgo(21)] = 12;
+    if (demo) {
+      var now = Date.now();
+      D.seedList.forEach(function (s, i) {
+        list[s.id] = {
+          status: s.status,
+          watched: s.watched,
+          rating: s.rating * 2, // sample data is written out of 5; ratings are stored out of 10
+          updatedAt: now - i * 3600e3,
+          completedOnce: s.status === "completed",
+        };
+      });
+      // A believable watch history: a 5-day streak ending yesterday,
+      // a 14-day run last month and one 12-episode binge day.
+      for (var i = 1; i <= 5; i++) log[daysAgo(i)] = 2 + (i % 3);
+      for (var j = 30; j < 44; j++) log[daysAgo(j)] = 1 + (j % 2);
+      log[daysAgo(21)] = 12;
+    }
     return {
       v: 1,
       ratingScale: 10,
@@ -101,7 +105,7 @@
     } catch (e) {
       /* storage unavailable: fall back to an in-memory seed */
     }
-    return seed();
+    return seed(true); // first visit: show the app with sample data
   }
   function save() {
     try {
@@ -282,6 +286,44 @@
     if (e.status === "watching" && !e.watched) e.status = "plan";
   });
 
+  /* ---------- XP, levels and titles ---------- */
+  var XP_RULES = {
+    episode: 2,
+    completed: 50,
+    rating: 5,
+    review: 10, // a rated show with a written review earns both
+    badge: 25,
+    streakDay: 5, // × the day of the streak it continues (day 1: 5, day 2: 10, …)
+    streakCap: 10, // … up to 50 XP a day from day 10 on
+  };
+  // XP needed to go from level n to n + 1
+  function levelCost(n) {
+    return 500 + 100 * (n - 1);
+  }
+  // [first level, title]: each title covers the levels up to the next one.
+  // After Legend, a new rank every 10 levels, ending at Legend X (Legendary).
+  var LEVEL_TITLES = [
+    [1, "Newcomer"],
+    [3, "Casual Viewer"],
+    [5, "Regular"],
+    [8, "Weekend Binger"],
+    [11, "Enthusiast"],
+    [15, "Seasoned Viewer"],
+    [19, "Otaku in Training"],
+    [23, "Veteran"],
+    [27, "Sensei"],
+    [30, "Legend"],
+  ];
+  ["II", "III", "IV", "V", "VI", "VII", "VIII", "IX"].forEach(function (r, i) {
+    LEVEL_TITLES.push([40 + 10 * i, "Legend " + r]);
+  });
+  LEVEL_TITLES.push([120, "Legendary"]);
+  function levelTitle(level) {
+    return LEVEL_TITLES.reduce(function (t, x) {
+      return level >= x[0] ? x[1] : t;
+    }, LEVEL_TITLES[0][1]);
+  }
+
   var api = {
     get state() {
       return state;
@@ -293,6 +335,8 @@
     onUnlock: function (fn) {
       unlockListeners.push(fn);
     },
+    xpRules: XP_RULES,
+    levelTitles: LEVEL_TITLES,
     dayKey: dayKey,
     daysAgo: daysAgo,
     anime: anime,
@@ -486,10 +530,21 @@
       try {
         localStorage.removeItem(KEY);
       } catch (e) {}
-      state = seed();
+      state = seed(); // empty: no sample list, streak history or badges come back
       state.signedIn = false;
-      recordUnlocks(0); // the sample list's badges count as already earned, with no toast
       save();
+    },
+    // A new account starts from zero: empty list, watch log (so no streak), badges and AI picks.
+    // This device's settings, layout and cached anime details carry over.
+    newAccount: function (profile) {
+      var fresh = seed();
+      fresh.settings = state.settings;
+      fresh.ui = state.ui;
+      fresh.anime = state.anime;
+      Object.assign(fresh.profile, { bio: "" }, profile);
+      state = fresh;
+      state.signedIn = true;
+      emit();
     },
 
     /* ---------- derived stats ---------- */
@@ -542,15 +597,59 @@
         mean: rated ? Math.round((sum / rated) * 10) / 10 : 0,
       };
     },
+    /* XP from every source (see XP_RULES), the level it reaches and that level's title.
+       Level n costs 500 + 100 × (n − 1) XP to finish, so each level takes a little longer. */
     xp: function () {
       var t = api.totals(),
-        c = counts();
-      var xp = t.episodes * 2 + c.completed * 50 + t.rated * 5;
+        c = counts(),
+        R = XP_RULES;
+      var reviews = Object.keys(state.list).filter(function (id) {
+        return String(state.list[id].note || "").trim();
+      }).length;
+      var badges = Object.keys(state.earned || {}).length;
+      // Streak bonus: each day you watch earns more the longer the run it continues, up to day STREAK_CAP
+      var streakXp = 0,
+        run = 0,
+        prev = null;
+      Object.keys(state.log)
+        .filter(function (k) {
+          return state.log[k] > 0;
+        })
+        .sort()
+        .forEach(function (k) {
+          var d = new Date(k + "T00:00:00");
+          run = prev && Math.round((d - prev) / 864e5) === 1 ? run + 1 : 1;
+          streakXp += R.streakDay * Math.min(run, R.streakCap);
+          prev = d;
+        });
+      var from = {
+        episodes: t.episodes * R.episode,
+        completed: c.completed * R.completed,
+        ratings: t.rated * R.rating,
+        reviews: reviews * R.review,
+        badges: badges * R.badge,
+        streaks: streakXp,
+      };
+      var xp = Object.keys(from).reduce(function (s, k) {
+        return s + from[k];
+      }, 0);
+      var level = 1,
+        into = xp;
+      while (into >= levelCost(level)) {
+        into -= levelCost(level);
+        level++;
+      }
+      var next = LEVEL_TITLES.filter(function (x) {
+        return x[0] > level;
+      })[0];
       return {
         xp: xp,
-        level: Math.floor(xp / 500) + 1,
-        into: xp % 500,
-        need: 500,
+        level: level,
+        into: into,
+        need: levelCost(level),
+        title: levelTitle(level),
+        nextTitle: next ? { level: next[0], title: next[1] } : null,
+        from: from,
       };
     },
     achievements: function () {

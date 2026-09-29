@@ -216,7 +216,7 @@
       names.length > 1
         ? names.slice(0, -1).join(", ") + " and " + names[names.length - 1]
         : names[0];
-    return joined + (names.length > 1 ? " badges" : " badge") + " earned!";
+    return joined + (names.length > 1 ? " badges" : " badge") + " earned! +" + names.length * S.xpRules.badge + " XP";
   }
   S.onUnlock(function (list) {
     unlockNews = unlockText(list);
