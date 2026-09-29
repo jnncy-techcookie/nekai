@@ -1,0 +1,252 @@
+/* Dark theme fixes (html.theme-dark). Colors themselves come from the tokens (tokens.css);
+   this file keeps text navy on the brand fills that stay bright in the dark theme
+   (orange, light orange, peach, periwinkle) and on the cream "ink" fills. */
+
+html.theme-dark .btn-primary {
+  color: var(--navy);
+}
+html.theme-dark .btn-primary:hover {
+  color: var(--navy);
+}
+html.theme-dark .btn-accent {
+  color: var(--navy);
+}
+html.theme-dark .btn-accent:hover {
+  color: var(--navy);
+}
+html.theme-dark .side-link[aria-current="page"] {
+  color: var(--navy);
+}
+html.theme-dark .navlink[aria-current="page"] {
+  color: var(--navy);
+}
+html.theme-dark .chip[aria-pressed="true"] {
+  color: var(--navy);
+}
+html.theme-dark .chip[aria-selected="true"] {
+  color: var(--navy);
+}
+html.theme-dark .count {
+  color: var(--navy);
+}
+html.theme-dark .pill-red {
+  color: var(--navy);
+}
+html.theme-dark .pill-yellow {
+  color: var(--navy);
+}
+html.theme-dark .pill-ink {
+  color: var(--navy);
+}
+html.theme-dark .pill-teal {
+  color: var(--navy);
+}
+html.theme-dark .pill-pink {
+  color: var(--navy);
+}
+html.theme-dark .pill-orange {
+  color: var(--navy);
+}
+html.theme-dark .jp-tag {
+  color: var(--navy);
+}
+html.theme-dark .progress > span {
+  color: var(--navy);
+}
+html.theme-dark .art .ep {
+  color: var(--navy);
+}
+html.theme-dark .switch[aria-checked="true"] {
+  color: var(--navy);
+}
+html.theme-dark .match {
+  color: var(--navy);
+}
+html.theme-dark .pick-arrow:hover {
+  color: var(--navy);
+}
+html.theme-dark .qi-chip.hl {
+  color: var(--navy);
+}
+html.theme-dark .trailer-play {
+  color: var(--navy);
+}
+html.theme-dark .air-chip i {
+  color: var(--navy);
+}
+html.theme-dark .dp-hero {
+  color: var(--navy);
+}
+html.theme-dark .dp-poster {
+  color: var(--navy);
+}
+html.theme-dark .dp-season-dot {
+  color: var(--navy);
+}
+html.theme-dark .dp-h::before {
+  color: var(--navy);
+}
+html.theme-dark .dp-review-actions #dp-review-save:not(:disabled):hover {
+  color: var(--navy);
+}
+html.theme-dark .dp-play-btn {
+  color: var(--navy);
+}
+html.theme-dark .lolli-fab {
+  color: var(--navy);
+}
+html.theme-dark .lchat-face {
+  color: var(--navy);
+}
+html.theme-dark .lchat-typing i {
+  color: var(--navy);
+}
+html.theme-dark .lchat-chips .chip:hover {
+  color: var(--navy);
+}
+html.theme-dark .sec-title::before {
+  color: var(--navy);
+}
+html.theme-dark .stat.yellow {
+  color: var(--navy);
+}
+html.theme-dark .stat.teal {
+  color: var(--navy);
+}
+html.theme-dark .stat.pink {
+  color: var(--navy);
+}
+html.theme-dark .brand-mark {
+  color: var(--navy);
+}
+html.theme-dark .avatar {
+  color: var(--navy);
+}
+html.theme-dark .mtab[aria-current="page"] .mtab-icon {
+  color: var(--navy);
+}
+html.theme-dark .toast {
+  color: var(--navy);
+}
+html.theme-dark .toast-icon {
+  color: var(--navy);
+}
+html.theme-dark .promo-dot[aria-current="true"]::before {
+  color: var(--navy);
+}
+html.theme-dark .gpill[aria-pressed="true"] {
+  color: var(--navy);
+}
+html.theme-dark .gpill[aria-expanded="true"] {
+  color: var(--navy);
+}
+html.theme-dark .wc-front {
+  color: var(--navy);
+}
+html.theme-dark .btn-spin:disabled {
+  color: var(--navy);
+}
+html.theme-dark .hp-flame {
+  color: var(--navy);
+}
+html.theme-dark .day.on {
+  color: var(--navy);
+}
+html.theme-dark .st-watching {
+  color: var(--navy);
+}
+html.theme-dark .st-plan {
+  color: var(--navy);
+}
+html.theme-dark .st-dropped {
+  color: var(--navy);
+}
+html.theme-dark .cw-track i.on {
+  color: var(--navy);
+}
+html.theme-dark .cw-track.is-bar span {
+  color: var(--navy);
+}
+html.theme-dark .view-btn[aria-pressed="true"] {
+  color: var(--navy);
+}
+html.theme-dark .lib-tabs .chip[aria-selected="true"] {
+  color: var(--navy);
+}
+html.theme-dark .lib-tabs .chip[aria-selected="true"] .count {
+  color: var(--navy);
+}
+html.theme-dark .pf-avatar {
+  color: var(--navy);
+}
+html.theme-dark .pf-xp span {
+  color: var(--navy);
+}
+html.theme-dark .auth-hero {
+  color: var(--navy);
+}
+
+/* ---------- hand-tuned ---------- */
+/* tab counts sit on a faint tint, not on a bright fill: keep them light */
+html.theme-dark .lib-tabs .count {
+  color: var(--ink);
+}
+html.theme-dark .lib-tabs .chip[aria-selected="true"] .count {
+  color: var(--navy);
+}
+/* dropdown chevrons are drawn as images: swap in a cream one */
+html.theme-dark .library-list .status-select,
+html.theme-dark .lib-sort select,
+html.theme-dark select.select:not(.status-select) {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F3EAD7' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+}
+
+/* raised surfaces: GitHub-style 1px border instead of a shadow (shadows vanish on black) */
+html.theme-dark .qi,
+html.theme-dark .cdlg,
+html.theme-dark .dp-close,
+html.theme-dark .dp-lib,
+html.theme-dark .lchat,
+html.theme-dark .lchat-bubble,
+html.theme-dark .genre-box,
+html.theme-dark .cw-ep,
+html.theme-dark .rp-pop,
+html.theme-dark .lib-tabs,
+html.theme-dark .lib-search,
+html.theme-dark .lib-sort,
+html.theme-dark .pf-hero,
+html.theme-dark .pf-card {
+  box-shadow: var(--dark-ring);
+}
+
+/* genre tags: GitHub-style labels, a faint wash with colored text (their light colors are inline) */
+html.theme-dark .gtag {
+  background: var(--tint) !important;
+  color: var(--muted) !important;
+}
+html.theme-dark .gtag-orange {
+  background: var(--peach-tint) !important;
+  color: var(--accent-text) !important;
+}
+html.theme-dark .gtag-blue {
+  background: var(--blue-tint) !important;
+  color: var(--blue-text) !important;
+}
+
+/* filled orange buttons: no cream outline on black */
+html.theme-dark .btn-primary,
+html.theme-dark .btn-primary:hover {
+  border-color: transparent;
+}
+/* "Add" buttons keep their white text (the navy rule above is for other orange fills) */
+html.theme-dark .btn-add,
+html.theme-dark .btn-add:hover {
+  color: #ffffff;
+}
+
+/* disabled buttons: readable grey text on the grey fill (beats the navy-on-orange rule above) */
+html.theme-dark .btn:disabled,
+html.theme-dark .btn[aria-disabled="true"] {
+  border-color: transparent;
+  color: var(--muted);
+}

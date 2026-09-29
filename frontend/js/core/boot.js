@@ -9,7 +9,6 @@
   if (!s) return;
   var ui = s.ui || {}, st = s.settings || {};
   if (ui.navOpen === false) h.classList.add("nav-collapsed");
-  if (st.text) h.classList.add("opt-large-text");
-  if (st.contrast) h.classList.add("opt-strong");
   if (st.motion) h.classList.add("opt-reduce-motion");
+  if (st.dark) h.classList.add("theme-dark");
 })();

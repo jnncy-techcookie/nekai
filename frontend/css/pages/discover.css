@@ -221,7 +221,7 @@
   border: 1.5px solid var(--ink);
   border-radius: 16px;
   background: var(--white);
-  box-shadow: 0 12px 32px rgba(15, 31, 92, 0.18);
+  box-shadow: 0 12px 32px rgb(var(--shadow-rgb) / 0.18);
 }
 .genre-box[hidden] {
   display: none;
@@ -302,6 +302,24 @@
   flex-wrap: wrap;
   gap: 16px;
 }
+/* TV / Movie / OVA / ONA: the page arrows' grey fill and thin grey border, slightly smaller */
+.results-toolbar [data-type] {
+  height: 34px;
+  padding: 0 10px;
+  border: 1.5px solid #8c91a8;
+  border-radius: 8px;
+  background: var(--tint-2);
+  color: var(--ink);
+  font-size: 14px;
+}
+.results-toolbar [data-type]:hover {
+  background: var(--tint);
+}
+.results-toolbar [data-type][aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--white);
+}
 .results-toolbar .results-pagination {
   margin-left: auto;
   flex-wrap: nowrap;
@@ -336,7 +354,7 @@ fieldset {
   background: radial-gradient(
     ellipse 70% 80% at 50% 38%,
     #1b2a66 0%,
-    var(--ink) 72%
+    var(--navy) 72%
   );
   overflow: hidden;
 }
@@ -417,7 +435,7 @@ fieldset {
 }
 /* card back artwork: one image shared by every card, so it downloads once */
 .wc-back {
-  background: #0f1f5c url("../../assets/images/mystery-anime.png") center/cover
+  background: var(--navy) url("../../assets/images/mystery-anime.png") center/cover
     no-repeat;
   transition: box-shadow 0.2s ease;
 }
@@ -429,7 +447,7 @@ fieldset {
 .wc-front {
   transform: rotateY(180deg);
   border: 2px solid var(--red);
-  background: var(--ink);
+  background: var(--navy);
 }
 .wc-front .art {
   width: 100%;
@@ -471,8 +489,8 @@ fieldset {
 }
 .btn-spin:disabled {
   background: var(--red);
-  border-color: var(--ink);
-  color: var(--ink);
+  border-color: var(--navy);
+  color: var(--navy);
   opacity: 0.7;
 }
 

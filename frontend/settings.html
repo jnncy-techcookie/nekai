@@ -22,14 +22,15 @@
 </head>
 <body class="paper">
   <div class="app">
-    <main id="main" class="main tight" tabindex="-1">
+    <main id="main" class="main tight set-page" tabindex="-1">
       <noscript><p class="notice">NEKAI needs JavaScript turned on to change settings.</p></noscript>
       <div class="page-head">
-        <div class="page-title"><h1 class="h1">Settings</h1><span class="jp-tag" aria-hidden="true">せってい</span></div>
-        <p class="body muted">Account, preferences and accessibility.</p>
+        <a id="set-back" class="set-back" href="index.html" hidden></a>
+        <div class="page-title"><h1 class="h1 display-title">Settings</h1></div>
       </div>
 
-      <div class="grid-fit">
+      <div class="grid-fit set-cols">
+        <div class="set-col">
         <section aria-labelledby="acc-h" class="card pad-24">
           <form id="profile-form" class="stack gap-16" novalidate>
             <h2 id="acc-h" class="h2 sec-title">Profile details</h2>
@@ -50,34 +51,38 @@
               <textarea id="bio" name="bio" class="input" rows="3" maxlength="160" aria-describedby="bio-help"></textarea>
               <p id="bio-help" class="help" aria-live="polite"></p>
             </div>
-            <div class="row gap-16">
+            <div class="row gap-8">
               <button id="save" type="submit" class="btn btn-primary">Save changes</button>
-              <button id="pw-change" type="button" class="btn btn-secondary">Change password</button>
+              <button id="pw-change" type="button" class="btn btn-soft">Change password</button>
             </div>
           </form>
-        </section>
-
-        <section aria-labelledby="exp-h" class="card pad-24 stack gap-8">
-          <h2 id="exp-h" class="h2 sec-title">Experience</h2>
-          <div id="sw-exp" class="stack gap-12"></div>
         </section>
 
         <section aria-labelledby="a11y-h" class="card pad-24 stack gap-8">
           <h2 id="a11y-h" class="h2 sec-title">Accessibility</h2>
           <div id="sw-acc" class="stack gap-12"></div>
         </section>
+        </div>
+        <div class="set-col">
+        <section aria-labelledby="exp-h" class="card pad-24 stack gap-8">
+          <h2 id="exp-h" class="h2 sec-title">Experience</h2>
+          <div id="sw-exp" class="stack gap-12"></div>
+        </section>
 
         <section aria-labelledby="dat-h" class="card pad-24 stack gap-16">
-          <h2 id="dat-h" class="h2 sec-title">Your data</h2>
-          <p class="small muted">NEKAI stores your list in this browser. Export it to keep a copy.</p>
-          <div class="row gap-16">
-            <button id="export" type="button" class="btn btn-secondary">Export my list (.csv)</button>
-            <button id="signout" type="button" class="btn btn-secondary">Sign out</button>
-            <button id="ask-delete" type="button" class="btn btn-ghost" style="color:var(--red-dark)">
+          <div class="stack sec-intro">
+            <h2 id="dat-h" class="h2 sec-title">Your data</h2>
+            <p class="small muted">NEKAI stores your list in this browser. Export it to keep a copy.</p>
+          </div>
+          <div class="row gap-8">
+            <button id="export" type="button" class="btn btn-soft">Export my list (.csv)</button>
+            <button id="signout" type="button" class="btn btn-soft">Sign out</button>
+            <button id="ask-delete" type="button" class="btn btn-ghost set-danger">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"></path></svg>Delete account
             </button>
           </div>
         </section>
+        </div>
       </div>
     </main>
   </div>

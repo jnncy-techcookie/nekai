@@ -21,6 +21,9 @@ How to read the history:
 - rating: their own score out of 10 (0 = not rated). 8+ is a strong signal; 5 or lower is a negative signal.
 - review (optional): a snippet of their own review. It says WHY they liked or disliked a title (characters, pacing, art, tone, themes). Use it to pick titles that share what they praised and avoid what they complained about. A review is a stronger signal than genre alone.
 - Weigh genres and titles they rated highly and finished. Steer away from what they dropped or rated low.
+- favoriteGenres (optional): the genres a brand-new user picked at sign-up. It is only sent while their history is empty.
+  Then base every pick on these genres: well-loved, accessible entry points (mostly titles that combine two of their genres),
+  and in "why" name the genre(s) it matches. Keep fit between 60 and 85, since there is no watch history yet.
 
 Rules:
 - Never recommend a title from the history or from "notInterested", or another season, movie or spin-off of a title they dropped or marked not interested.
@@ -96,7 +99,7 @@ async function resolve(pick) {
 }
 
 router.post("/", async (req, res) => {
-  const { history, exclude = [], notInterested = [] } = req.body || {};
+  const { history, exclude = [], notInterested = [], favoriteGenres = [] } = req.body || {};
 
   if (
     !validHistory(history) ||
@@ -105,7 +108,10 @@ router.post("/", async (req, res) => {
     !exclude.every(isId) ||
     !Array.isArray(notInterested) ||
     notInterested.length > 50 ||
-    !notInterested.every((t) => shortText(t, 200))
+    !notInterested.every((t) => shortText(t, 200)) ||
+    !Array.isArray(favoriteGenres) ||
+    favoriteGenres.length > 5 ||
+    !favoriteGenres.every((g) => shortText(g, 40) && g.trim())
   ) {
     return res.status(400).json({ error: "Invalid watch history" });
   }
@@ -127,6 +133,7 @@ router.post("/", async (req, res) => {
         ...(h.review && h.review.trim() ? { review: h.review.trim() } : {}),
       })),
       notInterested,
+      ...(history.length === 0 && favoriteGenres.length ? { favoriteGenres } : {}),
     };
     const reply = await askGemini(
       SYSTEM,

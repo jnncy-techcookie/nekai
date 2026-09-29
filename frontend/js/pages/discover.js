@@ -191,7 +191,7 @@
     var types = ["TV", "Movie", "OVA", "ONA"].map(function (t) {
       return '<button type="button" class="chip" data-type="' + t + '" aria-pressed="' + !!ui.types[t] + '">' + (ui.types[t] ? icon("check", 16, 3) : "") + t + "</button>";
     }).join("");
-    var head = '<div class="sec-head"><h2 id="r-h" class="h2 sec-title" tabindex="-1">Results for “' + esc(ui.submitted) + "”</h2>" +
+    var head = '<div class="sec-head"><h2 id="r-h" class="h2 sec-title" tabindex="-1">Results for ' + esc(ui.submitted) + "</h2>" +
       '<span class="small muted semibold">' + (ui.searching ? "Searching Tenrai…" : "Showing " + ui.results.length + " anime") + "</span>" +
       '<button type="button" class="btn btn-ghost ml-auto" id="clear">Clear search</button></div>' +
       '<div class="results-toolbar"><div class="row gap-8" role="group" aria-label="Filter by type">' + types + '</div>' + pagination("top") + '</div>';
@@ -199,8 +199,9 @@
     var body;
     if (ui.searching) body = '<div class="grid-auto">' + SKEL + SKEL + SKEL + SKEL + "</div>";
     else if (ui.results.length) body = '<div id="r-row"></div>';
-    else body = '<div class="card empty"><div class="empty-top"><span class="pill pill-yellow">NO MATCH</span></div><div class="empty-body"><h3 class="h2">Nothing found for ' + esc(ui.submitted) +
-      '</h3><p class="body muted" style="max-width:480px">Check the spelling, try the Japanese title, or clear the type and genre filters.</p><button type="button" class="btn btn-secondary" id="clear2">Clear search</button></div></div>';
+    else body = U.emptyState("No match", ui.submitted ? "Nothing found for " + ui.submitted : "Nothing found",
+      "Check the spelling, try the Japanese title, or clear the type and genre filters.",
+      '<button type="button" class="btn btn-secondary" id="clear2">Clear search</button>', { icon: "search", tag: "h3" });
     if (ui.resultError) note += '<p class="notice" role="alert">' + esc(ui.resultError) + '</p>';
     if (!ui.searching && !ui.results.length && ui.hasNext) body = '<p class="body muted">No matches on this page. Select Next to keep browsing, or change the filters.</p>';
     host.setAttribute("aria-busy", ui.searching);

@@ -133,6 +133,24 @@
   border-radius: 3px;
   background: var(--red);
 }
+/* a heading with a description: one bar runs down the side of both, and the text lines up past it */
+.sec-intro {
+  position: relative;
+  padding-left: 17px; /* 5px bar + 12px gap, as on a single heading */
+}
+.sec-intro::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 3px;
+  bottom: 3px;
+  width: 5px;
+  border-radius: 3px;
+  background: var(--red);
+}
+.sec-intro > .sec-title::before {
+  display: none;
+}
 /* heading with a one-line description right under it */
 .sec-intro {
   gap: 2px;
@@ -173,32 +191,64 @@
   background: var(--pink);
 }
 
-/* Empty state */
+/* Empty state ("nothing here"): a dashed empty slot rather than a heavy card; an icon in a
+   ringed peach circle, a small orange eyebrow, a calm title, muted help and the actions */
 .empty {
-  overflow: hidden;
-}
-.empty-top {
-  display: flex;
-  justify-content: center;
-  padding: 8px 16px;
-  background: var(--ink);
-}
-.empty-body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  padding: 48px 32px 64px;
+  padding: 40px 24px 44px;
+  border: 1.5px dashed var(--line);
+  border-radius: 20px;
+  background: rgb(var(--white-rgb) / 0.6);
   text-align: center;
+}
+.opt-strong .empty {
+  border: 2px solid var(--ink);
 }
 .empty-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 64px;
-  height: 64px;
+  width: 60px;
+  height: 60px;
+  margin-bottom: 16px;
   border-radius: 50%;
-  background: var(--yellow);
+  background: var(--peach-tint);
+  color: var(--accent-text);
+  box-shadow: 0 0 0 8px rgb(var(--ink-rgb) / 0.04);
+}
+.empty-kicker {
+  margin: 0 0 4px;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+.empty-title {
+  margin: 0;
+  max-width: 560px;
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 800;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.empty-text {
+  margin: 6px 0 0;
+  max-width: 440px;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--muted);
+}
+.empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
 }
 
 /* Real poster images from Tenrai sit on top of the brand placeholder art */

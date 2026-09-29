@@ -9,7 +9,7 @@
   border-radius: 20px;
   background: var(--white);
   overflow: hidden;
-  box-shadow: 0 2px 10px rgba(15, 31, 92, 0.06);
+  box-shadow: 0 2px 10px rgb(var(--shadow-rgb) / 0.06);
 }
 /* section headings use the site-wide .sec-title (helpers.css) */
 .pf-sec .sec-head .btn-ghost {
@@ -34,7 +34,7 @@
   align-items: flex-end;
   gap: 20px;
   padding: 0 28px;
-  margin-top: -52px;
+  margin-top: -36px; /* the avatar overlaps the banner by a third; the name sits clear below it */
   flex-wrap: wrap;
 }
 .pf-avatar {
@@ -49,7 +49,7 @@
   background: var(--pink);
   box-shadow:
     0 0 0 5px var(--white),
-    0 10px 24px rgba(15, 31, 92, 0.2);
+    0 10px 24px rgb(var(--shadow-rgb) / 0.2);
 }
 .pf-lv {
   position: absolute;
@@ -71,28 +71,28 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0; /* name, handle and bio read as one tight block */
   padding-top: 60px; /* clears the banner */
 }
 .pf-name {
   margin: 0;
-  font-size: 30px;
-  line-height: 36px;
+  font-size: 24px;
+  line-height: 26px; /* little extra leading: the handle sits right under the name */
   font-weight: 800;
   color: var(--ink);
 }
 .pf-handle {
   margin: 0;
   font-size: 14px;
-  line-height: 20px;
+  line-height: 16px;
+  margin-top: 4px;
   font-weight: 700;
   color: var(--muted);
 }
 .pf-bio {
-  margin: 2px 0 4px;
-  max-width: 60ch;
+  margin: 6px 0 0; /* the bio uses the full width beside the avatar before wrapping */
   font-size: 15px;
-  line-height: 22px;
+  line-height: 20px;
   color: var(--ink);
 }
 .pf-actions {
@@ -105,6 +105,7 @@
   padding: 0 14px;
   font-size: 14px;
 }
+/* Edit profile / Share list use the shared soft button (.btn-soft, components.css) */
 /* headline numbers: Letterboxd's strip of big numbers with small labels, thin dividers between */
 .pf-nums {
   display: flex;
@@ -132,13 +133,26 @@
   color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
+/* top genres: the last cell, its tags where the big number would be */
+.pf-nums-genres dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+}
+.pf-nums-genres .tag {
+  height: 26px;
+  padding: 0 12px;
+  font-size: 13px;
+}
 .pf-nums dt {
   font-size: 11px;
   line-height: 14px;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgba(15, 31, 92, 0.55);
+  color: rgb(var(--ink-rgb) / 0.55);
 }
 
 /* ---------- body: main column + sidebar ---------- */
@@ -160,6 +174,19 @@
   flex-direction: column;
   gap: 14px;
 }
+/* sidebar: its own "Your stats" heading, so its first card lines up with the posters beside it */
+.pf-main > .pf-sec:first-child > .sec-head,
+.pf-side > .sec-head {
+  min-height: 32px; /* the height of "View Library", so both heading rows match */
+}
+.pf-side {
+  gap: 14px;
+}
+.pf-side-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
 .pf-card {
   display: flex;
   flex-direction: column;
@@ -167,7 +194,7 @@
   padding: 20px;
   border-radius: 18px;
   background: var(--white);
-  box-shadow: 0 2px 10px rgba(15, 31, 92, 0.06);
+  box-shadow: 0 2px 10px rgb(var(--shadow-rgb) / 0.06);
 }
 .pf-side-h {
   margin: 0;
@@ -183,6 +210,11 @@
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 14px;
 }
+/* no rated shows yet: the note spans the whole row instead of one poster's column */
+.pf-posters > p {
+  grid-column: 1 / -1;
+  margin: 0;
+}
 .pf-poster {
   display: flex;
   flex-direction: column;
@@ -196,7 +228,7 @@
   display: block;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(15, 31, 92, 0.14);
+  box-shadow: 0 4px 12px rgb(var(--shadow-rgb) / 0.14);
   transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .pf-poster-art .art {
@@ -238,14 +270,14 @@
   color: var(--ink);
   font-size: 12px;
   font-weight: 800;
-  box-shadow: 0 1px 4px rgba(15, 31, 92, 0.2);
+  box-shadow: 0 1px 4px rgb(var(--shadow-rgb) / 0.2);
 }
 
 /* sidebar: level */
 .pf-xp {
   height: 10px;
   border-radius: 999px;
-  background: rgba(15, 31, 92, 0.08);
+  background: rgb(var(--ink-rgb) / 0.08);
   overflow: hidden;
 }
 .pf-xp span {
@@ -337,7 +369,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 6px;
+  padding: 7px 6px;
   margin: 0 -6px;
   border-radius: 10px;
   color: var(--ink);
@@ -358,7 +390,7 @@
   transition: transform 0.15s ease, opacity 0.15s ease;
 }
 .pf-lib a:hover {
-  background: #f3ead7;
+  background: var(--tint);
 }
 .pf-lib a:hover svg {
   opacity: 1;
@@ -394,12 +426,12 @@
   line-height: 28px;
 }
 .ach li.locked .ach-badge {
-  border: 1.5px dashed rgba(15, 31, 92, 0.3);
-  background: rgba(15, 31, 92, 0.04);
-  color: rgba(15, 31, 92, 0.45);
+  border: 1.5px dashed rgb(var(--ink-rgb) / 0.3);
+  background: rgb(var(--ink-rgb) / 0.04);
+  color: rgb(var(--ink-rgb) / 0.45);
 }
 .ach li.locked > .small {
-  color: rgba(15, 31, 92, 0.6);
+  color: rgb(var(--ink-rgb) / 0.6);
 }
 .ach-lock {
   position: absolute;
@@ -420,11 +452,41 @@
   gap: 4px;
   font-size: 12px;
   font-weight: 800;
-  color: var(--blue);
+  color: var(--blue-text);
 }
 
 /* ---------- narrower content ---------- */
+/* two columns: when the left column is taller, the sidebar stretches to end where it does and
+   Your Library takes the height that's left, spreading its rows. When the sidebar is taller
+   (e.g. a new account with nothing on the left yet), it simply keeps its own height. */
+@container main (min-width: 981px) {
+  .pf-grid {
+    align-items: stretch;
+  }
+  .pf-side-cards {
+    flex: 1;
+    min-height: 0;
+  }
+  .pf-side-cards > :last-child {
+    flex: 1;
+    min-height: 0;
+  }
+  .pf-side-cards > :last-child .pf-lib {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+}
 @container main (max-width: 980px) {
+  /* not enough room beside Best streak: top genres get their own line, under a faint rule */
+  .pf-nums > .pf-nums-genres {
+    flex-basis: 100%;
+    margin-top: 14px;
+    padding: 12px 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
   .pf-grid {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -452,6 +514,12 @@
     padding: 0 14px;
   }
   .pf-nums > div:nth-child(3n + 1) {
+    padding-left: 0;
+    border-left: 0;
+  }
+  /* top genres take a full line of their own */
+  .pf-nums > .pf-nums-genres {
+    grid-column: 1 / -1;
     padding-left: 0;
     border-left: 0;
   }

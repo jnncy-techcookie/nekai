@@ -17,6 +17,62 @@
   --muted: #4a5378;
   --line: #dcd2be;
   --white: #fffbf2;
+  /* theme roles (light values; html.theme-dark swaps them below) */
+  --navy: #0f1f5c; /* navy that never flips: text on orange / peach fills */
+  --ink-rgb: 15 31 92; /* faint text, lines and tints: rgb(var(--ink-rgb) / .08) */
+  --shadow-rgb: 15 31 92;
+  --white-rgb: 255 251 242;
+  --paper-rgb: 243 234 215;
+  --grid: #e8dec9; /* the page's graph-paper lines */
+  --tint: #f3ead7; /* quiet fills: steppers, fields, hovers */
+  --tint-2: #ede2cb; /* the same, one step deeper */
+  --peach-tint: #ffe0cc;
+  --peach-line: #ffc9a3;
+  --blue-tint: #e3e9fa;
+  --blue-line: #b9c8f2;
+  --accent-text: #b84300; /* orange text on light surfaces */
+  --blue-deep-text: #16307f; /* deep blue text on pale blue */
+  --status-watching: #b84300;
+  --status-plan: #1f3fa6;
+  --status-completed: #1c6b37; /* green: the one non-palette color, asked for so "done" reads at a glance */
+  --green-tint: #dcf1e2;
+  --green-line: #a9d9b6;
+  --status-dropped: #4a5378;
   --gutter: 32px;
   --side-w: 256px;
+}
+
+/* ---------- dark theme ----------
+   GitHub-dark inspired: a near-black canvas, charcoal surfaces separated by thin grey borders
+   (shadows don't read on black), warm off-white text. Orange and cobalt stay the accents,
+   and text on the bright brand fills stays navy (theme-dark.css). */
+html.theme-dark {
+  color-scheme: dark;
+  --ink: #ece6da; /* warm off-white text */
+  --paper: #0d1117; /* canvas */
+  --cream: #161b22; /* sidebar, panels */
+  --white: #161b22; /* cards */
+  --muted: #9aa3ad;
+  --line: #30363d;
+  --blue-text: #8fa8ff;
+  --ink-rgb: 236 230 218;
+  --shadow-rgb: 1 4 9;
+  --white-rgb: 22 27 34;
+  --paper-rgb: 13 17 23;
+  --grid: #11161d;
+  --tint: #21262d; /* fields, steppers, hovers */
+  --tint-2: #2a3038;
+  --peach-tint: #2b1d14; /* orange washes */
+  --peach-line: #5c3418;
+  --blue-tint: #172342; /* cobalt washes */
+  --blue-line: #2d4180;
+  --accent-text: #ffa25c;
+  --blue-deep-text: #8fa8ff;
+  --status-watching: #ffa25c;
+  --status-plan: #8fa8ff;
+  --status-completed: #6fd08c;
+  --green-tint: #12261a;
+  --green-line: #2c5a3a;
+  --status-dropped: #9aa3ad;
+  --dark-ring: 0 0 0 1px #30363d;
 }
