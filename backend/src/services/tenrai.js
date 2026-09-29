@@ -1,3 +1,5 @@
+const { rememberAnime } = require("./catalog");
+
 const BASE_URL = "https://api.tenrai.org/v1";
 const cache = new Map();
 const inFlight = new Map();
@@ -58,6 +60,7 @@ function getTenrai(path, params = {}) {
         data,
         expiresAt: Date.now() + 30 * 60 * 1000,
       });
+      rememberAnime(path, data);
       return data;
     })
     .finally(() => inFlight.delete(key));

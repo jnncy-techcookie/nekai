@@ -437,13 +437,14 @@
   function logOut() {
     confirmDialog({
       title: "Log out of NEKAI?",
-      body: "Your list, ratings and streak stay saved in this browser. Sign back in any time.",
+      body: "Your list, ratings and streak stay saved to your account. Sign back in any time.",
       confirm: "Log out",
       icon: "logout",
     }).then(function (ok) {
       if (!ok) return;
-      S.setSignedIn(false);
-      location.href = "signin.html";
+      NEKAI.db.signOut().then(function () {
+        location.href = "signin.html";
+      });
     });
   }
 
@@ -1348,4 +1349,9 @@
     streakReminder: streakReminder,
     lolliSvg: lolliSvg,
   };
+
+  // Changes save to Supabase in the background; say so when one doesn't make it
+  NEKAI.db.onSaveError(function () {
+    toast("Couldn’t save your last change. Check your connection and reload the page.");
+  });
 })();

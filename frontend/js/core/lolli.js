@@ -1,12 +1,13 @@
 /* Lolli chat: the floating Lolli button (and any other [data-lolli-chat] button) opens a chat box. Questions go to
  * the backend (/api/lolli/chat), which asks Gemini with a snapshot of the user's list.
- * The conversation is kept for this browser tab in sessionStorage.
+ * The conversation is saved to Supabase (lolli_conversations / lolli_messages), so it follows the
+ * user to other pages and devices. Clearing it starts a new conversation.
  */
 (function () {
   "use strict";
   var S = NEKAI.store, U = NEKAI.ui, esc = U.esc, icon = U.icon;
-  var KEY = "nekai:lolli";
-  var MAX_KEEP = 30; // messages remembered for the tab
+  var DB = NEKAI.db.lolli;
+  var MAX_KEEP = 30; // messages shown in the chat box (all of them stay saved)
   var MAX_SEND = 12; // messages sent with each question
   var SUGGESTIONS = [
     "What should I watch next?",
@@ -15,24 +16,40 @@
     "How do I level up faster?",
   ];
 
-  var messages = load(); // [{ role: "user" | "lolli", text }]
+  var messages = []; // [{ id, role: "user" | "lolli", text }]
+  var conversation = null; // id of the saved conversation, once there is one
+  var loaded = null; // loads the latest conversation the first time the chat opens
+  var saving = Promise.resolve(); // messages save one after another, in order
   var busy = false, failed = "", panel, logEl, form, input, sendBtn, opener;
 
   function load() {
-    try {
-      var m = JSON.parse(sessionStorage.getItem(KEY) || "[]");
-      return Array.isArray(m) ? m : [];
-    } catch (e) {
-      return [];
+    if (!loaded) {
+      busy = true;
+      loaded = DB.latest().then(function (c) {
+        conversation = c.id;
+        messages = c.messages.concat(messages).slice(-MAX_KEEP);
+      }).catch(function (err) {
+        console.error("Loading the Lolli chat failed:", err);
+      }).then(function () {
+        busy = false;
+        if (panel) render();
+      });
     }
+    return loaded;
   }
-  function save() {
+  // Adds a message to the chat and saves it (the first message also starts the conversation)
+  function save(role, text) {
+    var msg = { id: crypto.randomUUID(), role: role, text: text };
+    messages.push(msg);
     messages = messages.slice(-MAX_KEEP);
-    try {
-      sessionStorage.setItem(KEY, JSON.stringify(messages));
-    } catch (e) {
-      /* storage unavailable: the chat still works for this page */
-    }
+    saving = saving.then(function () {
+      return conversation || DB.start(role === "user" ? text : "").then(function (id) { return (conversation = id); });
+    }).then(function (id) {
+      return DB.add(id, msg);
+    }).catch(function (err) {
+      console.error("Saving the Lolli chat failed:", err);
+      U.toast("Couldn’t save this chat. It will be gone when you leave the page.");
+    });
   }
 
   /* ---------- what Lolli knows about the user ---------- */
@@ -171,9 +188,13 @@
           icon: "trash",
         }).then(function (ok) {
           if (!ok) return;
+          var old = conversation;
+          conversation = null;
           messages = [];
           failed = "";
-          save();
+          saving = saving.then(function () { return DB.clear(old); }).catch(function (err) {
+            console.error("Clearing the Lolli chat failed:", err);
+          });
           render();
           input.focus();
         });
@@ -196,8 +217,7 @@
   function ask(text) {
     text = String(text || "").trim();
     if (!text || busy) return;
-    messages.push({ role: "user", text: text.slice(0, 1000) });
-    save();
+    save("user", text.slice(0, 1000));
     input.value = "";
     input.style.height = "";
     send();
@@ -209,7 +229,10 @@
     fetch("/api/lolli/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: messages.slice(-MAX_SEND), context: context() }),
+      body: JSON.stringify({
+        messages: messages.slice(-MAX_SEND).map(function (m) { return { role: m.role, text: m.text }; }),
+        context: context(),
+      }),
     })
       .then(function (res) {
         return res.json().catch(function () { return {}; }).then(function (body) {
@@ -218,8 +241,7 @@
         });
       })
       .then(function (reply) {
-        messages.push({ role: "lolli", text: reply });
-        save();
+        save("lolli", reply);
       })
       .catch(function (err) {
         failed = err && err.message && err.name !== "TypeError" ? err.message
@@ -251,6 +273,7 @@
     var first = !panel;
     if (first) build();
     opener = from || document.activeElement;
+    load();
     render();
     panel.inert = false;
     if (first) void panel.offsetWidth; // let the closed state paint once so the first open animates too
