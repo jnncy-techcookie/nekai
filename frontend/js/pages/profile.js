@@ -11,7 +11,6 @@
 
   var GCOL = ["#1F3FA6", "#F25C05", "#6F8FE8", "#FFA25C", "#FFD3B3", "#F7823A", "#B3B6C6"];
   var FACE = '<svg width="96" height="96" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="17" r="10.5" fill="#FFFBF2" stroke="#0F1F5C" stroke-width="1"></circle><path d="M4.6 14.5c1.6-8 17.4-10 20.8-1.4c-5-1-8-3.8-9-5c-2.2 3.2-6.4 5.4-11.8 6.4z" fill="#0F1F5C"></path><circle cx="11.6" cy="18" r="1.1" fill="#0F1F5C"></circle><circle cx="18.4" cy="18" r="1.1" fill="#0F1F5C"></circle><path d="M13 22q2 1.6 4 0" stroke="#0F1F5C" stroke-width="1.1" fill="none" stroke-linecap="round"></path><circle cx="9.6" cy="20.6" r="1.3" fill="#FFD3B3"></circle><circle cx="20.4" cy="20.6" r="1.3" fill="#FFD3B3"></circle></svg>';
-  var TITLES = ["Newcomer", "Casual Viewer", "Regular", "Weekend Binger", "Enthusiast", "Seasoned Viewer", "Otaku in Training", "Veteran", "Sensei", "Legend"];
 
   // a row of posters (title under each), linking to the details panel
   function posters(list, extra, empty) {
@@ -61,10 +60,24 @@
     }, "Rate a show and your favorites will show up here.");
 
     // sidebar: level, genre mix, library counts
-    U.$("#level").innerHTML = '<span class="pf-side-h" id="lv-h">Level ' + lv.level + " · " + TITLES[Math.min(lv.level, TITLES.length) - 1] + "</span>" +
+    var R = S.xpRules, n = function (x) { return x.toLocaleString("en-US"); };
+    // where the XP came from: [label, XP, how it's earned]
+    var from = [
+      ["Episodes", lv.from.episodes, R.episode + " each"],
+      ["Completed", lv.from.completed, R.completed + " each"],
+      ["Ratings", lv.from.ratings, R.rating + " each"],
+      ["Reviews", lv.from.reviews, R.review + " each"],
+      ["Badges", lv.from.badges, R.badge + " each"],
+      ["Streak days", lv.from.streaks, R.streakDay + "–" + R.streakDay * R.streakCap + " a day"],
+    ];
+    U.$("#level").innerHTML = '<span class="pf-side-h" id="lv-h">Level ' + lv.level + " · " + esc(lv.title) + "</span>" +
       '<div class="pf-xp" role="progressbar" aria-label="Level progress" aria-valuemin="0" aria-valuemax="' + lv.need + '" aria-valuenow="' + lv.into + '"><span style="width:' + Math.round(lv.into / lv.need * 100) + '%"></span></div>' +
-      '<p class="pf-xp-cap"><strong>' + lv.into + " / " + lv.need + " XP</strong><span>" + (lv.need - lv.into) + " to Level " + (lv.level + 1) + "</span></p>" +
-      '<p class="caption muted">2 XP per episode, 50 per completed anime, 5 per rating.</p>';
+      '<p class="pf-xp-cap"><strong>' + n(lv.into) + " / " + n(lv.need) + " XP</strong><span>" + n(lv.need - lv.into) + " to Level " + (lv.level + 1) + "</span></p>" +
+      (lv.nextTitle ? '<p class="caption muted">Next title: <strong>' + esc(lv.nextTitle.title) + "</strong> at Level " + lv.nextTitle.level + "</p>" : "") +
+      '<ul class="pf-xp-from" aria-label="Where your ' + n(lv.xp) + ' XP came from">' + from.map(function (r) {
+        return "<li><span>" + r[0] + ' <span class="muted">· ' + r[2] + "</span></span><strong>" + n(r[1]) + "</strong></li>";
+      }).join("") + '<li class="pf-xp-total"><span>Total</span><strong>' + n(lv.xp) + " XP</strong></li></ul>" +
+      '<p class="caption muted">Streak days earn ' + R.streakDay + " XP × the day of the streak, up to day " + R.streakCap + ". Each level costs 100 XP more than the last.</p>";
 
     U.$("#mix").innerHTML = '<div class="genre-bar" role="img" aria-label="' + esc(mix.map(function (g) { return g.name + " " + g.pct + "%"; }).join(", ")) + '">' +
       mix.map(function (g, i) { return '<span style="width:' + g.pct + "%;background:" + GCOL[i % GCOL.length] + '"></span>'; }).join("") + "</div>" +
