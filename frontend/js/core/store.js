@@ -10,6 +10,7 @@
   var unlockListeners = [];
   var state = load();
 
+  // "YYYY-MM-DD" in local time: the key for a day in the watch log
   function dayKey(d) {
     var x = d || new Date();
     return (
@@ -20,6 +21,7 @@
       String(x.getDate()).padStart(2, "0")
     );
   }
+  // The day key for n days before today
   function daysAgo(n) {
     var d = new Date();
     d.setDate(d.getDate() - n);
@@ -81,6 +83,8 @@
     };
   }
 
+  // Reads the saved state and upgrades older saves in place.
+  // A first visit (nothing saved) gets the sample list.
   function load() {
     try {
       var raw = localStorage.getItem(KEY);
@@ -107,6 +111,7 @@
     }
     return seed(true); // first visit: show the app with sample data
   }
+  // Writes the whole state back to localStorage
   function save() {
     try {
       localStorage.setItem(KEY, JSON.stringify(state));
@@ -114,6 +119,7 @@
       /* quota or privacy mode */
     }
   }
+  // After every change: record newly met achievements, save, re-render subscribers, then announce unlocks
   function emit() {
     var unlocked = recordUnlocks(Date.now());
     save();
@@ -134,6 +140,7 @@
       return true;
     });
   }
+  // Undo works by snapshot: an action saves the state as JSON first, and undo restores it whole
   function snapshot() {
     return JSON.stringify(state);
   }
@@ -185,6 +192,8 @@
       rot: id % 2 ? 0 : 45,
     };
   }
+  // Merges anime metadata (from Tenrai) into state.anime. Empty values are skipped,
+  // so a partial answer never wipes fields we already have.
   function cacheAnime(a) {
     if (!a || !a.id) return;
     var id = String(a.id);
@@ -244,11 +253,13 @@
           : watched.toLocaleString("en-US") + " episodes · total unknown",
     });
   }
+  // Ids on the list that have metadata, optionally filtered by filterFn(listEntry, id)
   function ids(filterFn) {
     return Object.keys(state.list).filter(function (id) {
       return anime(id) && (!filterFn || filterFn(state.list[id], id));
     });
   }
+  // How many titles are in each status
   function counts() {
     var c = { watching: 0, plan: 0, completed: 0, dropped: 0 };
     Object.keys(state.list).forEach(function (id) {
@@ -264,6 +275,7 @@
     if (v) state.log[k] = v;
     else delete state.log[k];
   }
+  // Updates (or creates) a list entry and stamps updatedAt. New entries start as Plan to Watch.
   function touch(id, patch) {
     id = String(id);
     state.list[id] = Object.assign(
@@ -318,16 +330,20 @@
     LEVEL_TITLES.push([40 + 10 * i, "Legend " + r]);
   });
   LEVEL_TITLES.push([120, "Legendary"]);
+  // The title for a level: the last LEVEL_TITLES entry it has reached
   function levelTitle(level) {
     return LEVEL_TITLES.reduce(function (t, x) {
       return level >= x[0] ? x[1] : t;
     }, LEVEL_TITLES[0][1]);
   }
 
+  // ---------- public API: NEKAI.store ----------
+  // List actions return an undo function (or { undo, … }) for the toast's Undo button.
   var api = {
     get state() {
       return state;
     },
+    // fn(state) runs after every change
     subscribe: function (fn) {
       listeners.push(fn);
     },
@@ -343,6 +359,7 @@
     entry: entry,
     ids: ids,
     counts: counts,
+    // Saves metadata without notifying subscribers (no re-render)
     cacheAnime: function (a) {
       cacheAnime(a);
       save();
@@ -352,6 +369,8 @@
       save();
     },
 
+    // Adds a title as status (Plan to Watch by default). meta: anime data to cache first,
+    // for titles from search. Adding as Completed counts every episode as watched.
     add: function (id, status, meta) {
       var snap = snapshot();
       if (meta) cacheAnime(meta);
@@ -371,12 +390,15 @@
       emit();
       return { undo: undoTo(snap), firstCompletion: first };
     },
+    // Removes a title from the list (its cached metadata stays)
     remove: function (id) {
       var snap = snapshot();
       delete state.list[String(id)];
       emit();
       return undoTo(snap);
     },
+    // Moves a title to another status, adjusting episodes and the watch log to match.
+    // Returns { undo, firstCompletion, streakUp }.
     setStatus: function (id, status) {
       var snap = snapshot();
       var a = anime(id),
@@ -408,6 +430,8 @@
         streakUp: !wasLogged && !!state.log[dayKey()],
       };
     },
+    // +1 episode: logs it for today (streak), starts a planned show and completes it on the last episode.
+    // Returns null when it can't go up, else { undo, watched, finished, firstCompletion, streakUp }.
     inc: function (id) {
       var snap = snapshot();
       var e = entry(id);
@@ -434,6 +458,7 @@
         streakUp: !wasLogged, // first episode today: the streak just grew by a day
       };
     },
+    // −1 episode: takes one back from today's log. Back at 0, Watching returns to Plan to Watch.
     dec: function (id) {
       var snap = snapshot();
       var e = entry(id);
@@ -447,10 +472,10 @@
       emit();
       return undoTo(snap);
     },
+    // Same as setStatus(id, "completed")
     complete: function (id) {
       return api.setStatus(id, "completed");
     },
-    // n: 1–10 with at most one decimal (0 clears the rating)
     // Personal review / note (plain text, trimmed, up to 2000 characters; empty removes it)
     setNote: function (id, text) {
       var snap = snapshot();
@@ -458,6 +483,7 @@
       emit();
       return undoTo(snap);
     },
+    // n: 1–10 with at most one decimal (0 clears the rating)
     rate: function (id, n) {
       var snap = snapshot();
       n = Math.round(Math.min(10, Math.max(0, Number(n) || 0)) * 10) / 10;
@@ -465,24 +491,29 @@
       emit();
       return undoTo(snap);
     },
+    // "Not interested": hides a title from picks and Popular, and the AI is told to avoid it
     hide: function (id) {
       var snap = snapshot();
       state.hidden[String(id)] = true;
       emit();
       return undoTo(snap);
     },
+    // Saves the AI picks (from services/recommend.js)
     setRecs: function (recs) {
       state.recs = recs;
       emit();
     },
+    // Layout preferences (sidebar, Library view…): saved quietly, no re-render
     setUi: function (patch) {
       Object.assign(state.ui, patch);
       save();
     },
+    // Settings switches (sound, confetti, Lolli, dark mode…)
     setSettings: function (patch) {
       Object.assign(state.settings, patch);
       emit();
     },
+    // Name, handle, email and bio
     setProfile: function (patch) {
       Object.assign(state.profile, patch);
       emit();
@@ -522,10 +553,12 @@
       state.onboarding = false;
       emit();
     },
+    // Sign in / log out. The list stays saved either way.
     setSignedIn: function (v) {
       state.signedIn = v;
       save();
     },
+    // Delete account: wipes the save and starts empty and signed out
     reset: function () {
       try {
         localStorage.removeItem(KEY);
@@ -536,6 +569,7 @@
     },
     // A new account starts from zero: empty list, watch log (so no streak), badges and AI picks.
     // This device's settings, layout and cached anime details carry over.
+    // Not called at the moment: sign-up uses startFresh() above.
     newAccount: function (profile) {
       var fresh = seed();
       fresh.settings = state.settings;
@@ -548,6 +582,8 @@
     },
 
     /* ---------- derived stats ---------- */
+    // The current streak: consecutive logged days up to today, or up to yesterday while
+    // today has nothing logged yet (today stays open until midnight)
     streak: function () {
       var n = 0,
         i = state.log[dayKey()] ? 0 : 1; // today not logged yet keeps yesterday's streak alive
@@ -557,6 +593,7 @@
       }
       return { current: n, loggedToday: !!state.log[dayKey()] };
     },
+    // The longest run of consecutive logged days ever (Week Streak, Profile)
     longestStreak: function () {
       var days = Object.keys(state.log)
         .filter(function (k) {
@@ -574,11 +611,13 @@
       });
       return best;
     },
+    // The most episodes logged on one day (Binge Mode)
     maxDay: function () {
       return Object.keys(state.log).reduce(function (m, k) {
         return Math.max(m, state.log[k]);
       }, 0);
     },
+    // Episodes watched, how many titles are rated and the mean rating
     totals: function () {
       var eps = 0,
         rated = 0,
@@ -652,6 +691,8 @@
         from: from,
       };
     },
+    // Every achievement with met / earned / earnedAt, and a progress line while locked.
+    // To add one, add an A(glyph, name, description, badge color, condition, progress) entry below.
     achievements: function () {
       var c = counts(),
         t = api.totals(),
@@ -753,6 +794,7 @@
         ),
       ];
     },
+    // Each genre's share of the titles you've started (top 6, the rest as "Other"), in percent
     genreMix: function () {
       var g = {},
         tot = 0;

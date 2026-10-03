@@ -34,9 +34,11 @@
   var pushed = false; // whether we added a history entry
   var saved = null; // page + content scroll positions from before opening
 
+  // The page's content column (beside the panel)
   function mainEl() {
     return document.querySelector(".app > .main");
   }
+  // Remembers where the page was, so closing the panel returns there
   function saveScroll() {
     var m = mainEl();
     saved = { win: window.scrollY, main: m ? m.scrollTop : 0 };
@@ -55,6 +57,7 @@
     window.scrollTo({ top: s.win, behavior: "instant" });
   }
 
+  // Panel state for a newly opened anime: loading flags, episode paging and toggles
   function fresh(id) {
     return {
       id: id,
@@ -73,6 +76,7 @@
       addAs: "plan",
     };
   }
+  // 1234567 → "1.2M", 45200 → "45K"
   function compact(n) {
     return n >= 1e6
       ? (n / 1e6).toFixed(1).replace(/\.0$/, "") + "M"
@@ -82,6 +86,7 @@
   }
 
   /* ---------- sections ---------- */
+  // The four stat tiles under the header: score, type, episodes, year
   function stats(e) {
     var status = e.airing
       ? "Airing"
@@ -134,6 +139,7 @@
     return '<div class="dp-seasons">' + chips + "</div>" +
       (also.length ? '<p class="dp-also">Also: ' + also.join('<span aria-hidden="true"> · </span>') + "</p>" : "");
   }
+  // The synopsis, clamped with Read more when long; skeleton lines while loading
   function synopsis(e) {
     if (!e.synopsis)
       return st.loading
@@ -155,6 +161,7 @@
         : "")
     );
   }
+  // Not on the list: an Add to Library control. On the list: status, rating, episodes and review.
   function watchlist(e) {
     if (!e.inList) {
       return (
@@ -204,9 +211,11 @@
   function reviewDraft(e) {
     return st.reviewDraft != null ? st.reviewDraft : e.note || "";
   }
+  // True when the box differs from the saved review (enables Save and Cancel)
   function reviewChanged(e) {
     return reviewDraft(e).trim() !== (e.note || "");
   }
+  // "123 / 2,000" above the review box
   function reviewCount(text) {
     return text.length.toLocaleString("en-US") + " / 2,000";
   }
@@ -227,6 +236,7 @@
       '<button type="button" id="dp-review-save" class="btn btn-primary"' + off + ">Save review</button></div></div>"
     );
   }
+  // The Details list; rows with no value are left out
   function info(e) {
     var rows = [
       ["Japanese", e.jp],
@@ -256,6 +266,7 @@
   }
   var FULLSCREEN_ICON =
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path></svg>';
+  // A thumbnail button first; the YouTube player (youtube-nocookie) only loads once it's clicked
   function trailer(e) {
     if (!e.trailer)
       return (
@@ -293,10 +304,13 @@
       '<span class="dp-trailer-cap" aria-hidden="true"><strong>Official trailer</strong><span>YouTube</span></span></button>'
     );
   }
+  // Episodes: 5 at first; Show all lists them, and long shows page through 50 at a time
   var EPISODE_PAGE_SIZE = 50;
+  // True when Show all is on and the show has more than one page of episodes
   function pagedEpisodes(e) {
     return st.showAll && (e.episodes > EPISODE_PAGE_SIZE || st.eps.length > EPISODE_PAGE_SIZE || st.epsNext);
   }
+  // Previous / Next buttons for a paged episode list
   function episodePagination(e) {
     if (!pagedEpisodes(e)) return "";
     var start = (st.epsViewPage - 1) * EPISODE_PAGE_SIZE;
@@ -307,6 +321,8 @@
       '<span class="small semibold" aria-live="polite">' + (end ? (start + 1) + ' - ' + end : 'Loading…') + '</span>' +
       '<button type="button" class="btn btn-secondary" data-ep-page="' + (st.epsViewPage + 1) + '" aria-label="Next episodes" title="Next episodes"' + (st.epsLoading || (!st.epsNext && count <= start + EPISODE_PAGE_SIZE) ? ' disabled' : '') + '>' + icon("chevR", 18, 2.6) + '</button></nav>';
   }
+  // The episode list, marking watched episodes and the next one.
+  // Placeholder rows (Episode n) stand in until the titles arrive.
   function episodes(e) {
     var list = st.eps.slice();
     if (!list.length && e.episodes && !st.epsLoading)
@@ -373,6 +389,7 @@
     var failure = st.epsFailed ? '<p class="small muted" role="status">Couldn’t load episode details. <button type="button" class="dp-link" id="dp-retry-eps"' + (st.epsLoading ? ' disabled' : '') + '>Try again</button></p>' : '';
     return '<ol class="dp-eps" aria-busy="' + st.epsLoading + '">' + items + "</ol>" + failure + more;
   }
+  // A panel section with its heading; controls sit beside the heading
   function section(title, html, controls) {
     return (
       '<section class="dp-sec">' + (controls ? '<div class="dp-ep-head">' : '') + '<h3 class="dp-h">' +
@@ -383,6 +400,7 @@
     );
   }
 
+  // Draws the whole panel for st.id. Runs again after every store change while the panel is open.
   function render() {
     if (!st) return;
     var e = S.entry(st.id);
@@ -445,6 +463,7 @@
   }
 
   /* ---------- loading ---------- */
+  // Fetches full details, then seasons; the first page of episodes loads alongside
   function load(id) {
     J.full(id)
       .then(function (a) {
@@ -473,6 +492,8 @@
       if (ok && st === current && st.showAll && pagedEpisodes(S.entry(id))) changeEpisodePage(1);
     });
   }
+  // Appends one page of episodes from Tenrai and resolves true on success.
+  // The answer is ignored if another anime was opened meanwhile (st !== current).
   function loadEpisodes(id, page) {
     var current = st;
     current.epsLoading = true;
@@ -498,6 +519,7 @@
         return ok;
       });
   }
+  // Shows page n of the episode list, fetching Tenrai pages until enough episodes are loaded
   function changeEpisodePage(page) {
     if (!st || st.epsLoading || page < 1) return;
     st.epsRetryPage = page;
@@ -527,6 +549,8 @@
   }
 
   /* ---------- open / close ---------- */
+  // Opens anime id in the panel (or switches to it) and adds a history entry, so Back closes it.
+  // from: the element that gets focus back on close.
   function open(id, from) {
     var same = st && st.id === id && isOpen();
     opener = from || document.activeElement;
@@ -571,6 +595,7 @@
   function isOpen() {
     return host.classList.contains("is-open");
   }
+  // fromHistory: Back already left the panel's history entry, so don't step back again
   function close(fromHistory) {
     if (!isOpen()) return;
     host.classList.remove("is-open");

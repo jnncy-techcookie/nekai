@@ -22,6 +22,7 @@
     }).join("");
   }
 
+  // Draws the header, top rated row, level and XP breakdown, genre mix, library counts and achievements
   function render() {
     var p = S.state.profile, c = S.counts(), t = S.totals(), lv = S.xp(), mix = S.genreMix(), ach = S.achievements();
     var earned = ach.filter(function (a) { return a.earned; }).length;
@@ -97,6 +98,7 @@
     }).join("");
   }
 
+  // Share list copies a link to the Library. It only shows this browser's data until lists sync to a server.
   U.$("#me").addEventListener("click", function (e) {
     if (!e.target.closest("#share")) return;
     var url = location.href.replace(/profile\.html.*$/, "library.html?tab=all");

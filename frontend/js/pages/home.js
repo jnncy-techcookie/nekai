@@ -16,6 +16,7 @@
 
   var DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
+  // Titles you're watching, most recently updated first
   function watchingByRecent() {
     return S.ids(function (e) { return e.status === "watching"; }).map(S.entry)
       .sort(function (a, b) { return b.updatedAt - a.updatedAt; });
@@ -25,6 +26,7 @@
   var firstVisit = !!S.state.firstHome;
   U.$(".greet-hello").textContent = firstVisit ? "Welcome," : "Welcome back,";
   S.seenHome();
+  // The first name, the line under the greeting, and the Status card
   function renderIntro() {
     var c = S.counts(), st = S.streak();
     U.$("#who").textContent = String(S.state.profile.name || "").trim().split(/\s+/)[0]; // first name only
@@ -60,12 +62,14 @@
   /* ---------- "Pick up where you left off" ---------- */
   var TRACK_MAX = 52; // up to this many episodes, the progress is a strip of one cell per episode
 
+  // The small label over the next episode: Up next, All caught up, Completed…
   function nextLabel(e) {
     if (e.isDone) return "Completed";
     if (e.known && e.watched >= e.episodes) return "All caught up";
     if (e.ongoing && e.aired && e.watched >= e.aired) return "Caught up · airing";
     return "Up next";
   }
+  // The big line: the next episode to watch, or how far you've got
   function nextEpisode(e) {
     if (e.isDone || (e.known && e.watched >= e.episodes)) return e.episodes + " of " + e.episodes + " watched";
     if (e.ongoing && e.aired && e.watched >= e.aired) return "Episode " + (e.aired + 1).toLocaleString("en-US") + " soon";
@@ -179,6 +183,7 @@
   }
 
   var heroId = null;
+  // Redraws the whole page (on load and after every store change)
   function render() {
     renderIntro();
     var list = watchingByRecent();

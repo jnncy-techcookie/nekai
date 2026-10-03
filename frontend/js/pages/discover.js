@@ -19,6 +19,7 @@
     var timer, paused = false;
     dotsEl.innerHTML = slides.map(function (s, i) { return '<button type="button" class="promo-dot" data-i="' + i + '" aria-label="Show banner ' + (i + 1) + " of " + n + '"></button>'; }).join("");
     var dots = Array.prototype.slice.call(dotsEl.children);
+    // current(): the banner in view; sync(): marks its dot; go(i): scrolls to banner i (wrapping round)
     function current() { return Math.round(track.scrollLeft / track.clientWidth) || 0; }
     function sync() { var i = current(); dots.forEach(function (d, k) { d.setAttribute("aria-current", k === i); }); }
     function go(i) { track.scrollTo({ left: ((i + n) % n) * track.clientWidth, behavior: U.reducedMotion() ? "auto" : "smooth" }); arm(); }
@@ -40,6 +41,7 @@
       track.classList.add("is-dragging"); track.setPointerCapture(e.pointerId);
     });
     track.addEventListener("pointermove", function (e) { if (drag) track.scrollLeft = drag.left - (e.clientX - drag.x); });
+    // A mouse drag of more than 60px moves one banner; a shorter one snaps back
     function endDrag(e) {
       if (!drag) return;
       var dx = e.clientX - drag.x, from = drag.from; drag = null;
@@ -61,17 +63,21 @@
   var TOP_GENRES = 8, MAX_GENRES = 5;
   var TOP = { ids: [], open: false, note: "", el: "genre", btn: "g", top: true, onChange: function () { ui.error = ""; doSearch(); } };
   var WHEEL = { ids: [], open: false, note: "", el: "wheel", btn: "w", top: false, onChange: function () { changeGenres(); } };
+  // Genre helpers: sort by name, find by id, and the names of a filter's picked genres
   function byName(a, b) { return a.name.localeCompare(b.name); }
   function genreById(id) { return (ui.genreList || []).filter(function (g) { return g.id === id; })[0]; }
   function genreNames(f) { return f.ids.map(function (id) { var g = genreById(id); return g ? g.name : ""; }).filter(Boolean); }
+  // The TOP_GENRES genres with the most anime, in alphabetical order
   function topGenres() {
     return (ui.genreList || []).slice().sort(function (a, b) { return b.count - a.count || byName(a, b); }).slice(0, TOP_GENRES).sort(byName);
   }
+  // Fetches the genre list once for both filters (with Try again if it fails)
   function loadGenres() {
     ui.genreFailed = false; renderGenres(TOP); renderGenres(WHEEL);
     J.genres().then(function (list) { ui.genreList = list.sort(byName); renderGenres(TOP); renderPicker(); })
       .catch(function () { ui.genreFailed = true; renderGenres(TOP); renderGenres(WHEEL); });
   }
+  // Picks or unpicks genre id in filter f (up to MAX_GENRES), then runs that filter's onChange
   function toggleGenre(f, id) {
     var i = f.ids.indexOf(id);
     if (i >= 0) f.ids.splice(i, 1);
@@ -80,9 +86,12 @@
     f.note = ""; renderGenres(f); f.onChange();
   }
 
+  // Loading placeholder for one result card
   var SKEL = '<div class="cart" aria-hidden="true"><div class="skel" style="aspect-ratio:3/4;background:#26336A"></div><div class="cart-label"><div class="skel" style="height:16px;width:80%"></div><div class="skel" style="height:16px;width:56%"></div><div class="skel" style="height:48px;margin-top:16px"></div></div></div>';
 
+  // The type chips switched on (TV, Movie, OVA, ONA)
   function typesOn() { return Object.keys(ui.types).filter(function (t) { return ui.types[t]; }); }
+  // Offline fallback: the same search over NEKAI's built-in sample catalog
   function localSearch(q) {
     q = q.toLowerCase();
     var types = typesOn(), names = genreNames(TOP);
@@ -134,6 +143,7 @@
       if (paging) U.$("#r-h").focus({ preventScroll: true });
     });
   }
+  // Resets the search box, filters and results
   function clearSearch() {
     ++searchId;
     ui.submitted = ""; ui.results = []; TOP.ids = []; TOP.note = ""; ui.types = {}; U.$("#q").value = "";
@@ -141,6 +151,7 @@
     renderSearch(); renderGenres(TOP); renderResults(); U.$("#q").focus();
   }
 
+  // Previous / Page n / Next for the results (shown above and below them)
   function pagination(position) {
     return '<nav class="results-pagination" aria-label="Results pages (' + position + ')">' +
       '<button type="button" class="btn btn-secondary" data-page="' + (ui.page - 1) + '"' + (ui.searching || ui.page <= 1 ? ' disabled' : '') + ' aria-label="Previous page" title="Previous page">' + icon("chevL", 20, 2.6) + '</button>' +
@@ -154,6 +165,7 @@
     return '<button type="button" id="' + prefix + g.id + '" class="' + cls + (full ? " is-full" : "") + '" data-gid="' + g.id + '" aria-pressed="' + on + '">' +
       (on ? icon("check", 16, 3) : "") + esc(g.name) + "</button>";
   }
+  // The search box state: error message, busy spinner and keyboard shortcut hint
   function renderSearch() {
     var q = U.$("#q"), err = U.$("#q-err");
     q.setAttribute("aria-invalid", !!ui.error);
@@ -161,6 +173,7 @@
     err.hidden = !ui.error; err.lastChild.textContent = ui.error;
     U.$("#q-kbd").innerHTML = ui.searching ? '<span class="spinner" aria-hidden="true"></span>' : (/Mac|iPhone|iPad/.test(navigator.platform) ? "⌘ K" : "Ctrl K");
   }
+  // Draws filter f: the All Genres button, the genre pills, the All Genres box and the limit note
   function renderGenres(f) {
     var pills = U.$("#" + f.el + "-pills"), box = U.$("#" + f.el + "-box"), note = U.$("#" + f.el + "-note");
     // All Genres opens and closes the box that lists every genre
@@ -184,6 +197,7 @@
     note.hidden = !f.note; note.textContent = f.note;
   }
 
+  // The results section: heading, type chips, pagination and the cards (or skeletons / empty state)
   function renderResults() {
     var host = U.$("#results");
     host.hidden = !ui.submitted;
@@ -214,6 +228,7 @@
   // A pick must be something you haven't started, finished or dropped, and have every selected genre
   function unseen(e) { return e && e.status !== "watching" && e.status !== "completed" && e.status !== "dropped"; }
   function hasAll(e, names) { return names.every(function (n) { return e.genres.indexOf(n) >= 0; }); }
+  // Entries from list that pass unseen() and hasAll(), skipping the last pick so a re-spin differs
   function eligible(list, names) {
     return list.map(function (a) { return S.entry(a.id); }).filter(function (e) {
       return unseen(e) && hasAll(e, names) && e.id !== ui.lastPick;
@@ -262,12 +277,15 @@
       el.classList.toggle("is-center", ad < 0.5);
     }
   }
+  // Turns the last revealed card face down again
   function resetFace() {
     if (!W.picked) return;
     W.picked.classList.remove("is-flipped", "is-picked");
     W.picked.querySelector(".wc-front").innerHTML = "";
     W.picked = null;
   }
+  // Spins to a random card 26–35 places ahead (3.6 s ease-out, ticking as cards pass).
+  // Resolves with the card it stops on.
   function spin() {
     return new Promise(function (done) {
       resetFace(); W.spinning = true; wheelEl.classList.add("is-spinning");
@@ -285,6 +303,7 @@
       });
     });
   }
+  // Flips the stopped card to show the picked anime's poster
   function reveal(card, e) {
     card.querySelector(".wc-front").innerHTML = U.art(e);
     card.classList.add("is-flipped", "is-picked");
@@ -293,6 +312,7 @@
   }
   window.addEventListener("resize", function () { if (!W.spinning) layoutWheel(W.pos, 0); });
 
+  // Spin button: spins the wheel and fetches a pool of candidates at the same time
   function find() {
     if (ui.finding) return;
     var ids = WHEEL.ids.slice(), names = genreNames(WHEEL);
@@ -307,6 +327,7 @@
       renderPicker();
     });
   }
+  // The spin button, the help line under it and the result (a pick, nothing found, or an offline note)
   function renderPicker() {
     var names = genreNames(WHEEL), size = ui.poolSize[WHEEL.ids.join(",")];
     renderGenres(WHEEL);
@@ -330,6 +351,7 @@
     } else out.innerHTML = "";
     if (ui.pickOffline && !ui.finding) out.insertAdjacentHTML("beforeend", '<p class="notice small" role="status">' + icon("wifiOff", 18) + "<span>Couldn’t reach Tenrai, so this pick came from NEKAI’s built-in sample list.</span></p>");
   }
+  // The wheel's genres changed: clear the old pick
   function changeGenres() { if (!ui.finding) { ui.pick = null; ui.pickNone = false; resetFace(); } renderPicker(); }
 
   // Popular: Tenrai's top airing list. Until it arrives (or if it can't), the best-scored sample titles.
@@ -349,17 +371,24 @@
 
   /* ---------- Nekai's Picks: AI picks (services/recommend.js), curated picks until they arrive or if they fail ---------- */
   var R = NEKAI.recommend;
+  // "just now", "12 min ago", "3 h ago"
   function ago(t) {
     var m = Math.round((Date.now() - t) / 60000);
     return m < 1 ? "just now" : m < 60 ? m + " min ago" : Math.round(m / 60) + " h ago";
   }
+  // Nekai's Picks row plus its status line (picking…, an error, or when the AI picks were made)
   function renderPicks() {
     var picks = U.picks(), busy = R.busy();
     if (picks.length) U.pickRow(U.$("#picks"), picks, "Nekai’s Picks, scroll sideways", { lite: true, wide: true, dismiss: true });
-    else U.render(U.$("#picks"), '<p class="body muted">' + (busy ? "" : "You’ve added or hidden every pick. Select New picks for a fresh set.") + "</p>");
+    // With an error the status line already explains why the row is empty, so the row stays blank
+    else U.render(U.$("#picks"), '<p class="body muted">' + (busy || ui.recError ? "" : "You’ve added or hidden every pick. Select New picks for a fresh set.") + "</p>");
     var ai = U.aiPicks(), msg = "";
-    if (busy) msg = '<span class="spinner" aria-hidden="true"></span><span>' + (ai ? "Updating your picks from your latest list…" : "The AI is reading your history and picking titles. This takes about 15 seconds; curated picks until then.") + "</span>";
-    else if (ui.recError) msg = "<span>" + esc(ui.recError) + (ai ? " Showing your last AI picks." : " Showing NEKAI’s curated picks instead.") + "</span>";
+    var fromGenres = !S.ids().length && (S.state.favGenres || []).length; // a new account: no history yet, just the genres picked at sign-up
+    if (busy) msg = '<span class="spinner" aria-hidden="true"></span><span>' + (ai ? "Updating your picks from your latest list…"
+      : (fromGenres ? "The AI is picking titles from your favorite genres." : "The AI is reading your history and picking titles.") + " This takes about 15 seconds" + (picks.length ? "; curated picks until then." : ".")) + "</span>";
+    // Only say what's showing when something is: your last AI picks, the curated ones, or nothing at all
+    else if (ui.recError) msg = "<span>" + esc(ui.recError) + " " + (!picks.length ? "Try New picks again in a little while."
+      : ai ? "Showing your last AI picks." : "Here are NEKAI’s curated picks for now.") + "</span>";
     else if (ai) msg = icon("spark", 16) + "<span>AI picks from your history, updated " + ago(S.state.recs.at) + "</span>";
     var st = U.$("#picks-status");
     st.innerHTML = msg;
@@ -368,6 +397,7 @@
     b.disabled = busy;
     b.textContent = busy ? "Picking…" : "New picks";
   }
+  // Asks for AI picks (force: even when the saved ones are fresh). On failure the curated picks stay.
   function loadPicks(force) {
     ui.recError = "";
     var p = R.load(force);
@@ -378,6 +408,7 @@
       J.hydrate(D.picks.map(function (x) { return String(x.id); }), function () { clearTimeout(t); t = setTimeout(renderPicks, 250); });
     }).then(renderPicks);
   }
+  // Debounce timer: re-render once as a batch of curated posters arrives
   var t;
 
   /* ---------- events ---------- */
@@ -389,6 +420,7 @@
   document.addEventListener("keydown", function (e) {
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); U.$("#q").focus(); U.$("#q").select(); }
   });
+  // Wires filter f's pills and box: toggle a genre, open or close All Genres, retry loading
   function bindGenres(f) {
     function click(e) {
       var b = e.target.closest("[data-gid],[data-gall],[data-gretry]"); if (!b) return;

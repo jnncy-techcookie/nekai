@@ -1,3 +1,7 @@
+/* Gemini client (Google's Generative Language API, generateContent).
+ * The key comes from GEMINI_API_KEY in backend/.env and never leaves the server.
+ * GEMINI_MODEL and GEMINI_FALLBACK_MODEL can override the default models.
+ */
 const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/";
 
 // Google's "overloaded" / temporary server errors: worth another try
@@ -39,6 +43,8 @@ async function askGemini(system, messages, config) {
   throw lastError;
 }
 
+// One generateContent call. Throws an Error with .status (Google's HTTP status, or 502 when
+// the answer has no text, e.g. blocked by a safety filter) so askGemini can decide whether to retry.
 async function generate(key, model, system, messages, config) {
   const response = await fetch(
     API_URL + encodeURIComponent(model) + ":generateContent",
@@ -67,6 +73,7 @@ async function generate(key, model, system, messages, config) {
     throw error;
   }
 
+  // A reply can arrive in several parts: join them into one string
   const text = (result?.candidates?.[0]?.content?.parts || [])
     .map((part) => part.text || "")
     .join("")

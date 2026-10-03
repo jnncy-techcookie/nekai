@@ -26,6 +26,7 @@
     return (h >>> 0).toString(36);
   }
 
+  // The 60 most recently updated titles, in the shape routes/recommend.js checks
   function history() {
     return S.ids()
       .map(S.entry)
@@ -46,6 +47,7 @@
       return id + ":" + list[id].status + ":" + (list[id].rating || 0) + (note ? ":" + hash(note) : "");
     }).join(",") + "|" + Object.keys(S.state.hidden).sort().join(",") + "|" + (S.state.favGenres || []).join(",");
   }
+  // True when the saved picks still match the list and are less than a day old
   function fresh() {
     var r = S.state.recs;
     return !!(r && r.key === key() && Date.now() - r.at < MAX_AGE);
@@ -63,8 +65,8 @@
         history: history(),
         exclude: Object.keys(S.state.list).concat(hidden).map(Number).slice(0, 300),
         notInterested: hidden.map(S.anime).filter(Boolean).map(function (a) { return a.title; }).slice(0, 50),
-        // nothing added or rated yet: the genres picked at sign-up are the starting point
-        favoriteGenres: S.ids().length ? [] : (S.state.favGenres || []).slice(0, 3),
+        // the genres picked at sign-up: the AI's starting guide, weighed less as the history grows
+        favoriteGenres: (S.state.favGenres || []).slice(0, 3),
       }),
     })
       .then(function (res) {

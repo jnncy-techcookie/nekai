@@ -8,6 +8,7 @@
     D = NEKAI.data;
 
   /* ---------- helpers ---------- */
+  // Escapes text for use inside HTML strings. Every value from data or the user goes through this.
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
       return {
@@ -19,6 +20,7 @@
       }[c];
     });
   }
+  // Shorthands for querySelector and querySelectorAll ($$ returns a real array)
   function $(sel, root) {
     return (root || document).querySelector(sel);
   }
@@ -26,6 +28,7 @@
     return Array.prototype.slice.call((root || document).querySelectorAll(sel));
   }
 
+  // Icon paths (24 × 24, stroked), drawn by icon(name)
   var P = {
     search:
       '<circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path>',
@@ -102,6 +105,8 @@
     wifiOff:
       '<path d="M2 8.5a15 15 0 0120 0M5 12a10 10 0 0114 0M8.5 15.5a5 5 0 017 0M12 19h.01M3 3l18 18"></path>',
   };
+  // An inline SVG icon from P; sw is the stroke width. Icons are decorative
+  // (aria-hidden), so the button or link around one needs its own label.
   function icon(name, size, sw) {
     return (
       '<svg width="' +
@@ -150,6 +155,7 @@
     '<span class="brand-word brand-wordmark" aria-hidden="true">' +
     '<img class="logo-l" src="assets/images/logo-text-light.png?v=2" alt="" width="104" height="24">' +
     '<img class="logo-d" src="assets/images/logo-text-dark.png?v=2" alt="" width="105" height="24"></span>';
+  // Applies the settings kept as classes on <html> (dark mode, reduce motion) and updates the theme buttons
   function applySettings() {
     var st = S.state.settings,
       h = document.documentElement;
@@ -163,6 +169,7 @@
       if (i) i.innerHTML = icon(st.dark ? "sun" : "moon");
     });
   }
+  // True when Reduce motion is on in Settings or in the operating system
   function reducedMotion() {
     return (
       S.state.settings.motion ||
@@ -208,6 +215,7 @@
   // The store reports unlocks while an action runs, just before that action shows its toast.
   // The news rides along on that toast (keeping its Undo); an action with no toast gets one of its own.
   var unlockNews = "";
+  // "Critic badge earned! +25 XP", or several names joined with commas and "and"
   function unlockText(list) {
     var names = list.map(function (a) {
       return a.name;
@@ -227,6 +235,8 @@
     }, 0);
   });
 
+  // Builds the app frame around a page: sidebar, phone top bar and tabs, the Lolli button,
+  // the toast region and the skip link. Every signed-in page calls it once, before rendering.
   function shell(opts) {
     // A new account picks its 3 genres before anything else
     if (S.state.onboarding) { location.replace("welcome.html"); return; }
@@ -375,8 +385,6 @@
     document.body.insertBefore(skip, document.body.firstChild);
   }
 
-  /* ---------- toast with optional Undo ---------- */
-  var toastTimer;
   /* ---------- confirmation pop-up for critical actions ----------
      confirmDialog({ title, body, confirm, cancel, danger, icon }) → Promise<boolean>.
      A native <dialog> (showModal): it sits above everything, keeps focus inside,
@@ -428,12 +436,14 @@
       d.querySelector('[data-cdlg="no"]').focus();
     });
   }
+  // The same check as reducedMotion(), read from the class on <html>
   function reduceMotion() {
     return (
       document.documentElement.classList.contains("opt-reduce-motion") ||
       matchMedia("(prefers-reduced-motion: reduce)").matches
     );
   }
+  // Asks first, then signs out (the data stays in this browser)
   function logOut() {
     confirmDialog({
       title: "Log out of NEKAI?",
@@ -447,6 +457,10 @@
     });
   }
 
+  /* ---------- toast with optional Undo ---------- */
+  var toastTimer;
+  // Shows one toast (replacing any other) for 5 seconds; undo runs from its Undo button.
+  // News of a badge just unlocked is added to the message.
   function toast(msg, undo) {
     var region = $(".toast-region");
     if (!region) return;
@@ -543,6 +557,8 @@
     }, 3200);
   }
   var audio;
+  // Short synthesized sounds (Web Audio, no files): "done" is a rising chime, "tick" a soft click.
+  // Silent unless Settings → Sound effects is on.
   function sound(kind) {
     if (!S.state.settings.sound) return;
     try {
@@ -570,6 +586,8 @@
   }
 
   /* ---------- components ---------- */
+  // Poster: the brand placeholder (colors from a.art), with the real image on top once there is one.
+  // opts: lg / thumb sizes, noImg, width (px), ep (an episode label).
   function art(a, opts) {
     opts = opts || {};
     var x = a.art || {};
@@ -609,11 +627,11 @@
       "</div>"
     );
   }
-  // "S2" badge beside the title of a show's second (third…) season; season 1 has none
   // A genre tag's color family, so dark mode can restyle it (light mode keeps the inline colors)
   function genreTone(c) {
     return /^#[89]A/i.test(c.fg) ? "orange" : /^#1[6F]/i.test(c.fg) ? "blue" : "neutral";
   }
+  // "S2" badge beside the title of a show's second (third…) season; season 1 has none
   function seasonBadge(a) {
     return a && a.seasonNo > 1
       ? ' <span class="season-badge" title="Season ' + a.seasonNo + '">S' + a.seasonNo + "</span>"
@@ -623,10 +641,12 @@
   function airingChip(a) {
     return a && a.airing ? '<span class="air-chip"><i aria-hidden="true"></i>Airing</span>' : "";
   }
+  // Link that opens the detail panel (js/core/detail-panel.js)
   function detailsHref(a) {
     return "#anime-" + a.id;
   }
 
+  // The −1 / count / +1 control. Its buttons use data-act, so the shared handlers below do the work.
   function stepper(e) {
     return (
       '<div class="stepper" role="group" aria-label="Episodes watched, ' +
@@ -656,6 +676,7 @@
       "</button></div>"
     );
   }
+  // Five star buttons, 2 points each. No page uses this now: Library and Home use ratingBtn (panes.js).
   function stars(e) {
     var h =
       '<div class="stars" role="group" aria-label="Your rating for ' +
@@ -680,6 +701,7 @@
     }
     return h + "</div>";
   }
+  // Status dropdown; the shared "change" listener below handles it
   function statusSelect(e, id) {
     return (
       '<select id="' +
@@ -705,6 +727,7 @@
       "</select>"
     );
   }
+  // The MyAnimeList community score (not the user's own rating)
   function scoreBadge(a) {
     return (
       '<span class="score" title="Community score from Tenrai (MyAnimeList)">' +
@@ -733,21 +756,36 @@
   }
 
   /* ---------- shared actions (event delegation) ---------- */
+  // The toast (plus first-time confetti) after a title is completed
   function afterComplete(res, a) {
     if (res && res.firstCompletion) {
       confetti();
       sound("done");
     }
+    // Progress toward the next Finisher badge not yet earned (one just unlocked is announced by the unlock news)
     var c = S.counts().completed;
+    var earned = {};
+    S.achievements().forEach(function (b) {
+      earned[b.name] = b.earned;
+    });
+    var next = FINISHER_GOALS.filter(function (g) {
+      return !earned[g[0]];
+    })[0];
     toast(
       a.title +
-        " completed! Finisher badge " +
-        Math.min(c, 10) +
-        " / 10" +
+        " completed!" +
+        (next ? " " + next[0] + " badge " + Math.min(c, next[1]) + " / " + next[1] : "") +
         streakNews(res),
       res && res.undo,
     );
   }
+  // [badge, completions needed]: must match the Finisher achievements in store.js
+  var FINISHER_GOALS = [
+    ["Finisher", 5],
+    ["Finisher II", 10],
+  ];
+  // Buttons with data-act="name" (and data-id) run actions[name](id, button). One listener serves
+  // the whole page, so buttons keep working after a section re-renders.
   var actions = {
     // Dark mode: saved with the other settings; colors ease over briefly so the switch isn't a flash
     theme: function () {
@@ -848,6 +886,7 @@
   });
 
   /* ---------- re-render that keeps keyboard focus ---------- */
+  // A selector that finds the same control again after a re-render (by id, or data-act + data-id)
   function keyOf(el) {
     if (!el || !el.dataset) return null;
     if (el.id) return "#" + el.id;
@@ -862,6 +901,7 @@
       );
     return null;
   }
+  // Replaces a container's HTML, keeping keyboard focus on the same control if it had it
   function render(container, html) {
     var k = container.contains(document.activeElement)
       ? keyOf(document.activeElement)
@@ -878,11 +918,13 @@
   }
 
   /* ---------- match % tiers ---------- */
+  // High 80%+, Medium 65–79%, Low under 65%
   function matchTier(pct) {
     if (pct >= 80) return { key: "high", label: "High" };
     if (pct >= 65) return { key: "mid", label: "Medium" };
     return { key: "low", label: "Low" };
   }
+  // The match % pill on pick cards
   function matchBadge(pct) {
     var t = matchTier(pct);
     // Reads as "78% High match"
@@ -898,6 +940,8 @@
   }
 
   /* ---------- Picked for you row ---------- */
+  // One pick card plus its quick-info preview (.qi). a needs .match, and .why for a reason line.
+  // opts.wide: full-size buttons in the preview; opts.dismiss: add Not interested there.
   // opts.lite: browse-only card (no Add, no quick-info button, no "Not interested")
   function pickCard(a, opts) {
     opts = opts || {};
@@ -1075,6 +1119,7 @@
     );
   }
 
+  // The small Not interested button in the quick-info preview
   function dismissBtn(a) {
     return (
       '<button type="button" class="btn btn-secondary btn-icon" data-act="dismiss" data-id="' +
@@ -1087,10 +1132,12 @@
     );
   }
 
+  // The one open quick-info preview (only one at a time) and its hover timers
   var openKey = null,
     openCard = null,
     openTimer,
     closeTimer;
+  // Closes the open preview. Without now, it waits 120 ms so the pointer can cross into the preview.
   function closePanel(now) {
     clearTimeout(openTimer);
     clearTimeout(closeTimer);
@@ -1106,6 +1153,7 @@
     if (now) go();
     else closeTimer = setTimeout(go, 120);
   }
+  // Opens a card's preview after delay ms, on whichever side has room
   function openPanel(card, delay) {
     clearTimeout(openTimer);
     clearTimeout(closeTimer);
@@ -1144,6 +1192,8 @@
     else openTimer = setTimeout(go, delay);
   }
 
+  // A sideways-scrolling row of pick cards with arrows and edge fades. Keeps the scroll
+  // position and the open preview across re-renders.
   function pickRow(host, items, label, opts) {
     var keep = host.querySelector(".pick-row");
     var scroll = keep ? keep.scrollLeft : 0,
@@ -1235,6 +1285,7 @@
       bindPicks(host.querySelector(".pick-grid"), wasOpen);
   }
 
+  // Hover, focus, Esc and the ⋯ button for every card in a row or grid
   function bindPicks(row, wasOpen) {
     // Hover intent: a quick pass tilts/lifts (CSS); resting ~450ms opens the panel
     $$(".pick", row).forEach(function (card) {
@@ -1295,15 +1346,42 @@
     var r = S.state.recs;
     return !!(r && r.items && r.items.length);
   }
+  // ["A", "B", "C"] → "A, B and C"
+  function andJoin(list) {
+    return list.length > 1 ? list.slice(0, -1).join(", ") + " and " + list[list.length - 1] : list[0];
+  }
+  // The "why" line for a curated pick, from this user's own data (curated picks have no fixed reason,
+  // since they're shown to every account): the show in their list it's most like, else the genres they
+  // picked at sign-up, else nothing. Shows they dropped, haven't started or rated 5 or lower don't count.
+  function curatedWhy(a) {
+    var gs = a.genres || [], best = null, bestScore = 0;
+    Object.keys(S.state.list).forEach(function (id) {
+      var e = S.state.list[id], x = S.anime(id);
+      if (!x || e.status === "plan" || e.status === "dropped" || (e.rating && e.rating <= 5)) return;
+      var shared = (x.genres || []).filter(function (g) { return gs.indexOf(g) >= 0; });
+      var score = shared.length * 10 + (e.rating || 0); // shared genres first, then the higher rating
+      if (shared.length && score > bestScore) {
+        bestScore = score;
+        best = { title: x.title, shared: shared.slice(0, 2), rating: e.rating };
+      }
+    });
+    if (best)
+      return andJoin(best.shared) + ", like " + best.title +
+        (best.rating ? ", which you rated " + (Math.round(best.rating * 10) / 10) + "/10" : "");
+    var fav = (S.state.favGenres || []).filter(function (g) { return gs.indexOf(g) >= 0; });
+    return fav.length ? "From your favorite genres: " + andJoin(fav) : "";
+  }
+  // The picks for Home and Discover, as described above aiPicks()
   function picks() {
-    return (aiPicks() ? S.state.recs.items : D.picks)
+    var ai = aiPicks();
+    return (ai ? S.state.recs.items : D.picks)
       .filter(function (p) {
         var id = String(p.id);
         return !S.state.hidden[id] && !S.state.list[id] && S.anime(id);
       })
       .map(function (p) {
         var a = S.anime(p.id);
-        a.why = p.why;
+        a.why = ai ? p.why : curatedWhy(a);
         a.synopsis = a.synopsis || p.synopsis;
         a.match = p.fit != null ? S.blendMatch(a, p.fit) : S.match(a);
         return a;

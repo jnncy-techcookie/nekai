@@ -18,6 +18,7 @@
   var messages = load(); // [{ role: "user" | "lolli", text }]
   var busy = false, failed = "", panel, logEl, form, input, sendBtn, opener;
 
+  // The conversation saved for this tab (sessionStorage: gone when the tab closes)
   function load() {
     try {
       var m = JSON.parse(sessionStorage.getItem(KEY) || "[]");
@@ -26,6 +27,7 @@
       return [];
     }
   }
+  // Keeps the last MAX_KEEP messages
   function save() {
     messages = messages.slice(-MAX_KEEP);
     try {
@@ -36,6 +38,7 @@
   }
 
   /* ---------- what Lolli knows about the user ---------- */
+  // The snapshot sent with every question. Lolli only knows what's in here.
   function context() {
     var st = S.streak(), t = S.totals(), lv = S.xp();
     var list = S.ids().map(S.entry).sort(function (a, b) { return b.updatedAt - a.updatedAt; }).slice(0, 40);
@@ -54,6 +57,7 @@
       xpToNextLevel: lv.need - lv.into,
       episodesWatched: t.episodes,
       averageRating: t.mean || null,
+      pickedGenres: (S.state.favGenres || []).slice(0, 3), // the genres they said they love at sign-up
       favoriteGenres: S.genreMix().filter(function (g) { return g.name !== "Other"; }).map(function (g) { return g.name + " " + g.pct + "%"; }),
       achievements: {
         earned: ach.filter(function (a) { return a.earned; }).map(function (a) { return a.name; }),
@@ -91,11 +95,13 @@
     flush();
     return html;
   }
+  // One chat message; screen readers hear who said it
   function bubble(role, html, extra) {
     return '<div class="lchat-msg lchat-' + role + (extra ? " " + extra : "") + '">' +
       (role === "lolli" ? '<span class="lchat-avatar" aria-hidden="true">' + U.lolliSvg(28) + "</span>" : "") +
       '<div class="lchat-bubble">' + (role === "user" ? '<span class="sr">You: </span>' : '<span class="sr">Lolli: </span>') + html + "</div></div>";
   }
+  // Redraws the conversation: greeting and page tip, messages, typing dots, error, suggestions
   function render() {
     // Lolli's greeting carries this page's tip (streak reminders and the like) and its link
     var tip = U.lolliTip || {};
@@ -116,6 +122,7 @@
     sendBtn.disabled = busy;
   }
 
+  // Creates the chat box the first time it opens and wires up its form and buttons
   function build() {
     panel = document.createElement("section");
     panel.className = "lchat";
@@ -193,6 +200,7 @@
   }
 
   /* ---------- talking to the backend ---------- */
+  // Adds the user's message and sends it
   function ask(text) {
     text = String(text || "").trim();
     if (!text || busy) return;
@@ -202,6 +210,7 @@
     input.style.height = "";
     send();
   }
+  // Sends the latest MAX_SEND messages with a fresh context (also used by Try again)
   function send() {
     busy = true;
     failed = "";
@@ -235,18 +244,21 @@
   /* ---------- open / close ----------
      The box stays in the page and animates with the .is-open class (see lolli-chat.css),
      so opening and closing are both smooth. */
+  // The floating Lolli button (added by ui.shell when Lolli is on)
   function fab() {
     return document.querySelector(".lolli-fab");
   }
   function isOpen() {
     return !!panel && panel.classList.contains("is-open");
   }
+  // The button steps aside while the chat is open, since the chat sits in its place
   function setFab(open) {
     var b = fab();
     if (!b) return;
     b.setAttribute("aria-expanded", String(open));
     b.inert = open; // hidden while the chat sits in its place
   }
+  // from: the button that opened the chat (focus returns there on close)
   function open(from) {
     var first = !panel;
     if (first) build();

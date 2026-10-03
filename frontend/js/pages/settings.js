@@ -6,6 +6,7 @@
 
   U.shell({ page: "settings.html", lolli: "Turn me off here any time. I won’t take it personally… much." });
 
+  // [setting key, label, description] for each switch, by section
   var SWITCHES = {
     experience: [["sound", "Sound effects", "Subtle sounds when you log an episode or finish a show."], ["confetti", "Completion confetti", "Celebrate the first time you mark an anime completed."],
       ["lolli", "Lolli supporter", "A floating chat button in the corner, with reminders, recommendations and encouragement."], ["streak", "Streak reminders", "A nudge from Lolli when your watch streak is about to end."]],
@@ -13,6 +14,7 @@
   };
   var EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
+  // One labelled on/off switch (role=switch)
   function switchRow(s) {
     var on = !!S.state.settings[s[0]];
     return '<div class="divider switch-row"><div class="grow"><p id="' + s[0] + '-l" class="h3">' + s[1] + '</p><p id="' + s[0] + '-d" class="small muted">' + s[2] + "</p></div>" +
@@ -23,6 +25,7 @@
     U.render(U.$("#sw-exp"), SWITCHES.experience.map(switchRow).join(""));
     U.render(U.$("#sw-acc"), SWITCHES.access.map(switchRow).join(""));
   }
+  // A switch flips its setting. Turning Lolli on or off needs a reload, since the button is built with the page.
   document.addEventListener("click", function (e) {
     var b = e.target.closest("[data-sw]"); if (!b) return;
     var k = b.dataset.sw, patch = {}; patch[k] = !S.state.settings[k];
@@ -55,6 +58,7 @@
   var p = S.state.profile;
   var nm = U.$("#dn"), em = U.$("#em"), bio = U.$("#bio");
   nm.value = p.name; em.value = p.email; bio.value = p.bio || "";
+  // Live character count under the bio
   function count() { U.$("#bio-help").textContent = bio.value.length + " of 160 characters"; }
   function showErr(input, errEl, bad) { input.setAttribute("aria-invalid", bad); errEl.hidden = !bad; }
   bio.addEventListener("input", count); count();
@@ -90,6 +94,7 @@
   U.$("#pw-change").addEventListener("click", function () { U.toast("We’ve emailed a password reset link to " + S.state.profile.email); });
 
   /* ---------- data ---------- */
+  // Export: the list as a CSV file (values quoted where needed), made in the browser
   U.$("#export").addEventListener("click", function () {
     var rows = [["mal_id", "title", "status", "episodes_watched", "total_episodes", "your_rating", "community_score"]];
     S.ids().map(S.entry).forEach(function (e) {

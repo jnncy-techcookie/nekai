@@ -21,6 +21,7 @@
     dropped: "Shows you stop watching land here. You can pick them back up any time.", plan: "Save shows from Discover to build your queue.",
     completed: "Finish a show and it will appear here, with confetti.", watching: "Start something from your Plan to Watch list.", all: "Your list is empty. Add your first anime from Discover."
   };
+  // The Sort menu's orders; ties on rating fall back to the most recently updated
   var SORTS = {
     updated: function (a, b) { return b.updatedAt - a.updatedAt; },
     rating: function (a, b) { return b.rating - a.rating || b.updatedAt - a.updatedAt; },
@@ -40,6 +41,7 @@
     if (withAiring && e.airing) bits.splice(1, 0, '<span class="air-tag">Airing</span>');
     return bits.length ? '<p class="m-sub">' + bits.join('<span class="m-dot" aria-hidden="true">•</span>') + "</p>" : "";
   }
+  // Remove button (asks first, through data-act="remove")
   function del(e) { return '<button type="button" class="m-del" data-act="remove" data-id="' + e.id + '" aria-label="Remove ' + esc(e.title) + ' from your list" title="Remove from list">' + icon("trash", 18) + "</button>"; }
 
   // List: [poster] [title, year · genre] [stepper] [rating] [status] [delete]
@@ -63,6 +65,7 @@
       "</div></article>";
   }
 
+  // Draws the tabs (with counts), the result count, and the rows or cards for the current tab, search and sort
   function render() {
     var c = S.counts(), all = S.ids();
     var label = TABS.filter(function (t) { return t[0] === ui.tab; })[0][1];
@@ -99,7 +102,9 @@
       panel.classList.add("tab-enter");
     }
   }
+  // Set by a tab or view change so render() replays the panel's enter animation
   var switched = false;
+  // Changes tab and keeps it in the URL (?tab=…), so reloads and links land on it
   function switchTab(tab) {
     if (tab === ui.tab) return;
     ui.tab = tab; switched = true; history.replaceState(null, "", "?tab=" + ui.tab); render();
