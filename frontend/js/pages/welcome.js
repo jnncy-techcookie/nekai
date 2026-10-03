@@ -28,6 +28,7 @@
   var name = (S.state.profile.name || "").trim();
   if (name) U.$("#ob-hi").textContent = "Welcome to NEKAI, " + name;
 
+  // Draws the 12 genre tiles (numbered in pick order), the progress bar and the Continue button
   function render() {
     var full = picked.length >= MAX;
     U.$("#ob-grid").innerHTML = GENRES.map(function (g, i) {

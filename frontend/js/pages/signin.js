@@ -13,6 +13,7 @@
 
   if (new URLSearchParams(location.search).get("deleted")) U.$("#deleted").hidden = false;
 
+  // Which fields are valid in this mode: sign in needs no name, sign up needs an 8+ character password
   function valid() {
     return {
       name: mode === "signin" || !!nm.value.trim(),
@@ -20,6 +21,7 @@
       pw: mode === "register" ? pw.value.length >= 8 : pw.value.length > 0
     };
   }
+  // Updates the form for the mode (sign in / sign up), and shows errors once a submit was tried
   function paint() {
     var reg = mode === "register", v = valid();
     U.$("#auth-h").textContent = reg ? "Create your account" : "Welcome back";

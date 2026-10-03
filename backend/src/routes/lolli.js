@@ -1,7 +1,12 @@
+/* POST /api/lolli/chat: Lolli, the chatbot.
+ * Body: { messages: [{ role: "user" | "lolli", text }], context } where context is the snapshot
+ * of the user's list built by frontend/js/core/lolli.js. Answers { reply } or { error }.
+ */
 const router = require("express").Router();
 const { askGemini } = require("../services/gemini");
 const { rateLimiter } = require("../services/rate-limit");
 
+// Limits: messages of history sent to Gemini, characters per message, characters of user data
 const MAX_TURNS = 12;
 const MAX_TEXT = 1000;
 const MAX_CONTEXT = 12000;
@@ -9,6 +14,8 @@ const MAX_CONTEXT = 12000;
 // Protects the Gemini key from runaway use: 15 messages per minute per IP
 const rateLimited = rateLimiter(15, 60 * 1000);
 
+// Lolli's instructions. The NEKAI rules below (XP, levels, titles) must match
+// frontend/js/core/store.js, or Lolli will explain them wrong.
 const SYSTEM = `You are Lolli, the lollipop-shaped watch buddy inside NEKAI, an anime watchlist web app.
 
 Personality: warm, upbeat and a little playful, like a friend who loves anime. Keep answers short: usually under 120 words. Use plain text; you may use **bold** for titles and "- " bullet lists. No headings, tables or emoji spam (one emoji at most).
@@ -42,6 +49,7 @@ function toTurns(messages) {
   return turns;
 }
 
+// Validate → rate-limit → ask Gemini. Every failure becomes a short message the chat shows as is.
 router.post("/chat", async (req, res) => {
   const { messages, context } = req.body || {};
 

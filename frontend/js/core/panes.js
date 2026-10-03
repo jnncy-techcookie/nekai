@@ -7,7 +7,9 @@
   "use strict";
   var S = NEKAI.store, U = NEKAI.ui, esc = U.esc, icon = U.icon;
 
+  // 8 → "8.0", 8.45 → "8.5", 10 → "10"
   function fmtRating(n) { return (Math.round(n * 10) / 10).toFixed(1).replace(/^10\.0$/, "10"); }
+  // The "★ 8.4 ⌄" button that opens the rating pane
   function ratingBtn(e) {
     return '<button type="button" class="rp-btn" data-rate-open="' + e.id + '" aria-haspopup="dialog" aria-expanded="false" aria-label="Your rating for ' + esc(e.title) + ": " + (e.rating ? fmtRating(e.rating) + " out of 10" : "not rated") + '. Change rating">' +
         U.star(16, e.rating ? "#F25C05" : "#E6DCC7") + (e.rating ? "<span>" + fmtRating(e.rating) + "</span>" : '<span class="rp-none">Rate</span>') + icon("chevD", 16, 2.6) + "</button>";
@@ -62,6 +64,7 @@
     RP.btn = all.filter(function (b) { return !!b.closest(".dp") === RP.inPanel; })[0] || all[0] || null;
     return RP.btn;
   }
+  // Shows rating v on the stars (partly filled) and in the box. fromTyping leaves the box as typed.
   function paint(v, fromTyping) {
     RP.preview = v;
     Array.prototype.forEach.call(rpStars.children, function (s, i) {
@@ -71,6 +74,7 @@
     rpStars.setAttribute("aria-valuetext", v ? fmtRating(v) + " out of 10" : "Not rated");
     if (!fromTyping) { rpInput.value = v ? fmtRating(v) : ""; showErr(""); }
   }
+  // Shows or clears the message under the box
   function showErr(msg) {
     rpErr.hidden = !msg; rpErr.textContent = msg;
     rpInput.setAttribute("aria-invalid", !!msg);
@@ -87,6 +91,7 @@
     if (n < 1) return { error: "Ratings start at 1." };
     return { value: n };
   }
+  // Positions the pane under its button (above it when there's no room), inside the window
   function place() {
     var a = anchor();
     if (!a) { closeRating(false); return; }
@@ -99,6 +104,7 @@
     rp.classList.toggle("above", above);
     a.setAttribute("aria-expanded", "true");
   }
+  // viaKeyboard: move focus into the stars (a click leaves focus on the button)
   function openRating(id, viaKeyboard) {
     if (RP.id && RP.id !== id) closeRating(false);
     RP.id = id;
@@ -107,6 +113,7 @@
     place();
     if (viaKeyboard) rpStars.focus({ preventScroll: true }); // mouse users keep focus on the button (no stray focus ring)
   }
+  // returnFocus: put focus back on the Rate button (Esc, Clear)
   function closeRating(returnFocus) {
     var a = anchor();
     clearTimeout(RP.keyTimer);
@@ -114,6 +121,7 @@
     rp.hidden = true; RP.id = null; RP.btn = null;
     if (returnFocus && a) a.focus({ preventScroll: true });
   }
+  // Saves rating v if it changed, with an Undo toast
   function commit(v) {
     if (!RP.id) return;
     var e = S.entry(RP.id);
@@ -135,6 +143,7 @@
     paint(valueAt(ev.clientX));
   });
   rpStars.addEventListener("pointermove", function (ev) { if (dragging) paint(valueAt(ev.clientX)); });
+  // Letting go saves the value under the pointer
   function endDrag() { if (!dragging) return; dragging = false; rp.classList.remove("is-dragging"); commit(RP.preview); }
   rpStars.addEventListener("pointerup", endDrag);
   rpStars.addEventListener("pointercancel", endDrag);

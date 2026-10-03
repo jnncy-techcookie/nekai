@@ -9,6 +9,7 @@
   var GAP = 400;
   var queue = Promise.resolve();
   var last = 0;
+  // path → Promise for this page load (a failed request is forgotten, so it can be retried)
   var memo = {};
   var seasonJobs = {}; // season chains being worked out, so two callers share one walk
 
@@ -18,6 +19,7 @@
     });
   }
 
+  // GET /api/tenrai + path, queued GAP ms apart and retried once on a 429. The same path gets the same Promise.
   function request(path) {
     if (memo[path]) return memo[path];
     var p = (queue = queue
@@ -51,6 +53,7 @@
     return s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
   }
 
+  // The YouTube video id from Tenrai's trailer object (youtube_id, or taken from embed_url)
   function youtubeId(t) {
     if (!t) return "";
     if (t.youtube_id) return t.youtube_id;
@@ -88,7 +91,7 @@
       rank: j.rank || null,
       popularity: j.popularity || null,
       duration: j.duration || "",
-      ageRating: j.rating || "", // e.g. "PG-13"; not "rating", which is the user's own 1–5 stars
+      ageRating: j.rating || "", // e.g. "PG-13"; not "rating", which is the user's own 1–10 score
       source: j.source || "",
       season: j.season ? cap(j.season) + " " + year : String(year || ""),
       year: year ? String(year) : "",
@@ -187,11 +190,13 @@
         },
       );
     },
+    // Full details (normalized) for the detail panel
     full: function (id) {
       return request("/anime/" + id + "/full").then(function (r) {
         return normalize(r.data);
       });
     },
+    // One page of episodes: { items: [{ n, title, aired, filler, recap }], hasNext, lastPage }
     episodes: function (id, page) {
       return request("/anime/" + id + "/episodes?page=" + (page || 1)).then(
         function (r) {
@@ -238,6 +243,7 @@
         if (!D.catalog[String(a.id)]) bits.title = a.title;
         S.cacheAnime(bits);
       };
+      // Follows the first prequel (or sequel) link, up to 10 hops, collecting season ids in order
       function walk(start, dir, acc, hops) {
         var next = start.rel && start.rel[dir][0];
         if (!next || hops >= 10) return Promise.resolve(acc);

@@ -5,6 +5,7 @@ function rateLimiter(limit, windowMs) {
 
   return function limited(key) {
     const now = Date.now();
+    // Keep only the hits still inside the window, then add this one
     const recent = (hits.get(key) || []).filter((t) => now - t < windowMs);
     recent.push(now);
     hits.set(key, recent);
