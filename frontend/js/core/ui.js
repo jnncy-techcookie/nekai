@@ -1295,15 +1295,40 @@
     var r = S.state.recs;
     return !!(r && r.items && r.items.length);
   }
+  function andJoin(list) {
+    return list.length > 1 ? list.slice(0, -1).join(", ") + " and " + list[list.length - 1] : list[0];
+  }
+  // The "why" line for a curated pick, from this user's own data (curated picks have no fixed reason,
+  // since they're shown to every account): the show in their list it's most like, else the genres they
+  // picked at sign-up, else nothing. Shows they dropped, haven't started or rated 5 or lower don't count.
+  function curatedWhy(a) {
+    var gs = a.genres || [], best = null, bestScore = 0;
+    Object.keys(S.state.list).forEach(function (id) {
+      var e = S.state.list[id], x = S.anime(id);
+      if (!x || e.status === "plan" || e.status === "dropped" || (e.rating && e.rating <= 5)) return;
+      var shared = (x.genres || []).filter(function (g) { return gs.indexOf(g) >= 0; });
+      var score = shared.length * 10 + (e.rating || 0); // shared genres first, then the higher rating
+      if (shared.length && score > bestScore) {
+        bestScore = score;
+        best = { title: x.title, shared: shared.slice(0, 2), rating: e.rating };
+      }
+    });
+    if (best)
+      return andJoin(best.shared) + ", like " + best.title +
+        (best.rating ? ", which you rated " + (Math.round(best.rating * 10) / 10) + "/10" : "");
+    var fav = (S.state.favGenres || []).filter(function (g) { return gs.indexOf(g) >= 0; });
+    return fav.length ? "From your favorite genres: " + andJoin(fav) : "";
+  }
   function picks() {
-    return (aiPicks() ? S.state.recs.items : D.picks)
+    var ai = aiPicks();
+    return (ai ? S.state.recs.items : D.picks)
       .filter(function (p) {
         var id = String(p.id);
         return !S.state.hidden[id] && !S.state.list[id] && S.anime(id);
       })
       .map(function (p) {
         var a = S.anime(p.id);
-        a.why = p.why;
+        a.why = ai ? p.why : curatedWhy(a);
         a.synopsis = a.synopsis || p.synopsis;
         a.match = p.fit != null ? S.blendMatch(a, p.fit) : S.match(a);
         return a;

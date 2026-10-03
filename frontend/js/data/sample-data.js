@@ -571,49 +571,41 @@ NEKAI.data = {
   picks: [
     {
       id: 37521,
-      why: "Adventure and Drama, like Frieren, which you rated 5★",
       synopsis:
         "A young warrior rides with the mercenaries who killed his father, chasing revenge across Viking-age Europe until he has to ask what strength is for.",
     },
     {
       id: 5114,
-      why: "Fantasy adventure with the found-family feel of Delicious in Dungeon",
       synopsis:
         "Two brothers pay a terrible price for a failed alchemy ritual and set out to find the Philosopher’s Stone to get their bodies back.",
     },
     {
       id: 11061,
-      why: "Big adventure arcs, like Delicious in Dungeon (5★)",
       synopsis:
         "A boy leaves his island to become a Hunter and find the father who left him, making friends and rivals in brutal exams along the way.",
     },
     {
       id: 4081,
-      why: "Gentle Supernatural stories, like Mushishi (5★)",
       synopsis:
         "A boy who can see spirits inherits his grandmother’s book of their names and starts giving them back, one quiet encounter at a time.",
     },
     {
       id: 9253,
-      why: "Twisty Sci-Fi, like Kaiju No. 8",
       synopsis:
         "A self-styled mad scientist finds a way to text the past, and every small change he makes starts to cost more than he expected.",
     },
     {
       id: 46102,
-      why: "A Mystery pick: you rated The Apothecary Diaries 4★",
       synopsis:
         "A quiet walrus taxi driver is pulled into a missing-girl case through the strange passengers who ride in his cab.",
     },
     {
       id: 20,
-      why: "Long-running action, like One Piece",
       synopsis:
         "An outcast ninja with a fox spirit sealed inside him trains to lead his village and win the respect it never gave him.",
     },
     {
       id: 37999,
-      why: "Lighter Comedy to balance your list",
       synopsis:
         "Two top students are in love, and both are too proud to confess, so every conversation turns into a battle of wits.",
     },

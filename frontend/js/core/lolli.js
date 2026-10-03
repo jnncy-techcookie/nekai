@@ -54,6 +54,7 @@
       xpToNextLevel: lv.need - lv.into,
       episodesWatched: t.episodes,
       averageRating: t.mean || null,
+      pickedGenres: (S.state.favGenres || []).slice(0, 3), // the genres they said they love at sign-up
       favoriteGenres: S.genreMix().filter(function (g) { return g.name !== "Other"; }).map(function (g) { return g.name + " " + g.pct + "%"; }),
       achievements: {
         earned: ach.filter(function (a) { return a.earned; }).map(function (a) { return a.name; }),

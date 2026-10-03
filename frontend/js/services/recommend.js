@@ -63,8 +63,8 @@
         history: history(),
         exclude: Object.keys(S.state.list).concat(hidden).map(Number).slice(0, 300),
         notInterested: hidden.map(S.anime).filter(Boolean).map(function (a) { return a.title; }).slice(0, 50),
-        // nothing added or rated yet: the genres picked at sign-up are the starting point
-        favoriteGenres: S.ids().length ? [] : (S.state.favGenres || []).slice(0, 3),
+        // the genres picked at sign-up: the AI's starting guide, weighed less as the history grows
+        favoriteGenres: (S.state.favGenres || []).slice(0, 3),
       }),
     })
       .then(function (res) {

@@ -356,10 +356,15 @@
   function renderPicks() {
     var picks = U.picks(), busy = R.busy();
     if (picks.length) U.pickRow(U.$("#picks"), picks, "Nekai’s Picks, scroll sideways", { lite: true, wide: true, dismiss: true });
-    else U.render(U.$("#picks"), '<p class="body muted">' + (busy ? "" : "You’ve added or hidden every pick. Select New picks for a fresh set.") + "</p>");
+    // With an error the status line already explains why the row is empty, so the row stays blank
+    else U.render(U.$("#picks"), '<p class="body muted">' + (busy || ui.recError ? "" : "You’ve added or hidden every pick. Select New picks for a fresh set.") + "</p>");
     var ai = U.aiPicks(), msg = "";
-    if (busy) msg = '<span class="spinner" aria-hidden="true"></span><span>' + (ai ? "Updating your picks from your latest list…" : "The AI is reading your history and picking titles. This takes about 15 seconds; curated picks until then.") + "</span>";
-    else if (ui.recError) msg = "<span>" + esc(ui.recError) + (ai ? " Showing your last AI picks." : " Showing NEKAI’s curated picks instead.") + "</span>";
+    var fromGenres = !S.ids().length && (S.state.favGenres || []).length; // a new account: no history yet, just the genres picked at sign-up
+    if (busy) msg = '<span class="spinner" aria-hidden="true"></span><span>' + (ai ? "Updating your picks from your latest list…"
+      : (fromGenres ? "The AI is picking titles from your favorite genres." : "The AI is reading your history and picking titles.") + " This takes about 15 seconds" + (picks.length ? "; curated picks until then." : ".")) + "</span>";
+    // Only say what's showing when something is: your last AI picks, the curated ones, or nothing at all
+    else if (ui.recError) msg = "<span>" + esc(ui.recError) + " " + (!picks.length ? "Try New picks again in a little while."
+      : ai ? "Showing your last AI picks." : "Here are NEKAI’s curated picks for now.") + "</span>";
     else if (ai) msg = icon("spark", 16) + "<span>AI picks from your history, updated " + ago(S.state.recs.at) + "</span>";
     var st = U.$("#picks-status");
     st.innerHTML = msg;
