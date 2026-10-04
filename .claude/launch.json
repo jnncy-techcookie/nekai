@@ -4,8 +4,9 @@
     {
       "name": "nekai",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["-y", "http-server", "frontend", "-p", "5173", "-c-1"],
-      "port": 5173
+      "runtimeArgs": ["-y", "http-server", "frontend", "-c-1"],
+      "port": 5173,
+      "autoPort": true
     },
     {
       "name": "nekai-api",

@@ -1,82 +1,587 @@
 /* =========================================================
-   SIGN IN
+   SIGN IN / CREATE ACCOUNT
+   One cobalt panel on the graph paper, in the same language as the pages inside: the
+   brand's seigaiha waves (like the Home banner) rise from the right behind a soft rounded
+   form card (like the genre picker), with the pitch on the left.
+   Desktop fits in one screen: spacing and type scale with the window's height (vh clamps),
+   so nothing needs a scroll. On phones the pitch shrinks to a short band above the card.
    ========================================================= */
+/* flow-root keeps the panel's margin inside the body (no collapse, so no stray scroll) */
+.auth-page {
+  display: flow-root;
+}
 .auth {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  min-height: 100vh;
-}
-.auth-hero {
+  --pad: clamp(24px, 4.4vh, 44px); /* the panel's inner padding */
   position: relative;
+  isolation: isolate;
   overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  height: calc(100vh - 32px);
+  height: calc(100dvh - 32px);
+  min-height: 560px;
+  margin: 16px;
+  border-radius: 24px;
+  background: var(--blue);
+  color: #faf3e6;
+}
+/* the seigaiha waves: strongest behind the card, fading out before the copy */
+.auth::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  --wf: var(--blue);
+  --wl: #3553b8;
+  background-color: var(--wf);
+  background-image:
+    radial-gradient(circle at 100% 150%, var(--wf) 24%, var(--wl) 24%, var(--wl) 28%, var(--wf) 28%, var(--wf) 36%, var(--wl) 36%, var(--wl) 40%, transparent 40%, transparent),
+    radial-gradient(circle at 0 150%, var(--wf) 24%, var(--wl) 24%, var(--wl) 28%, var(--wf) 28%, var(--wf) 36%, var(--wl) 36%, var(--wl) 40%, transparent 40%, transparent),
+    radial-gradient(circle at 50% 100%, var(--wl) 10%, var(--wf) 10%, var(--wf) 23%, var(--wl) 23%, var(--wl) 30%, var(--wf) 30%, var(--wf) 43%, var(--wl) 43%, var(--wl) 50%, var(--wf) 50%, var(--wf) 63%, var(--wl) 63%, var(--wl) 71%, transparent 71%, transparent),
+    radial-gradient(circle at 100% 50%, var(--wl) 5%, var(--wf) 5%, var(--wf) 15%, var(--wl) 15%, var(--wl) 20%, var(--wf) 20%, var(--wf) 29%, var(--wl) 29%, var(--wl) 34%, var(--wf) 34%, var(--wf) 44%, var(--wl) 44%, var(--wl) 49%, transparent 49%, transparent),
+    radial-gradient(circle at 0 50%, var(--wl) 5%, var(--wf) 5%, var(--wf) 15%, var(--wl) 15%, var(--wl) 20%, var(--wf) 20%, var(--wf) 29%, var(--wl) 29%, var(--wl) 34%, var(--wf) 34%, var(--wf) 44%, var(--wl) 44%, var(--wl) 49%, transparent 49%, transparent);
+  background-size: 64px 32px;
+  -webkit-mask-image: linear-gradient(105deg, transparent 22%, #000 68%);
+  mask-image: linear-gradient(105deg, transparent 22%, #000 68%);
+}
+html.theme-dark .auth {
+  box-shadow: var(--dark-ring);
+}
+
+/* ---------- the pitch (left) ---------- */
+.auth-hero {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 32px;
-  padding: 64px;
-  background: var(--red);
-  color: var(--ink);
+  gap: clamp(16px, 3vh, 32px);
+  min-height: 0;
+  /* the copy sits further in, toward the card, so the middle of the panel isn't empty */
+  padding: var(--pad) var(--pad) var(--pad) clamp(40px, 7vw, 136px);
 }
-.auth-hero .brand {
-  color: var(--white);
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
-.auth-hero .brand-mark {
-  background: var(--white);
-  color: var(--red);
-  width: 64px;
-  height: 56px;
-  font-size: 32px;
-  line-height: 40px;
+.auth-logo {
+  display: block;
+  width: clamp(44px, 6.2vh, 56px);
+  height: clamp(44px, 6.2vh, 56px);
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgb(250 243 230 / 0.16);
 }
-.auth-hero .brand-word {
-  font-size: 32px;
-  line-height: 40px;
+.auth-wordmark {
+  display: block;
+  width: auto;
+  height: clamp(26px, 3.6vh, 32px);
 }
+
 .auth-copy {
-  position: relative;
-  z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  max-width: 480px;
+  gap: clamp(10px, 1.9vh, 18px);
+  max-width: 700px;
+  margin-block: auto;
+}
+.auth-kicker {
+  margin: 0;
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--yellow);
 }
 .auth-claim {
-  font-family: "Dela Gothic One", sans-serif;
-  font-size: 48px;
-  line-height: 56px;
+  margin: 0;
+  font-size: clamp(42px, 7.4vh, 80px);
+  line-height: 1;
+  color: #faf3e6;
 }
-.auth-deco {
-  position: absolute;
-  right: -40px;
-  top: 40px;
-  width: 280px;
-  height: 280px;
+.auth-claim span {
+  color: #ffd3b3;
 }
-.auth-deco .cart {
-  position: absolute;
-  width: 144px;
+.auth-lede {
+  margin: 0;
+  max-width: 520px;
+  font-size: clamp(16px, 2.2vh, 20px);
+  line-height: 1.5;
+  color: rgb(250 243 230 / 0.82);
 }
+.auth-feats {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 1.3vh, 12px);
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.auth-feats li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: clamp(15px, 2vh, 18px);
+  line-height: 1.3;
+  font-weight: 700;
+}
+.auth-feat-icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: clamp(32px, 4.6vh, 42px);
+  height: clamp(32px, 4.6vh, 42px);
+  border-radius: 10px;
+  background: rgb(250 243 230 / 0.12);
+  color: var(--yellow);
+}
+
+/* preview cards: cream chips that bob gently over the waves */
+.auth-float {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 18px;
+  pointer-events: none;
+}
+.af-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px 8px 8px;
+  border-radius: 16px;
+  background: #faf3e6;
+  color: var(--navy);
+  box-shadow: 0 12px 32px rgb(1 4 9 / 0.28);
+  animation: afFloat 6s ease-in-out infinite;
+}
+.af-streak {
+  transform: rotate(-3deg);
+}
+.af-pick {
+  transform: rotate(2deg);
+  animation-delay: -3s;
+}
+.af-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--red);
+  color: var(--navy);
+}
+.af-pick img {
+  display: block;
+  width: 36px;
+  height: 36px;
+}
+.af-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.af-text b {
+  font-size: 14px;
+  line-height: 18px;
+}
+.af-text small {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  color: rgb(15 31 92 / 0.66);
+}
+@keyframes afFloat {
+  50% {
+    translate: 0 -6px;
+  }
+}
+
+.auth-credit {
+  margin: 0;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  color: rgb(250 243 230 / 0.6);
+}
+
+/* ---------- the form card (right, on the waves) ---------- */
 .auth-side {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 64px;
+  min-height: 0;
+  padding: var(--pad);
 }
 .auth-card {
-  width: min(480px, 100%);
-  padding: 40px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: clamp(12px, 2.2vh, 22px);
+  width: min(480px, 100%);
+  max-height: 100%;
+  overflow-y: auto; /* only on very short windows; normally everything fits */
+  padding: clamp(20px, 3.6vh, 36px) clamp(22px, 3vw, 40px);
+  border-radius: 24px;
+  background: var(--white);
+  color: var(--ink);
+  box-shadow: 0 24px 64px rgb(1 4 9 / 0.35);
+  scrollbar-width: thin;
 }
+html.theme-dark .auth-card {
+  box-shadow: var(--dark-ring), 0 24px 64px rgb(0 0 0 / 0.5);
+}
+.auth-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.auth-title {
+  margin: 0;
+  font-family: inherit; /* the app's rounded body face, like the field labels */
+  font-size: clamp(26px, 3.6vh, 32px);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  white-space: nowrap; /* "Create your account" stays on one line */
+  color: var(--ink);
+}
+.auth-sub {
+  margin: 0;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--muted);
+}
+
+/* segmented control */
+.auth-tabs {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  flex-shrink: 0;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--tint);
+}
+.auth-thumb {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  border-radius: 10px;
+  background: var(--white);
+  box-shadow: 0 2px 8px rgb(var(--shadow-rgb) / 0.12);
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+html.theme-dark .auth-thumb {
+  background: var(--tint-2);
+  box-shadow: none;
+}
+.auth-tabs[data-mode="register"] .auth-thumb {
+  transform: translateX(100%);
+}
+.auth-tabs button {
+  position: relative;
+  height: clamp(36px, 4.6vh, 40px);
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+.auth-tabs button[aria-selected="true"] {
+  color: var(--ink);
+}
+.auth-tabs button:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 1px;
+}
+
+/* fields: soft tinted wells that light up on focus */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1.7vh, 16px);
+}
+.auth-field .label {
+  font-size: 14px;
+  line-height: 20px;
+}
+.auth-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+}
+.auth-link {
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 800;
+  color: var(--accent-text);
+  text-decoration: none;
+}
+.auth-link:hover {
+  text-decoration: underline;
+}
+.auth-card .input {
+  height: clamp(42px, 5.6vh, 50px);
+  border: 1.5px solid transparent;
+  border-radius: 12px;
+  background: var(--tint);
+  font-weight: 600;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+.auth-card .input:hover {
+  background: var(--tint-2);
+}
+.auth-card .input:focus {
+  outline: none;
+  border-color: var(--blue);
+  background: var(--white);
+  box-shadow: 0 0 0 4px var(--blue-tint);
+}
+html.theme-dark .auth-card .input:focus {
+  border-color: var(--blue-text);
+}
+.auth-card .input[aria-invalid="true"] {
+  border-color: var(--red-dark);
+  background: var(--peach-tint);
+}
+html.theme-dark .auth-card .input[aria-invalid="true"] {
+  border-color: var(--accent-text);
+}
+.auth-card .error,
+.auth-card .help {
+  font-size: 13px;
+  line-height: 18px;
+  margin-top: 6px;
+}
+.auth-card .error {
+  gap: 6px;
+}
+/* the error already says "at least 8 characters": don't repeat the hint under it */
+.auth-card .error:not([hidden]) + .help {
+  display: none;
+}
+
 .pw-wrap {
   position: relative;
 }
 .pw-wrap .input {
-  padding-right: 56px;
+  padding-right: 52px;
 }
-.pw-wrap .btn {
+.pw-toggle {
   position: absolute;
-  right: 0;
-  top: 0;
+  top: 50%;
+  right: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+.pw-toggle:hover {
+  background: rgb(var(--ink-rgb) / 0.08);
+  color: var(--ink);
+}
+.pw-toggle .eye-off,
+.pw-toggle[aria-pressed="true"] .eye-on {
+  display: none;
+}
+.pw-toggle[aria-pressed="true"] .eye-off {
+  display: block;
+}
+
+.auth-submit {
+  height: clamp(44px, 5.8vh, 52px);
+  margin-top: 4px;
+  border-color: transparent;
+  border-radius: 12px;
+  font-size: 16px;
+}
+.auth-submit svg {
+  transition: transform 0.18s ease;
+}
+.auth-submit:hover svg {
+  transform: translateX(3px);
+}
+
+.auth-or {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.auth-or::before,
+.auth-or::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--line);
+}
+
+.auth-google {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: clamp(42px, 5.6vh, 50px);
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.auth-google:hover {
+  background: var(--tint);
+  border-color: rgb(var(--ink-rgb) / 0.24);
+}
+.auth-google:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+
+/* "New to NEKAI? Create an account" under the form (sign in only) */
+.auth-switch {
+  margin: 0;
+  text-align: center;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.auth-switch[hidden] {
+  display: none;
+}
+button.auth-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.auth-terms {
+  margin: 0;
+  text-align: center;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--muted);
+}
+
+/* ---------- shorter windows: drop the extras so the pitch still fits ---------- */
+@media (max-height: 820px) {
+  .auth-float {
+    display: none;
+  }
+}
+@media (max-height: 760px) {
+  .auth-sub,
+  .auth-or {
+    display: none;
+  }
+  .auth-field .label {
+    margin-bottom: 4px;
+  }
+  .auth-card .error {
+    margin-top: 4px;
+  }
+}
+@media (max-height: 700px) {
+  .auth-lede {
+    display: none;
+  }
+}
+
+/* ---------- tablet & phone ---------- */
+@media (max-width: 1100px) {
+  .auth-float {
+    display: none;
+  }
+  .auth-claim {
+    font-size: clamp(36px, 5.4vh, 48px);
+  }
+}
+@media (max-width: 860px) {
+  /* stacked: the page scrolls on small screens, the panel grows with its content */
+  .auth {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+    min-height: calc(100dvh - 24px);
+    margin: 12px;
+    border-radius: 20px;
+  }
+  .auth::before {
+    -webkit-mask-image: linear-gradient(180deg, transparent 8%, #000 60%);
+    mask-image: linear-gradient(180deg, transparent 8%, #000 60%);
+  }
+  .auth-hero {
+    gap: 16px;
+    padding: 24px 24px 4px;
+  }
+  .auth-copy {
+    gap: 10px;
+    margin: 0;
+  }
+  .auth-claim {
+    font-size: 34px;
+  }
+  .auth-lede,
+  .auth-feats,
+  .auth-credit {
+    display: none;
+  }
+  .auth-side {
+    align-items: flex-start;
+    padding: 20px 12px 12px;
+  }
+  .auth-card {
+    max-height: none;
+    overflow: visible;
+  }
+}
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 24px 20px;
+    border-radius: 18px;
+  }
+  .auth-title {
+    font-size: 28px;
+    white-space: normal;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .af-card {
+    animation: none;
+  }
+  .auth-thumb,
+  .auth-submit svg {
+    transition: none;
+  }
+}
+.opt-reduce-motion .af-card {
+  animation: none;
+}
+.opt-reduce-motion .auth-thumb {
+  transition: none;
 }
