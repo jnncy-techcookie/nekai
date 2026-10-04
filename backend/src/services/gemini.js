@@ -34,6 +34,13 @@ async function askGemini(system, messages, config) {
         lastError = error;
         // Quota used up (429): each model has its own free-tier quota, so move on to the next one
         if (error.status === 429) break;
+        // No answer within the time limit: this model is overloaded, so don't wait on it again.
+        // Move on to the next model, and report it as busy (504) if that one fails too.
+        if (error.name === "TimeoutError") {
+          console.warn(`Gemini ${model} timed out, trying the next model`);
+          error.status = 504;
+          break;
+        }
         if (!BUSY.includes(error.status)) throw error;
         console.warn(`Gemini ${model} is busy (${error.status}), retrying`);
         await wait(800 * (attempt + 1));
