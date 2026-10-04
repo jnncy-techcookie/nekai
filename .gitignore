@@ -1,0 +1,6 @@
+node_modules/
+
+# Environment files hold secrets (API keys); copy backend/.env.example instead
+.env
+.env.*
+!.env.example

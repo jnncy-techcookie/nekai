@@ -14,57 +14,59 @@
   <!-- boot.js applies saved layout settings before the first paint; the rest run once the page is parsed,
        and blocking="render" holds the first paint until the sidebar and content are built (no flash) -->
   <script src="js/core/boot.js"></script>
-  <script src="js/data/sample-data.js" defer blocking="render"></script>
-  <script src="js/core/store.js" defer blocking="render"></script>
-  <script src="js/services/jikan.js" defer blocking="render"></script>
-  <script src="js/core/ui.js" defer blocking="render"></script>
-  <script src="js/core/detail-panel.js" defer blocking="render"></script>
-  <script src="js/pages/home.js" defer blocking="render"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" defer></script>
+  <script src="js/data/sample-data.js" defer></script>
+  <script src="js/core/supabase.js" defer></script>
+  <!-- start.js checks the session, loads the user's data, then runs these in order -->
+  <script src="js/core/start.js" defer data-app="js/core/store.js js/services/tenrai.js js/services/recommend.js js/core/ui.js js/core/lolli.js js/core/panes.js js/core/detail-panel.js js/pages/home.js"></script>
 </head>
 <body class="paper">
   <div class="app">
     <main id="main" class="main" tabindex="-1">
       <noscript><p class="notice">NEKAI needs JavaScript turned on to load your watchlist.</p></noscript>
 
-      <section aria-labelledby="page-h" class="stack gap-32">
-        <div class="stack gap-16">
+      <!-- Welcome banner: the greeting, then this week's streak and the latest achievement,
+           on one cobalt banner with the brand's seigaiha waves -->
+      <header class="hello">
+        <section aria-labelledby="page-h" class="hello-greet">
           <h1 id="page-h" class="greet">
-            <span class="h1 display-title greet-hello">Welcome back,</span>
+            <span class="display-title greet-hello">Welcome back,</span>
             <span id="who" class="name-pop lg" translate="no">Niko</span>
           </h1>
-          <p id="intro-sub" class="body muted" style="margin-top:8px"></p>
+          <p id="intro-sub" class="hello-sub"></p>
+        </section>
+        <div class="hello-side">
+          <section id="streak" aria-labelledby="st-h" class="hello-panel"></section>
+          <section id="achievement" aria-labelledby="ach-h" class="hello-panel"></section>
         </div>
-        <dl class="grid-4">
-          <div class="card-sm stat yellow"><dt>Anime watched<span>Started or completed</span></dt><dd id="stat-watched" class="title">–</dd></div>
-          <div class="card-sm stat teal"><dt>Completed<span>Finished anime</span></dt><dd id="stat-completed" class="title">–</dd></div>
-          <div class="card-sm stat pink"><dt>Currently watching<span>Ongoing anime</span></dt><dd id="stat-watching" class="title">–</dd></div>
-          <div class="card-sm stat"><dt>Plan to Watch<span class="muted">Anime in your queue</span></dt><dd id="stat-plan" class="title">–</dd></div>
-        </dl>
-      </section>
+      </header>
 
-      <div class="home-top">
-        <div id="hero"></div>
-        <div class="stack gap-32">
-          <section id="streak" aria-labelledby="st-h" class="card pad-24 stack gap-16"></section>
-          <section id="achievement" aria-labelledby="ach-h" class="card pad-24 stack gap-16" style="background:var(--cream)"></section>
-        </div>
+      <!-- Row 2: the show you're on · your list at a glance -->
+      <div class="home-mid">
+        <section aria-labelledby="pick-h" class="stack gap-16">
+          <h2 id="pick-h" class="h2 sec-title">Pick up where you left off</h2>
+          <div id="hero"></div>
+        </section>
+        <section aria-labelledby="stat-h" class="stack gap-16">
+          <h2 id="stat-h" class="h2 sec-title">Status</h2>
+          <div id="status" class="st-card"></div>
+        </section>
       </div>
 
       <section aria-labelledby="cont-h" class="stack gap-24">
         <div class="sec-head">
-          <h2 id="cont-h" class="h2 sec-title"><span class="pill pill-red">UP NEXT</span>Continue watching</h2>
-          <a id="cont-count" class="btn btn-ghost ml-auto" href="my-anime.html">View all</a>
+          <h2 id="cont-h" class="h2 sec-title">Continue watching</h2>
+          <a id="cont-count" class="btn btn-ghost ml-auto" href="library.html">View all</a>
         </div>
         <div id="continue"></div>
       </section>
 
       <section aria-labelledby="np-h" class="stack gap-24">
         <div class="sec-head">
-          <h2 id="np-h" class="h2 sec-title"><span class="pill pill-ink">NEKAI’S PICKS</span>Picked for you</h2>
+          <h2 id="np-h" class="h2 sec-title">Picked for you</h2>
           <a class="btn btn-ghost ml-auto" href="discover.html">More in Discover</a>
         </div>
         <div id="picks"></div>
-        <p class="caption muted row gap-8"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8v.5"></path></svg><span>Match estimates how well a title fits your genres, ratings and history. It isn’t a guarantee you’ll enjoy it.</span></p>
       </section>
     </main>
   </div>

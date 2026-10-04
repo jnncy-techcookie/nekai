@@ -1,12 +1,14 @@
 /* NEKAI store
- * All user data lives in localStorage under one key. Every change notifies
- * subscribers so pages can re-render, and returns an undo function.
+ * The signed-in user's data, loaded from Supabase by start.js before the page runs.
+ * Every change is saved back to Supabase (NEKAI.db.sync), notifies subscribers so
+ * pages can re-render, and returns an undo function.
  */
 (function () {
   "use strict";
-  var KEY = "nekai:v1";
+  var DISPLAY_KEY = "nekai:display"; // this device's layout and theme, read by boot.js before the first paint
   var D = NEKAI.data;
   var listeners = [];
+  var unlockListeners = [];
   var state = load();
 
   function dayKey(d) {
@@ -25,39 +27,18 @@
     return dayKey(d);
   }
 
+  // An empty state (signed out). Signed-in pages start from NEKAI.startState instead.
   function seed() {
-    var list = {};
-    var now = Date.now();
-    D.seedList.forEach(function (s, i) {
-      list[s.id] = {
-        status: s.status,
-        watched: s.watched,
-        rating: s.rating * 2, // sample data is written out of 5; ratings are stored out of 10
-        updatedAt: now - i * 3600e3,
-        completedOnce: s.status === "completed",
-      };
-    });
-    // A believable watch history: a 5-day streak ending yesterday,
-    // a 14-day run last month and one 12-episode binge day.
-    var log = {};
-    for (var i = 1; i <= 5; i++) log[daysAgo(i)] = 2 + (i % 3);
-    for (var j = 30; j < 44; j++) log[daysAgo(j)] = 1 + (j % 2);
-    log[daysAgo(21)] = 12;
     return {
-      v: 1,
-      ratingScale: 10,
-      list: list,
+      list: {},
       anime: {},
       hidden: {},
-      log: log,
+      recs: null, // AI picks: { at, key, items: [{ id, why, fit }] }
+      earned: {}, // achievement name -> time it was unlocked (0: unlock time unknown)
+      log: {}, // day -> episodes watched that day
+      logBy: {}, // day -> { anime id -> episodes }: what the log is made of, saved as watch events
       ui: { navOpen: true, lolliHidden: false },
-      profile: {
-        name: "Niko",
-        handle: "niko",
-        email: "niko@example.com",
-        bio: "Fantasy journeys, cooking anime, and anything with a good opening song.",
-        since: 2024,
-      },
+      profile: { name: "", handle: "", email: "", bio: "", since: new Date().getFullYear() },
       settings: {
         sound: false,
         confetti: true,
@@ -66,43 +47,48 @@
         motion: false,
         text: false,
         contrast: false,
+        dark: false,
       },
-      signedIn: true,
+      signedIn: false,
+      favGenres: [], // the 3 genres picked at sign-up: the AI's starting point before any history
+      onboarding: false, // true from sign-up until those genres are picked
+      firstHome: false, // Home greets a new account with "Welcome," once, then "Welcome back,"
     };
   }
 
   function load() {
-    try {
-      var raw = localStorage.getItem(KEY);
-      if (raw) {
-        var s = JSON.parse(raw);
-        if (s && s.v === 1) {
-          // Ratings used to be whole stars out of 5; convert once to the 1–10 scale
-          if (s.ratingScale !== 10) {
-            Object.keys(s.list || {}).forEach(function (id) {
-              if (s.list[id].rating) s.list[id].rating = s.list[id].rating * 2;
-            });
-            s.ratingScale = 10;
-          }
-          return Object.assign(seed(), s);
-        }
-      }
-    } catch (e) {
-      /* storage unavailable: fall back to an in-memory seed */
-    }
-    return seed();
+    return NEKAI.startState ? Object.assign(seed(), NEKAI.startState) : seed();
   }
   function save() {
+    if (NEKAI.db) NEKAI.db.sync(state);
     try {
-      localStorage.setItem(KEY, JSON.stringify(state));
+      localStorage.setItem(DISPLAY_KEY, JSON.stringify({
+        navOpen: state.ui.navOpen !== false,
+        motion: !!state.settings.motion,
+        dark: !!state.settings.dark,
+      }));
     } catch (e) {
-      /* quota or privacy mode */
+      /* storage unavailable: the page just paints with default layout first */
     }
   }
   function emit() {
+    var unlocked = recordUnlocks(Date.now());
     save();
     listeners.forEach(function (fn) {
       fn(state);
+    });
+    if (unlocked.length)
+      unlockListeners.forEach(function (fn) {
+        fn(unlocked);
+      });
+  }
+  // Saves the time of every achievement that is met but not saved yet, and returns those achievements.
+  // Once saved, an achievement stays earned even if its condition stops holding (e.g. a broken streak).
+  function recordUnlocks(at) {
+    return api.achievements().filter(function (a) {
+      if (!a.met || state.earned[a.name] != null) return false;
+      state.earned[a.name] = at;
+      return true;
     });
   }
   function snapshot() {
@@ -110,7 +96,9 @@
   }
   function undoTo(snap) {
     return function () {
+      var earned = state.earned; // achievements stay earned (they are saved for good)
       state = JSON.parse(snap);
+      state.earned = earned;
       emit();
     };
   }
@@ -174,9 +162,14 @@
     var e = state.list[String(id)] || null;
     var watched = e ? e.watched : 0;
     var known = !!a.episodes;
+    // Ongoing shows have no final count; use the episodes aired so far when we've fetched it
+    var ongoing = !known && !!a.airing;
+    var aired = ongoing && a.airedEps ? a.airedEps : 0;
     var pct = known
       ? Math.min(100, Math.round((watched / a.episodes) * 100))
-      : 0;
+      : aired
+        ? Math.min(100, Math.round((watched / aired) * 100))
+        : 0;
     return Object.assign(a, {
       inList: !!e,
       status: e ? e.status : null,
@@ -185,6 +178,8 @@
       note: (e && e.note) || "",
       updatedAt: e ? e.updatedAt : 0,
       known: known,
+      ongoing: ongoing,
+      aired: aired,
       pct: pct,
       isDone: !!e && e.status === "completed",
       canInc:
@@ -198,10 +193,14 @@
         e.status !== "dropped",
       stepText: known
         ? watched + " / " + a.episodes
-        : watched.toLocaleString("en-US") + " eps",
+        : aired
+          ? watched.toLocaleString("en-US") + " / " + aired.toLocaleString("en-US")
+          : watched.toLocaleString("en-US") + " eps",
       progText: known
         ? "Episode " + watched + " of " + a.episodes + " · " + pct + "%"
-        : watched.toLocaleString("en-US") + " episodes · total unknown",
+        : aired
+          ? "Episode " + watched.toLocaleString("en-US") + " of " + aired.toLocaleString("en-US") + " aired so far · " + pct + "%"
+          : watched.toLocaleString("en-US") + " episodes · total unknown",
     });
   }
   function ids(filterFn) {
@@ -217,6 +216,21 @@
     });
     return c;
   }
+  // Adds n episodes of anime id (or removes, when negative) to today's watch log; a day at 0 is dropped.
+  // Only episodes logged today for that anime can be taken back.
+  function logToday(n, id) {
+    var k = dayKey();
+    id = String(id);
+    var byDay = (state.logBy[k] = state.logBy[k] || {});
+    var before = byDay[id] || 0,
+      v = Math.max(0, before + n);
+    if (v) byDay[id] = v;
+    else delete byDay[id];
+    if (!Object.keys(byDay).length) delete state.logBy[k];
+    var total = Math.max(0, (state.log[k] || 0) + (v - before));
+    if (total) state.log[k] = total;
+    else delete state.log[k];
+  }
   function touch(id, patch) {
     id = String(id);
     state.list[id] = Object.assign(
@@ -227,6 +241,56 @@
     );
   }
 
+  // Titles saved with every episode watched but not yet completed (from before
+  // completion became automatic) are completed now, quietly, with no confetti
+  Object.keys(state.list).forEach(function (id) {
+    var e = state.list[id], a = anime(id);
+    if (a && a.episodes && e.watched >= a.episodes && (e.status === "watching" || e.status === "plan")) {
+      e.status = "completed";
+      e.completedOnce = true;
+    }
+    // Watching with no episodes logged is really Plan to Watch
+    if (e.status === "watching" && !e.watched) e.status = "plan";
+  });
+
+  /* ---------- XP, levels and titles ---------- */
+  var XP_RULES = {
+    episode: 2,
+    completed: 50,
+    rating: 5,
+    review: 10, // a rated show with a written review earns both
+    badge: 25,
+    streakDay: 5, // × the day of the streak it continues (day 1: 5, day 2: 10, …)
+    streakCap: 10, // … up to 50 XP a day from day 10 on
+  };
+  // XP needed to go from level n to n + 1
+  function levelCost(n) {
+    return 500 + 100 * (n - 1);
+  }
+  // [first level, title]: each title covers the levels up to the next one.
+  // After Legend, a new rank every 10 levels, ending at Legend X (Legendary).
+  var LEVEL_TITLES = [
+    [1, "Newcomer"],
+    [3, "Casual Viewer"],
+    [5, "Regular"],
+    [8, "Weekend Binger"],
+    [11, "Enthusiast"],
+    [15, "Seasoned Viewer"],
+    [19, "Otaku in Training"],
+    [23, "Veteran"],
+    [27, "Sensei"],
+    [30, "Legend"],
+  ];
+  ["II", "III", "IV", "V", "VI", "VII", "VIII", "IX"].forEach(function (r, i) {
+    LEVEL_TITLES.push([40 + 10 * i, "Legend " + r]);
+  });
+  LEVEL_TITLES.push([120, "Legendary"]);
+  function levelTitle(level) {
+    return LEVEL_TITLES.reduce(function (t, x) {
+      return level >= x[0] ? x[1] : t;
+    }, LEVEL_TITLES[0][1]);
+  }
+
   var api = {
     get state() {
       return state;
@@ -234,6 +298,12 @@
     subscribe: function (fn) {
       listeners.push(fn);
     },
+    // fn(achievements) runs after a change unlocks one or more achievements
+    onUnlock: function (fn) {
+      unlockListeners.push(fn);
+    },
+    xpRules: XP_RULES,
+    levelTitles: LEVEL_TITLES,
     dayKey: dayKey,
     daysAgo: daysAgo,
     anime: anime,
@@ -279,37 +349,68 @@
       var a = anime(id),
         e = state.list[String(id)] || {};
       var patch = { status: status };
-      var first = false;
+      var first = false,
+        wasLogged = !!state.log[dayKey()];
+      // Starting a planned show or rewatching a completed one begins at episode 1; Plan to Watch means nothing watched yet
+      if (
+        status === "watching" &&
+        (e.status === "completed" || (e.status === "plan" && !e.watched))
+      )
+        patch.watched = 1;
+      if (status === "plan") patch.watched = 0;
       if (status === "completed") {
         if (a && a.episodes) patch.watched = a.episodes;
         first = !e.completedOnce;
         patch.completedOnce = true;
+        // Finishing a show you were watching counts the remaining episodes as watched today.
+        // Plan to Watch -> Completed is treated as backfilling history, so it doesn't touch the streak.
+        if (e.status === "watching" && patch.watched > (e.watched || 0))
+          logToday(patch.watched - (e.watched || 0), id);
       }
       touch(id, patch);
       emit();
-      return { undo: undoTo(snap), firstCompletion: first };
+      return {
+        undo: undoTo(snap),
+        firstCompletion: first,
+        streakUp: !wasLogged && !!state.log[dayKey()],
+      };
     },
     inc: function (id) {
       var snap = snapshot();
       var e = entry(id);
       if (!e || !e.canInc) return null;
+      var finished = e.known && e.watched + 1 === e.episodes;
       var patch = { watched: e.watched + 1 };
       if (e.status === "plan") patch.status = "watching";
+      // Logging the last episode completes the anime; there is no separate "Mark completed" step
+      var first = false;
+      if (finished) {
+        patch.status = "completed";
+        first = !state.list[String(id)].completedOnce;
+        patch.completedOnce = true;
+      }
       touch(id, patch);
-      var k = dayKey();
-      state.log[k] = (state.log[k] || 0) + 1;
+      var wasLogged = !!state.log[dayKey()];
+      logToday(1, id);
       emit();
       return {
         undo: undoTo(snap),
         watched: e.watched + 1,
-        finished: e.known && e.watched + 1 === e.episodes,
+        finished: finished,
+        firstCompletion: first,
+        streakUp: !wasLogged, // first episode today: the streak just grew by a day
       };
     },
     dec: function (id) {
       var snap = snapshot();
       var e = entry(id);
       if (!e || !e.canDec) return null;
-      touch(id, { watched: e.watched - 1 });
+      var patch = { watched: e.watched - 1 };
+      // Nothing watched any more, so it belongs back in Plan to Watch
+      if (patch.watched === 0 && e.status === "watching") patch.status = "plan";
+      touch(id, patch);
+      // Take back one of today's logged episodes (an episode from an earlier day stays in history)
+      logToday(-1, id);
       emit();
       return undoTo(snap);
     },
@@ -337,6 +438,10 @@
       emit();
       return undoTo(snap);
     },
+    setRecs: function (recs) {
+      state.recs = recs;
+      emit();
+    },
     setUi: function (patch) {
       Object.assign(state.ui, patch);
       save();
@@ -349,17 +454,17 @@
       Object.assign(state.profile, patch);
       emit();
     },
-    setSignedIn: function (v) {
-      state.signedIn = v;
+    // Home has greeted a new account once
+    seenHome: function () {
+      if (!state.firstHome) return;
+      state.firstHome = false;
       save();
     },
-    reset: function () {
-      try {
-        localStorage.removeItem(KEY);
-      } catch (e) {}
-      state = seed();
-      state.signedIn = false;
-      save();
+    // The genres picked at sign-up (finishes onboarding)
+    setFavGenres: function (list) {
+      state.favGenres = list.slice(0, 3);
+      state.onboarding = false;
+      emit();
     },
 
     /* ---------- derived stats ---------- */
@@ -412,15 +517,59 @@
         mean: rated ? Math.round((sum / rated) * 10) / 10 : 0,
       };
     },
+    /* XP from every source (see XP_RULES), the level it reaches and that level's title.
+       Level n costs 500 + 100 × (n − 1) XP to finish, so each level takes a little longer. */
     xp: function () {
       var t = api.totals(),
-        c = counts();
-      var xp = t.episodes * 2 + c.completed * 50 + t.rated * 5;
+        c = counts(),
+        R = XP_RULES;
+      var reviews = Object.keys(state.list).filter(function (id) {
+        return String(state.list[id].note || "").trim();
+      }).length;
+      var badges = Object.keys(state.earned || {}).length;
+      // Streak bonus: each day you watch earns more the longer the run it continues, up to day STREAK_CAP
+      var streakXp = 0,
+        run = 0,
+        prev = null;
+      Object.keys(state.log)
+        .filter(function (k) {
+          return state.log[k] > 0;
+        })
+        .sort()
+        .forEach(function (k) {
+          var d = new Date(k + "T00:00:00");
+          run = prev && Math.round((d - prev) / 864e5) === 1 ? run + 1 : 1;
+          streakXp += R.streakDay * Math.min(run, R.streakCap);
+          prev = d;
+        });
+      var from = {
+        episodes: t.episodes * R.episode,
+        completed: c.completed * R.completed,
+        ratings: t.rated * R.rating,
+        reviews: reviews * R.review,
+        badges: badges * R.badge,
+        streaks: streakXp,
+      };
+      var xp = Object.keys(from).reduce(function (s, k) {
+        return s + from[k];
+      }, 0);
+      var level = 1,
+        into = xp;
+      while (into >= levelCost(level)) {
+        into -= levelCost(level);
+        level++;
+      }
+      var next = LEVEL_TITLES.filter(function (x) {
+        return x[0] > level;
+      })[0];
       return {
         xp: xp,
-        level: Math.floor(xp / 500) + 1,
-        into: xp % 500,
-        need: 500,
+        level: level,
+        into: into,
+        need: levelCost(level),
+        title: levelTitle(level),
+        nextTitle: next ? { level: next[0], title: next[1] } : null,
+        from: from,
       };
     },
     achievements: function () {
@@ -441,15 +590,20 @@
       });
       var ng = Object.keys(genres).length,
         n = Object.keys(list).length,
-        maxDay = api.maxDay();
+        maxDay = api.maxDay(),
+        saved = state.earned || {};
+      // met: the condition holds right now. earned: met now or unlocked before (saved in state.earned)
       function A(glyph, name, desc, bg, ok, progress) {
+        var at = saved[name];
         return {
           glyph: glyph,
           name: name,
           desc: desc,
           bg: bg,
-          earned: ok,
-          progress: ok ? "" : progress,
+          met: ok,
+          earned: ok || at != null,
+          earnedAt: at || 0,
+          progress: ok || at != null ? "" : progress,
         };
       }
       return [
@@ -498,7 +652,7 @@
           "Week Streak",
           "Watch 7 days in a row",
           "#F7823A",
-          st >= 7,
+          api.longestStreak() >= 7, // any 7-day run counts, not only the current one
           st + " / 7 days",
         ),
         A(
@@ -568,7 +722,12 @@
           }
         });
       });
-      if (!total) return 50;
+      if (!total) {
+        var fav = state.favGenres || [];
+        if (!fav.length) return 50;
+        var hits = (a.genres || []).filter(function (g) { return fav.indexOf(g) >= 0; }).length;
+        return [48, 68, 80, 90][Math.min(3, hits)];
+      }
       // Overlap: how much of your viewing the title's genres cover, relative to your top three genres
       var top3 = Object.keys(count)
         .map(function (g) {
@@ -596,6 +755,24 @@
       hist = gs.length ? hist / gs.length : 0.5;
       return Math.round(35 + 60 * (0.6 * overlap + 0.3 * rated + 0.1 * hist));
     },
+    /* AI picks: the history-based match above (60%) blended with the AI's own fit estimate (40%) */
+    blendMatch: function (a, fit) {
+      var f = Math.min(100, Math.max(0, Number(fit) || 0));
+      return Math.round(0.6 * api.match(a) + 0.4 * f);
+    },
+    /* The most recently unlocked achievement (list order breaks ties between ones earned before times were saved) */
+    latestAchievement: function () {
+      return api
+        .achievements()
+        .filter(function (a) {
+          return a.earned;
+        })
+        .reduce(function (best, a) {
+          return !best || a.earnedAt >= best.earnedAt ? a : best;
+        }, null);
+    },
   };
+  // Achievements already met when the page loads (e.g. one not saved yet) are recorded without a toast
+  if (recordUnlocks(0).length) save();
   NEKAI.store = api;
 })();

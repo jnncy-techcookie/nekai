@@ -7,77 +7,775 @@
   gap: 8px;
   margin: 0;
 }
-.home-top {
+/* ---------- welcome banner ----------
+   One cobalt banner for the greeting, this week's streak and the latest achievement.
+   The brand's seigaiha waves (the pattern from the Koneko reference) rise from the right
+   and fade out before they reach the greeting, so the name always reads cleanly. */
+.hello {
+  position: relative;
+  isolation: isolate;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 32px;
-  align-items: start;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px 32px;
+  padding: 28px 28px 28px 36px;
+  border-radius: 20px;
+  background: var(--blue);
+  color: #faf3e6;
+  overflow: hidden;
 }
-.hero {
-  padding: 16px;
+.hello::before,
+.pf-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  --wf: var(--blue); /* wave fill */
+  --wl: #3553b8; /* wave line, a shade lighter */
+  background-color: var(--wf);
+  background-image:
+    radial-gradient(circle at 100% 150%, var(--wf) 24%, var(--wl) 24%, var(--wl) 28%, var(--wf) 28%, var(--wf) 36%, var(--wl) 36%, var(--wl) 40%, transparent 40%, transparent),
+    radial-gradient(circle at 0 150%, var(--wf) 24%, var(--wl) 24%, var(--wl) 28%, var(--wf) 28%, var(--wf) 36%, var(--wl) 36%, var(--wl) 40%, transparent 40%, transparent),
+    radial-gradient(circle at 50% 100%, var(--wl) 10%, var(--wf) 10%, var(--wf) 23%, var(--wl) 23%, var(--wl) 30%, var(--wf) 30%, var(--wf) 43%, var(--wl) 43%, var(--wl) 50%, var(--wf) 50%, var(--wf) 63%, var(--wl) 63%, var(--wl) 71%, transparent 71%, transparent),
+    radial-gradient(circle at 100% 50%, var(--wl) 5%, var(--wf) 5%, var(--wf) 15%, var(--wl) 15%, var(--wl) 20%, var(--wf) 20%, var(--wf) 29%, var(--wl) 29%, var(--wl) 34%, var(--wf) 34%, var(--wf) 44%, var(--wl) 44%, var(--wl) 49%, transparent 49%, transparent),
+    radial-gradient(circle at 0 50%, var(--wl) 5%, var(--wf) 5%, var(--wf) 15%, var(--wl) 15%, var(--wl) 20%, var(--wf) 20%, var(--wf) 29%, var(--wl) 29%, var(--wl) 34%, var(--wf) 34%, var(--wf) 44%, var(--wl) 44%, var(--wl) 49%, transparent 49%, transparent);
+  background-size: 64px 32px;
+  -webkit-mask-image: linear-gradient(90deg, transparent 18%, #000 62%);
+  mask-image: linear-gradient(90deg, transparent 18%, #000 62%);
 }
-.hero .cart-label {
-  display: grid;
-  grid-template-columns: 200px minmax(0, 1fr);
-  gap: 32px;
-  padding: 24px;
+.opt-strong .hello {
+  box-shadow: inset 0 0 0 1.5px var(--ink);
 }
-.hero-body {
+
+/* greeting: "Welcome back," in cream, the name large in peach (7:1 on cobalt) */
+.hello-greet {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
   min-width: 0;
 }
+.greet {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+/* the greeting in the app's rounded body face (calmer than the display fonts) */
+.hello .greet-hello {
+  font-family: "Arial Rounded MT Bold", "Trebuchet MS", Arial, sans-serif;
+  font-size: 20px;
+  line-height: 26px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: rgba(250, 243, 230, 0.85);
+  margin-bottom: 8px; /* a little air before the name */
+}
+.hello .name-pop {
+  color: #ffd3b3;
+  overflow-wrap: anywhere;
+}
+.hello .name-pop.lg {
+  font-size: 96px;
+  line-height: 92px;
+}
+.hello-sub {
+  margin: 0;
+  max-width: 36ch;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 700;
+  color: rgba(250, 243, 230, 0.82);
+}
+
+/* the two panels: frosted navy on the waves */
+.hello-side {
+  display: grid;
+  grid-template-columns: minmax(0, 320px) minmax(0, 280px);
+  gap: 14px;
+}
+.hello-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: rgba(15, 31, 92, 0.42); /* sits on the cobalt banner in both themes */
+  border: 1px solid rgba(250, 243, 230, 0.16);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.hp-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.hp-head > div {
+  min-width: 0;
+}
+.hp-flame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: var(--red);
+  color: var(--ink);
+}
+.hp-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--cream);
+  font-family: "Dela Gothic One", sans-serif;
+  font-size: 18px;
+  line-height: 24px;
+}
+.hp-title {
+  margin: 0;
+  font-size: 17px;
+  line-height: 22px;
+  font-weight: 800;
+  color: #faf3e6;
+}
+.hp-tag {
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffd3b3;
+  white-space: nowrap;
+}
+.hp-sub,
+.hp-note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 700;
+  color: rgba(250, 243, 230, 0.78);
+}
+.hp-eyebrow {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  color: #ffd3b3;
+}
+.hp-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  margin-top: auto;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 800;
+  color: #faf3e6;
+  text-decoration: none;
+}
+.hp-link svg:last-child {
+  transition: transform 0.15s ease;
+}
+.hp-link:hover svg:last-child {
+  transform: translateX(3px);
+}
+.hp-link:focus-visible {
+  outline: 3px solid #ffd3b3;
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* the week: logged days orange with a check, today ringed, days still to come faint */
 .week {
   list-style: none;
+  margin: 0;
   padding: 0;
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
 }
 .week li {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+}
+.day-l {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 800;
+  color: rgba(250, 243, 230, 0.7);
 }
 .day {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  border: 1.5px dashed #8c91a8;
+  border: 1.5px dashed rgba(250, 243, 230, 0.45); /* a past day that was missed */
+  color: var(--ink);
 }
 .day.on {
-  background: var(--orange);
   border: 0;
+  background: var(--red);
 }
-.icon-tile {
+.day.today {
+  border: 2px solid #ffd3b3;
+}
+.day.later {
+  border: 0;
+  background: rgba(250, 243, 230, 0.12);
+}
+@media (prefers-reduced-motion: reduce) {
+  .hp-link svg:last-child {
+    transition: none;
+  }
+}
+
+/* ---------- layout ----------
+   Row 1: the welcome banner. Row 2: "Pick up where you left off" · Status.
+   Breakpoints are container queries on .main, so the page also reflows when the
+   details panel takes part of the width. */
+.home-mid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 24px;
+  align-items: stretch; /* the Status card runs as tall as the card beside it */
+}
+.home-mid > section {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.home-mid .st-card {
+  flex: 1;
+}
+
+/* ---------- Status: the Library split by status ----------
+   A headline count, one bar showing the proportions, then a row per status
+   (its dot is its color in the bar) that opens that tab in Library. */
+.st-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 18px 12px;
+  background: var(--white);
+  border-radius: 16px;
+}
+/* no outline on these two cards, except with Settings → Stronger outlines */
+.opt-strong .cw,
+.opt-strong .st-card {
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+}
+.st-head {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  flex-shrink: 0;
-  border-radius: 8px;
+  gap: 12px;
 }
-.badge-round {
+/* the display face, once: the number of anime you've watched */
+.st-big {
+  font-family: "The Last Shuriken", "Dela Gothic One", sans-serif;
+  font-size: 48px;
+  line-height: 48px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.st-label {
+  display: flex;
+  flex-direction: column;
+  font-size: 16px;
+  line-height: 20px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.st-label small {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.st-bar {
+  display: flex;
+  gap: 3px;
+  height: 14px;
+}
+.st-seg {
+  min-width: 6px;
+  border-radius: 4px;
+  transition: flex-grow 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+/* one color per status, shared by the bar and the dots */
+.st-completed { background: var(--blue); }
+.st-watching { background: var(--red); }
+.st-plan { background: #ffd3b3; }
+.st-dropped { background: #6f8fe8; }
+.st-empty { background: var(--tint-2); }
+/* when the card runs taller than its content (it matches the card beside it),
+   the rows share the extra height evenly instead of leaving a gap */
+.st-list {
+  list-style: none;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.st-list li {
+  flex: 1;
+  display: flex;
+}
+.st-list .st-row {
+  flex: 1;
+}
+.st-list li + li {
+  border-top: 1px solid var(--line);
+}
+.st-row {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 64px;
-  height: 64px;
+  gap: 10px;
+  padding: 10px 6px;
+  margin: 0 -6px;
+  border-radius: 10px;
+  color: var(--ink);
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+.st-dot {
+  width: 10px;
+  height: 10px;
   flex-shrink: 0;
   border-radius: 50%;
-  background: var(--red);
-  color: var(--ink);
-  font-family: "Dela Gothic One", sans-serif;
-  font-size: 24px;
-  line-height: 32px;
 }
-/* Greeting: "Welcome back," and the name both use The Last Shuriken (.display-title) */
-.greet-hello {
-  font-size: 28px;
-  line-height: 36px;
+.st-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 700;
+}
+.st-num {
+  font-size: 18px;
+  line-height: 20px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.st-row svg {
+  flex-shrink: 0;
+  color: var(--muted);
+  opacity: 0.5;
+  transition:
+    transform 0.15s ease,
+    opacity 0.15s ease;
+}
+.st-row:hover {
+  background: var(--tint);
+}
+.st-row:hover svg {
+  opacity: 1;
+  transform: translateX(3px);
+  color: var(--ink);
+}
+.st-row:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: -1px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .st-seg,
+  .st-row,
+  .st-row svg {
+    transition: none;
+  }
+}
+
+/* "Pick up where you left off": poster left, details right */
+.cw {
+  display: grid;
+  grid-template-columns: minmax(0, 44%) minmax(0, 1fr);
+  min-height: 340px;
+  overflow: hidden;
+  background: var(--white);
+  border-radius: 16px;
+}
+.cw-media {
+  position: relative;
+  min-height: 260px;
+  background: #0b1745;
+}
+.cw-poster,
+.cw-poster .art {
+  position: absolute;
+  inset: 0;
+}
+.cw-poster .art {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  border-radius: 0;
+}
+.cw-poster .art img {
+  object-position: center 20%;
+}
+.cw-media .rp-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgb(var(--shadow-rgb) / 0.2);
+}
+.cw-media .rp-btn:hover,
+.cw-media .rp-btn[aria-expanded="true"] {
+  border-color: var(--ink);
+}
+/* title on the poster, over a cream fade */
+.cw-cap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  padding: 48px 18px 14px;
+  background: linear-gradient(transparent, rgb(var(--white-rgb) / 0.92) 55%, var(--white));
+}
+.cw-title {
+  margin: 0;
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.cw-jp {
+  margin: 2px 0 0;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 700;
+  color: var(--muted);
+}
+/* Right side, top to bottom: what's next (the one thing to act on), then progress, then controls */
+.cw-body {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 28px 28px 20px;
+  min-width: 0;
+}
+.cw-next {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cw-eyebrow {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+/* the display face, used only here: "Episode 22" */
+.cw-ep-big {
+  margin: 0;
+  font-family: "The Last Shuriken", "Dela Gothic One", sans-serif;
+  font-size: 40px;
+  line-height: 44px;
+  letter-spacing: 0.5px;
+  color: var(--ink);
+}
+.cw-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+/* Episode track: one cell per episode; watched cells are orange, the next one is outlined in cobalt */
+.cw-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: auto;
+}
+.cw-track {
+  display: grid;
+  grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+  gap: 3px;
+  height: 14px;
+}
+.cw-track i {
+  border-radius: 3px;
+  background: var(--tint-2);
+  transition: background-color 0.25s ease;
+}
+.cw-track i.on {
+  background: var(--red);
+}
+.cw-track i.next {
+  background: var(--white);
+  box-shadow: inset 0 0 0 2px var(--blue);
+}
+/* long or ongoing shows: a continuous bar in the same colors */
+.cw-track.is-bar {
+  display: block;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--tint-2);
+  overflow: hidden;
+}
+.cw-track.is-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--red);
+  transition: width 0.25s ease;
+}
+.cw-track-cap {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.cw-track-cap span:first-child {
+  color: var(--ink);
+}
+
+/* controls on a hairline, the way into Library pushed to the far end */
+.cw-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.cw-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  padding: 8px 4px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--blue-text);
+  text-decoration: none;
+}
+.cw-open svg {
+  transition: transform 0.15s ease;
+}
+.cw-open:hover {
+  color: var(--ink);
+}
+.cw-open:hover svg {
+  transform: translateX(3px);
+}
+.cw-open:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cw-track i,
+  .cw-track.is-bar span,
+  .cw-open svg {
+    transition: none;
+  }
+}
+
+/* narrower content: the greeting on top, the two banner panels side by side under it */
+@container main (max-width: 1080px) {
+  .hello {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hello-side {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+/* status counters move under the card, two by two */
+@container main (max-width: 860px) {
+  .home-mid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* full width under the card: the rows go two by two */
+  .st-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 24px;
+  }
+  .st-list li + li {
+    border-top: 0;
+  }
+}
+/* phone-sized: everything stacks, the poster sits on top */
+@container main (max-width: 600px) {
+  .hello {
+    padding: 22px 18px 18px;
+  }
+  .hello-side {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hello .name-pop.lg {
+    font-size: 64px;
+    line-height: 64px;
+  }
+  .cw {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cw-media {
+    min-height: 0;
+    aspect-ratio: 16 / 10;
+  }
+  .cw-body {
+    padding: 20px;
+  }
+  .cw-ep-big {
+    font-size: 32px;
+    line-height: 36px;
+  }
+}
+@container main (max-width: 420px) {
+  .st-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .st-list li + li {
+    border-top: 1px solid var(--line);
+  }
+}
+
+/* ---------- Continue watching cards ----------
+   Same look as the Nekai's Picks cards (.pick-card): white card, light outline,
+   inset rounded poster, lift on hover. The counter is Library's soft pill (.library-list). */
+.sec-head + #continue {
+  margin-top: -22px; /* cards sit 12px under the heading, not the section's 24px gap */
+}
+.cw-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
+  gap: 24px;
+}
+.cw-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+.opt-strong .cw-card {
+  border-color: var(--ink);
+}
+.cw-card:hover,
+.cw-card:focus-within {
+  transform: translateY(-6px) rotate(-1deg);
+  border-color: transparent;
+  box-shadow:
+    0 12px 28px rgb(var(--shadow-rgb) / 0.1),
+    0 2px 6px rgb(var(--shadow-rgb) / 0.06);
+}
+.cw-card-media {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.cw-card-media .art {
+  aspect-ratio: 6/5;
+  border-radius: 12px;
+}
+.cw-card-media .art img {
+  object-position: center top;
+}
+.cw-card-media .art .jp {
+  display: none;
+}
+/* "EP 8": the next episode, as a chip like the picks' match badge */
+.cw-ep {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgb(var(--shadow-rgb) / 0.2);
+}
+/* the title on the poster's fade and the year under it: .has-cap / .card-cap / .card-sub (components.css) */
+.cw-card-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: auto;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cw-card,
+  .cw-card:hover,
+  .cw-card:focus-within {
+    transition: none;
+    transform: none;
+  }
+}
+.opt-reduce-motion .cw-card:hover,
+.opt-reduce-motion .cw-card:focus-within {
+  transform: none;
+}
+
+/* review shortcut next to the episode counter: opens the details panel at "Your review" */
+.review-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--tint);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.review-btn:hover,
+.review-btn.has-note {
+  background: var(--blue-tint);
+  color: var(--blue-text);
+}
+.review-btn.has-note svg {
+  fill: rgba(31, 63, 166, 0.14);
+}
+@media (pointer: coarse) {
+  .review-btn {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* AIRING chip level with the rating button across the top of the poster */
+.cw-media .poster-chips {
+  top: 12px;
+  left: 12px;
+}
+/* no rating button on these posters, so the chips can use the full width */
+.cw-card .poster-chips {
+  max-width: none;
 }

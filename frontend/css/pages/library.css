@@ -1,0 +1,781 @@
+/* =========================================================
+   LIBRARY
+   Cards and list rows share one soft style: light outline, rounded 16px,
+   pill stepper with round buttons, labelled progress, tinted status pill,
+   round delete button. Item styles are scoped to .library-list.
+   ========================================================= */
+
+/* ---------- column labels + List/Cards toggle ---------- */
+/* The toggle is pinned right so it stays put when the labels hide
+   (card view, or stacked rows on narrower windows). */
+.list-cols {
+  grid-template-columns: 48px minmax(0, 1fr) 172px 140px 156px 88px;
+  gap: 16px;
+}
+.list-head {
+  display: grid;
+  padding: 0 16px;
+}
+/* EPISODES, YOUR RATING and STATUS sit centered over their controls */
+.list-head > span:nth-child(3),
+.list-head > span:nth-child(4),
+.list-head > span:nth-child(5) {
+  text-align: center;
+}
+.list-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.list-bar[hidden] {
+  display: none;
+}
+.list-bar .list-head {
+  flex: 1;
+}
+.list-bar.is-cards {
+  display: none;
+}
+.view-toggle {
+  display: inline-flex;
+  flex-shrink: 0;
+  border: 1.5px solid var(--ink);
+  border-radius: 8px;
+  background: var(--white);
+  overflow: hidden;
+}
+.view-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+.view-btn + .view-btn {
+  border-left: 1.5px solid var(--ink);
+}
+.view-btn:hover {
+  background: var(--cream);
+  color: var(--ink);
+}
+.view-btn[aria-pressed="true"] {
+  background: var(--yellow);
+  color: var(--ink);
+}
+.view-btn svg {
+  transition: transform 0.15s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+}
+.view-btn:active svg {
+  transform: scale(0.85);
+}
+/* mouse users get a slightly smaller toggle */
+@media (hover: hover) and (pointer: fine) {
+  .view-btn {
+    width: 32px;
+    height: 28px;
+  }
+}
+
+/* ---------- shared item style ---------- */
+.library-list .card-sm {
+  border: 1.5px solid var(--line);
+  border-radius: 16px;
+  background: var(--white);
+}
+.opt-strong .library-list .card-sm {
+  border-color: var(--ink);
+}
+.m-title {
+  margin: 0;
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+/* stepper: a soft pill with round − / + buttons */
+.library-list .stepper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 4px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--tint); /* same warm gray as the note / delete buttons */
+  overflow: visible;
+}
+.library-list .step {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--tint-2); /* a shade deeper than the counter, so − / + still read as buttons */
+  color: var(--ink);
+  transition:
+    background-color 0.15s ease,
+    transform 0.12s ease;
+}
+.library-list .step:hover {
+  background: var(--tint-2);
+}
+.library-list .step:active {
+  transform: scale(0.9);
+}
+.library-list .step:disabled {
+  background: transparent;
+  color: #b3b6c6;
+  transform: none;
+}
+.library-list .step-val {
+  flex: 1;
+  min-width: 0;
+  height: auto;
+  padding: 0;
+  border: 0;
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 800;
+}
+
+/* rating: "Your rating" + stars */
+.m-rate {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.m-rate-label {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.library-list .star {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+}
+.library-list .star svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* status: tinted pill, tint follows the status */
+.library-list .status-select {
+  height: 40px;
+  padding: 0 36px 0 16px;
+  border: 1.5px solid var(--peach-line);
+  border-radius: 999px;
+  background: var(--peach-tint)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230F1F5C' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")
+    no-repeat right 12px center/16px;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+/* styleable menus open the custom list (components.css); elsewhere just hide the built-in arrow */
+@supports not (appearance: base-select) {
+  .library-list .status-select {
+    appearance: none;
+    -webkit-appearance: none;
+  }
+}
+.library-list .status-select:hover {
+  border-color: currentColor;
+}
+.library-list [data-status="plan"] .status-select {
+  background-color: var(--blue-tint);
+  border-color: var(--blue-line);
+}
+.library-list [data-status="completed"] .status-select {
+  background-color: var(--green-tint);
+  border-color: var(--green-line);
+}
+.library-list [data-status="dropped"] .status-select {
+  background-color: var(--tint-2);
+  border-color: var(--line);
+}
+
+.m-del {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--tint);
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+}
+
+.m-del {
+  color: var(--ink);
+}
+.m-del:hover {
+  background: var(--peach-tint);
+  color: var(--accent-text);
+}
+.m-del:active {
+  transform: scale(0.88);
+}
+
+/* ---------- card view (Notion-style gallery) ---------- */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
+  gap: 20px;
+}
+.anime-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.anime-card:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 12px 28px rgb(var(--shadow-rgb) / 0.1),
+    0 2px 6px rgb(var(--shadow-rgb) / 0.06);
+}
+.ac-top {
+  position: relative;
+}
+/* the rating button sits on the poster, top right */
+.ac-top .rp-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  height: 34px;
+  border-color: transparent;
+  background: var(--white);
+  box-shadow: 0 2px 8px rgb(var(--shadow-rgb) / 0.2);
+}
+.ac-top .rp-btn:hover,
+.ac-top .rp-btn[aria-expanded="true"] {
+  border-color: var(--ink);
+}
+.ac-media {
+  display: block;
+}
+.anime-card .art {
+  width: 100%;
+  aspect-ratio: 4/3; /* shorter than square, so cards aren't so tall */
+  border-radius: 0;
+}
+.anime-card .art img {
+  object-position: center top;
+}
+
+.ac-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  padding: 12px 14px 14px;
+}
+.ac-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.ac-title {
+  font-size: 18px;
+  line-height: 24px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ac-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+}
+.ac-foot .l-status {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---------- list view: the same pieces in a row ---------- */
+.list-row {
+  display: grid;
+  align-items: center;
+  padding: 12px 16px;
+}
+.list-row .art.thumb {
+  width: 48px;
+}
+.l-title {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.l-controls {
+  display: contents;
+}
+.l-eps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.list-row .stepper {
+  height: 40px;
+}
+.list-row .step {
+  width: 32px;
+  height: 32px;
+}
+.list-row .m-rate-label {
+  display: none;
+}
+/* each control fills its column, or sits in its middle, so it lines up with the centered label
+   (table layout only; narrower windows stack the controls, see below) */
+@media (min-width: 1281px) {
+  :root:not(.dp-open) .list-cols > .l-controls > .l-eps,
+  :root:not(.dp-open) .list-cols > .l-controls > .l-status {
+    width: 100%;
+  }
+  :root:not(.dp-open) .list-cols > .l-controls > .m-rate {
+    justify-content: center;
+  }
+  @container main (min-width: 1041px) {
+    .dp-open .list-cols > .l-controls > .l-eps,
+    .dp-open .list-cols > .l-controls > .l-status {
+      width: 100%;
+    }
+    .dp-open .list-cols > .l-controls > .m-rate {
+      justify-content: center;
+    }
+  }
+}
+.l-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* Narrower windows: the table needs ~1300px with the sidebar open, so rows stack */
+@media (max-width: 1280px) {
+  .list-head {
+    display: none;
+  }
+  .list-row {
+    grid-template-columns: 72px minmax(0, 1fr) auto;
+    grid-template-areas: "art title actions" "art controls controls";
+    row-gap: 10px;
+  }
+  /* the poster runs the full height of the row (title + controls) */
+  .list-row > .art.thumb {
+    grid-area: art;
+    align-self: stretch;
+    width: 72px;
+    height: 100%;
+    min-height: 96px;
+    aspect-ratio: auto;
+  }
+  .list-row > .l-title {
+    grid-area: title;
+  }
+  .list-row > .l-actions {
+    grid-area: actions;
+    align-self: start;
+  }
+  /* counter, rating and status on one line (they wrap only if the row is truly too narrow) */
+  .list-row .l-controls {
+    grid-area: controls;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+  }
+  .list-row .l-eps {
+    width: 200px;
+    flex: 0 0 auto;
+  }
+  .list-row .m-rate-label {
+    display: none; /* the Rate button says what it is; the label only crowds the row */
+  }
+  .list-row .l-status {
+    width: 170px;
+    margin-left: auto;
+  }
+}
+@media (max-width: 767px) {
+  .list-row {
+    grid-template-areas: "art title actions" "controls controls controls";
+    padding: 12px;
+  }
+  .list-row .l-eps,
+  .list-row .l-status {
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
+/* Touch screens get bigger targets */
+@media (pointer: coarse) {
+  .library-list .step,
+  .list-row .step {
+    width: 40px;
+    height: 40px;
+  }
+  .library-list .stepper,
+  .list-row .stepper {
+    height: 48px;
+  }
+  .library-list .star {
+    width: 40px;
+    height: 40px;
+  }
+  .m-del {
+    width: 44px;
+    height: 44px;
+  }
+  .library-list .status-select {
+    height: 44px;
+  }
+}
+
+.status-select {
+  font-weight: 800;
+}
+/* List fades up when switching status tabs or layout (not on every re-render) */
+.tab-enter {
+  animation: tabEnter 0.24s ease-out both;
+}
+@keyframes tabEnter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tab-enter {
+    animation: none;
+  }
+  .anime-card,
+  .anime-card:hover {
+    transition: none;
+    transform: none;
+  }
+  .library-list .step:active,
+  .m-del:active {
+    transform: none;
+  }
+}
+
+/* ---------- rating: "★ 8.4 ⌄" button + pane (drag the stars or type 1–10) ---------- */
+.rp-btn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 10px 0 12px;border:1.5px solid var(--line);border-radius:999px;background:var(--white);color:var(--ink);font-family:inherit;font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;cursor:pointer;transition:border-color .15s ease,background-color .15s ease}
+.rp-btn:hover,.rp-btn[aria-expanded="true"]{border-color:var(--ink)}
+.rp-btn .rp-none{color:var(--muted)}
+.rp-btn > svg:last-child{color:var(--muted);transition:transform .2s ease}
+.rp-btn[aria-expanded="true"] > svg:last-child{transform:rotate(180deg)}
+.rp-pop{position:fixed;z-index:55;width:300px;padding:18px 20px 14px;border:1px solid var(--line);border-radius:18px;background:var(--white);box-shadow:0 18px 40px rgb(var(--shadow-rgb) / .16),0 2px 8px rgb(var(--shadow-rgb) / .08);animation:rpIn .16s ease-out}
+.rp-pop[hidden]{display:none}
+.rp-pop::before{content:"";position:absolute;top:-8px;left:var(--nub,50%);width:14px;height:14px;margin-left:-7px;background:var(--white);border-left:1px solid var(--line);border-top:1px solid var(--line);transform:rotate(45deg)}
+.rp-pop.above::before{top:auto;bottom:-8px;transform:rotate(225deg)}
+@keyframes rpIn{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}
+.rp-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.rp-title{font-size:18px;line-height:24px;font-weight:800;color:var(--ink)}
+.rp-badge{display:inline-flex;align-items:baseline;padding:6px 10px;border-radius:10px;background:var(--blue-tint);color:var(--blue-text);font-size:18px;line-height:24px;font-weight:800;cursor:text;transition:background-color .15s ease,box-shadow .15s ease}
+.rp-badge:focus-within{box-shadow:0 0 0 2px var(--blue)}
+.rp-badge input{width:3.3ch;padding:0;border:0;background:transparent;color:inherit;font:inherit;font-variant-numeric:tabular-nums;text-align:right;outline:0}
+.rp-pop.has-error .rp-badge{background:var(--peach-tint);color:var(--accent-text)}
+.rp-pop.has-error .rp-badge:focus-within{box-shadow:0 0 0 2px var(--red-dark)}
+.rp-stars{display:flex;justify-content:space-between;margin-top:16px;padding:2px;border-radius:10px;cursor:pointer;touch-action:none;user-select:none}
+.rp-star{position:relative;display:block;width:44px;height:44px;transition:transform .12s ease}
+.rp-star svg{position:absolute;inset:0;width:100%;height:100%}
+.rp-on{position:absolute;inset:0;clip-path:inset(0 calc(100% - var(--f,0%)) 0 0)}
+.rp-pop.is-dragging .rp-star{transform:scale(1.04)}
+.rp-err{margin-top:10px;font-size:13px;line-height:18px;font-weight:800;color:var(--accent-text)}
+.rp-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px;font-size:13px;line-height:18px;font-weight:700;color:var(--muted)}
+.rp-clear{padding:4px 0;border:0;background:none;color:var(--blue-text);font-family:inherit;font-size:13px;font-weight:800;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+@media (prefers-reduced-motion: reduce){.rp-pop{animation:none}.rp-star,.rp-btn > svg:last-child{transition:none}}
+
+/* ---------- year · genre line ---------- */
+.m-sub{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:0;font-size:14px;line-height:20px;font-weight:700;color:var(--muted)}
+.m-sub .m-dot{color:#B3B6C6}
+.ac-head{gap:2px}
+.ac-eps{display:flex;align-items:center;gap:8px}
+.ac-eps .stepper{flex:1;min-width:0}
+
+
+/* Unknown total: watched count with a small "EP Unknown" inside the counter */
+.library-list .step-val.two{display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:16px}
+.library-list .step-val.two small{font-size:10px;line-height:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+
+/* Card view: the title sits on the poster's fade (.has-cap, components.css), so nothing
+   is reserved for a second title line. The poster is full-bleed here, so the title and
+   the year · genres line both line up with the card's 14px text inset. The stepper and
+   status row sit at the bottom, so they still line up across a row of cards. */
+.anime-card .card-cap {
+  padding-inline: 14px;
+}
+.anime-card .ac-body {
+  padding-top: 4px;
+}
+.anime-card .card-sub {
+  margin-top: 0;
+  padding-left: 0;
+}
+.anime-card .ac-eps {
+  margin-top: auto;
+}
+.anime-card .ac-foot {
+  margin-top: 0;
+}
+
+/* AIRING chip level with the rating button across the top of the poster */
+.anime-card .poster-chips {
+  top: 10px;
+  left: 10px;
+}
+
+/* ---------- Library header ----------
+   Title + Add anime, then one borderless toolbar card: the status filters as a single
+   segmented track (active = the light-orange pill the sidebar uses for the current page),
+   and search + sort as compact pills. The card and list views below are unchanged. */
+.lib-top {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.lib-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  flex-wrap: wrap;
+}
+/* one row: the white status track, then search and sort as their own white pills */
+.lib-toolbar {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 12px 24px; /* a clear gap between the status filters and search */
+  flex-wrap: wrap;
+}
+/* On one line the filters stay compact: search and sort take (nearly) all the spare room.
+   When the row wraps, the filter group is alone on its line and stretches to the full width. */
+.lib-group {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.opt-strong .lib-tabs,
+.opt-strong .lib-search,
+.opt-strong .lib-sort {
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+}
+
+/* status filters: one segmented track */
+.lib-tabs {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--white);
+  box-shadow: 0 2px 10px rgb(var(--shadow-rgb) / 0.06);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.lib-tabs::-webkit-scrollbar {
+  display: none;
+}
+.lib-tabs .chip {
+  height: 36px;
+  flex: 1 0 auto; /* spread evenly when the group is stretched */
+  justify-content: center;
+  padding: 0 8px 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 800;
+  transition:
+    background-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+.lib-tabs .chip:hover {
+  background: rgb(var(--ink-rgb) / 0.06);
+}
+.lib-tabs .chip[aria-selected="true"] {
+  background: var(--yellow);
+  box-shadow: 0 2px 6px rgba(184, 67, 0, 0.18);
+}
+.lib-tabs .count {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgb(var(--ink-rgb) / 0.08);
+  color: var(--ink);
+  font-size: 12px;
+}
+.lib-tabs .chip[aria-selected="true"] .count {
+  background: var(--ink);
+  color: #faf3e6;
+}
+.lib-tabs .chip:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 1px;
+}
+
+/* search + sort: compact pills */
+.lib-tools {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  flex: 1000 1 360px; /* claims the spare room on a shared line, so the filters stay compact */
+  justify-content: flex-end;
+  min-width: 0;
+}
+.lib-search,
+.lib-sort {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  border-radius: 14px;
+  background: var(--white);
+  box-shadow: 0 2px 10px rgb(var(--shadow-rgb) / 0.06);
+  color: var(--muted);
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.lib-search {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+.lib-sort {
+  flex: 0 0 auto; /* keeps "Recently updated" whole; search gives up the space instead */
+}
+.lib-search svg,
+.lib-sort svg {
+  position: absolute;
+  left: 14px;
+  pointer-events: none;
+}
+.lib-search input,
+.lib-sort select {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  padding: 0 14px 0 40px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+}
+.lib-search input::placeholder {
+  color: var(--muted);
+  font-weight: 600;
+}
+.lib-sort select {
+  padding-left: 38px;
+  padding-right: 42px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230F1F5C' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 16px center/16px;
+  cursor: pointer;
+}
+/* browsers without styleable menus: hide the built-in arrow, the chevron above replaces it */
+@supports not (appearance: base-select) {
+  .lib-sort select {
+    appearance: none;
+    -webkit-appearance: none;
+  }
+}
+.lib-search:hover,
+.lib-sort:hover {
+  box-shadow: 0 4px 14px rgb(var(--shadow-rgb) / 0.1);
+}
+.lib-search:focus-within,
+.lib-sort:focus-within {
+  background: var(--white);
+  box-shadow: 0 0 0 2px var(--blue);
+}
+.lib-search input:focus,
+.lib-sort select:focus {
+  outline: 0;
+}
+/* "Showing 19 in All" and the list/card toggle, centered on one line */
+.lib-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 2px;
+}
+.lib-count {
+  margin: 0;
+  padding-left: 4px;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 700;
+  color: var(--muted);
+}
+@media (max-width: 767px) {
+  .lib-group {
+    flex-basis: 100%;
+  }
+  .lib-tools {
+    flex-basis: 100%;
+  }
+  /* search gets the full width; sort drops to its own line */
+  .lib-tools {
+    flex-wrap: wrap;
+  }
+  .lib-search,
+  .lib-sort {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lib-tabs .chip,
+  .lib-search,
+  .lib-sort {
+    transition: none;
+  }
+}
+
+/* the column labels sit close to the list, just under the "Showing …" row */
+.lib-top + .stack {
+  margin-top: -14px;
+}
+
+

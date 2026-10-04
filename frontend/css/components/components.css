@@ -47,6 +47,25 @@
   background: var(--cream);
   color: var(--ink);
 }
+/* soft filled button, no outline: faint blue (charcoal in dark mode) */
+.btn-soft {
+  border-color: transparent;
+  background: var(--blue-tint);
+  color: var(--ink);
+}
+.btn-soft:hover {
+  background: #d5def6;
+  color: var(--ink);
+}
+html.theme-dark .btn-soft {
+  background: var(--tint);
+}
+html.theme-dark .btn-soft:hover {
+  background: var(--tint-2);
+}
+.opt-strong .btn-soft {
+  border-color: var(--ink);
+}
 .btn-accent {
   background: var(--yellow);
   color: var(--ink);
@@ -64,7 +83,7 @@
 .btn-ghost:hover,
 .btn-ghost:active {
   transform: none;
-  background: rgba(15, 31, 92, 0.08);
+  background: rgb(var(--ink-rgb) / 0.08);
   color: var(--ink);
 }
 .btn-icon {
@@ -74,7 +93,7 @@
 }
 .btn:disabled,
 .btn[aria-disabled="true"] {
-  background: #e6dcc7;
+  background: var(--tint-2);
   color: var(--muted);
   border-color: #8c91a8;
   transform: none;
@@ -122,7 +141,7 @@
   color: var(--muted);
 }
 .side-link:hover {
-  background: rgba(15, 31, 92, 0.08);
+  background: rgb(var(--ink-rgb) / 0.08);
   color: var(--ink);
 }
 .side-link[aria-current="page"] {
@@ -147,7 +166,7 @@
   cursor: pointer;
 }
 .side-toggle:hover {
-  background: #f1e8d6;
+  background: var(--tint);
 }
 .navlink {
   display: inline-flex;
@@ -170,7 +189,7 @@
   font-weight: 700;
 }
 .navlink:hover {
-  background: rgba(15, 31, 92, 0.08);
+  background: rgb(var(--ink-rgb) / 0.08);
   color: var(--ink);
 }
 .navlink[aria-current="page"] {
@@ -297,7 +316,7 @@
   height: 32px;
   padding: 0 16px;
   border: 0;
-  background: #f1e8d6;
+  background: var(--tint);
   border-radius: 999px;
   font-size: 14px;
   font-weight: 800;
@@ -321,7 +340,7 @@
 .progress {
   height: 8px;
   border-radius: 999px;
-  background: #e6dcc7;
+  background: var(--tint-2);
   overflow: hidden;
 }
 .progress > span {
@@ -430,7 +449,7 @@
   font-size: 16px;
   line-height: 24px;
   font-weight: 800;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 .input {
   width: 100%;
@@ -451,20 +470,20 @@ textarea.input {
   resize: vertical;
 }
 .input::placeholder {
-  color: #5e6788;
+  color: var(--muted);
 }
 .input:hover {
-  background: #fffbf2;
+  background: var(--white);
 }
 .input[aria-invalid="true"] {
   border-color: var(--red-dark);
-  background: #ffede3;
+  background: var(--peach-tint);
 }
 .help {
   font-size: 16px;
   line-height: 24px;
   color: var(--muted);
-  margin-top: 8px;
+  margin-top: 6px;
 }
 .error {
   display: flex;
@@ -473,7 +492,7 @@ textarea.input {
   font-size: 16px;
   line-height: 24px;
   font-weight: 800;
-  color: var(--red-dark);
+  color: var(--accent-text);
   margin-top: 8px;
 }
 .divider {
@@ -501,7 +520,7 @@ textarea.input {
   }
 }
 .skel {
-  background: #e6dcc7;
+  background: var(--tint-2);
   border-radius: 8px;
   animation: pulse 1.2s ease-in-out infinite;
 }
@@ -523,7 +542,7 @@ textarea.input {
   cursor: pointer;
 }
 .star:hover {
-  background: rgba(15, 31, 92, 0.08);
+  background: rgb(var(--ink-rgb) / 0.08);
 }
 /* Name display on Home, in The Last Shuriken */
 .name-pop {
@@ -579,7 +598,7 @@ textarea.input {
   cursor: pointer;
 }
 .step:hover {
-  background: #f1e8d6;
+  background: var(--tint);
 }
 .step:disabled {
   color: #b3b6c6;
@@ -614,7 +633,7 @@ textarea.input {
   padding: 0;
   border: 1.5px solid var(--ink);
   border-radius: 999px;
-  background: #e6dcc7;
+  background: var(--tint-2);
   cursor: pointer;
   transition: background-color 0.15s ease;
 }
@@ -674,14 +693,89 @@ textarea.input {
 .select {
   appearance: auto;
 }
-.lolli {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 16px;
-  border: 1.5px solid var(--ink);
-  border-radius: 16px;
-  background: var(--white);
+
+/* ---------- dropdown menus ----------
+   Where the browser supports styling the open list (Chrome/Edge 135+), selects open a
+   floating white menu: rounded, soft shadow, roomy rows, the current choice tinted peach
+   with a check. Other browsers keep their built-in list. */
+@supports (appearance: base-select) {
+  select.select,
+  .lib-sort select {
+    appearance: base-select;
+    align-items: center;
+  }
+  select.select::picker-icon,
+  .lib-sort select::picker-icon {
+    display: none; /* each select draws its own chevron */
+  }
+  select.select:not(.status-select) {
+    padding-right: 40px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230F1F5C' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 16px;
+  }
+  select.select::picker(select),
+  .lib-sort select::picker(select) {
+    appearance: base-select;
+    min-width: anchor-size(width);
+    margin-block: 6px;
+    padding: 6px;
+    border: 0;
+    border-radius: 14px;
+    background: var(--white);
+    color: var(--ink);
+    box-shadow:
+      0 0 0 1px rgb(var(--shadow-rgb) / 0.06),
+      0 12px 32px rgb(var(--shadow-rgb) / 0.18);
+    animation: menuIn 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  select.select option,
+  .lib-sort select option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 40px;
+    padding: 0 12px;
+    border-radius: 10px;
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  select.select option:hover,
+  select.select option:focus-visible,
+  .lib-sort select option:hover,
+  .lib-sort select option:focus-visible {
+    background: var(--tint);
+    outline: 0;
+  }
+  select.select option:checked,
+  .lib-sort select option:checked {
+    background: var(--peach-tint);
+    font-weight: 800;
+  }
+  select.select option::checkmark,
+  .lib-sort select option::checkmark {
+    order: 1;
+    margin-left: auto;
+    color: var(--accent-text);
+    font-weight: 800;
+  }
+}
+@keyframes menuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  select.select::picker(select),
+  .lib-sort select::picker(select) {
+    animation: none;
+  }
 }
 .bit {
   position: absolute;
@@ -710,19 +804,19 @@ textarea.input {
   gap: 16px;
   padding: 8px 8px 8px 16px;
   border-radius: 8px;
-  background: #e3e9fa;
+  background: var(--blue-tint);
   border: 1.5px solid #1f3fa6;
   font-size: 14px;
   line-height: 24px;
   font-weight: 800;
-  color: #16307f;
+  color: var(--blue-deep-text);
 }
 .title-link {
   color: inherit;
   text-decoration: none;
 }
 .title-link:hover {
-  color: var(--red-dark);
+  color: var(--accent-text);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -779,6 +873,20 @@ textarea {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
+.pick-row-tall {
+  padding-bottom: 176px;
+  margin-bottom: -152px;
+}
+.pick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
+  gap: 24px;
+  /* closed previews sit beside the right column; clip them sideways only so open ones can still drop below */
+  overflow-x: clip;
+}
+.pick-grid .pick {
+  min-width: 0;
+}
 .pick-row::-webkit-scrollbar {
   display: none;
 }
@@ -788,6 +896,14 @@ textarea {
 }
 .pick-wrap {
   position: relative;
+  /* the row keeps 16px of top padding for the cards' hover lift; pull it up so
+     the cards sit 12px under the heading instead of 40px */
+  margin-top: -38px;
+}
+/* under a heading with a description line, the text already adds room */
+.sec-intro + * .pick-wrap,
+.page-actions + * .pick-wrap {
+  margin-top: -28px;
 }
 .fade {
   position: absolute;
@@ -799,11 +915,11 @@ textarea {
 }
 .fade-l {
   left: 0;
-  background: linear-gradient(90deg, var(--paper) 16%, rgba(243, 234, 215, 0));
+  background: linear-gradient(90deg, var(--paper) 16%, rgb(var(--paper-rgb) / 0));
 }
 .fade-r {
   right: 0;
-  background: linear-gradient(270deg, var(--paper) 16%, rgba(243, 234, 215, 0));
+  background: linear-gradient(270deg, var(--paper) 16%, rgb(var(--paper-rgb) / 0));
 }
 .pick-arrow {
   position: absolute;
@@ -826,6 +942,13 @@ textarea {
 }
 .pick-arrow:hover {
   background: var(--yellow);
+}
+/* Center arrows on the cards, not on the row's extra space below them (16px top padding, P bottom padding): 50% + 8px - P/2 */
+.pick-row ~ .pick-arrow {
+  top: calc(50% - 40px);
+}
+.pick-row-tall ~ .pick-arrow {
+  top: calc(50% - 80px);
 }
 .pick-arrow.prev {
   left: 8px;
@@ -877,8 +1000,8 @@ textarea {
   transform: translateY(-6px) rotate(-1deg);
   border-color: transparent;
   box-shadow:
-    0 12px 28px rgba(15, 31, 92, 0.1),
-    0 2px 6px rgba(15, 31, 92, 0.06);
+    0 12px 28px rgb(var(--shadow-rgb) / 0.1),
+    0 2px 6px rgb(var(--shadow-rgb) / 0.06);
 }
 .pick-media {
   position: relative;
@@ -896,26 +1019,44 @@ textarea {
 .pick .art .ep {
   display: none;
 }
-.match-green {
+/* Match % pill, tinted by tier: High 80%+, Medium 65–79%, Low under 65% */
+.match-pill {
   display: inline-flex;
   align-items: center;
   height: 28px;
   padding: 0 12px;
   border-radius: 999px;
-  background: #dce4f8;
-  color: #16307f;
+  border: 1px solid var(--blue-line);
+  background: var(--blue-tint);
+  color: var(--blue-deep-text);
   font-size: 14px;
   line-height: 20px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.pick-media .match-green {
+.match-tier {
+  margin-left: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.match-high {
+  border-color: var(--blue-line); /* keeps the pill distinct on cobalt posters */
+  background: var(--blue);
+  color: #faf3e6;
+}
+.match-low {
+  border-color: var(--line);
+  background: var(--tint);
+  color: var(--muted);
+}
+.pick-media .match-pill {
   position: absolute;
   left: 8px;
   top: 8px;
   height: 32px;
-  border: 1px solid #b9c8f2;
 }
 
 
@@ -1016,8 +1157,8 @@ textarea {
   border: 0;
   border-radius: 20px;
   box-shadow:
-    0 16px 40px rgba(15, 31, 92, 0.12),
-    0 2px 8px rgba(15, 31, 92, 0.06);
+    0 16px 40px rgb(var(--shadow-rgb) / 0.12),
+    0 2px 8px rgb(var(--shadow-rgb) / 0.06);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -1053,6 +1194,22 @@ textarea {
 .pick.flip .qi::before {
   left: auto;
   right: -16px;
+}
+/* no room on either side: the preview opens over the card, centered on it
+   (JS sets left), rising slightly into place instead of sliding in sideways */
+.pick.centered .qi {
+  right: auto;
+  z-index: 4;
+  transform: translateY(8px);
+  box-shadow:
+    0 20px 48px rgb(var(--shadow-rgb) / 0.2),
+    0 2px 8px rgb(var(--shadow-rgb) / 0.08);
+}
+.pick.centered.is-open .qi {
+  transform: none;
+}
+.pick.centered .qi::before {
+  display: none; /* it covers the card, so no hover bridge is needed */
 }
 .qi-title {
   margin: 0;
@@ -1114,7 +1271,7 @@ textarea {
   line-height: 20px;
 }
 .qi-dl dt {
-  color: #5e6788;
+  color: var(--muted);
   font-weight: 500;
 }
 .qi-dl dd {
@@ -1131,10 +1288,10 @@ textarea {
   align-items: flex-start;
   margin: 0;
   padding-top: 20px;
-  border-top: 1px solid #ede4d2;
+  border-top: 1px solid var(--tint-2);
   font-size: 14px;
   line-height: 20px;
-  color: #16307f;
+  color: var(--blue-deep-text);
   font-weight: 700;
 }
 .qi-foot {
@@ -1143,25 +1300,39 @@ textarea {
   gap: 8px;
   margin-top: 4px;
 }
+/* Discover's Picks and Popular: full-size Add to Library (sharing the row with Not interested in Picks) */
+.qi-foot-wide .btn {
+  flex: 1 1 0;
+  gap: 6px;
+  padding: 0 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.qi .qi-foot-wide .btn-secondary {
+  border-radius: 999px;
+}
+.qi-title .title-link {
+  color: inherit;
+}
 .qi .btn-see {
   background: #1f3fa6;
   border-color: #1f3fa6;
-  color: var(--white);
+  color: #faf3e6;
   border-radius: 999px;
 }
 .qi .btn-see:hover {
   background: #16307f;
   border-color: #16307f;
-  color: var(--white);
+  color: #faf3e6;
 }
 .qi .btn-secondary {
   border-color: var(--line);
   border-radius: 50%;
 }
 .qi .btn-secondary:hover {
-  background: #e3e9fa;
+  background: var(--blue-tint);
   border-color: #1f3fa6;
-  color: #1f3fa6;
+  color: var(--blue-text);
 }
 @media (prefers-reduced-motion: reduce) {
   .pick-card,
@@ -1217,7 +1388,7 @@ textarea {
   align-items: flex-start;
   padding: 16px;
   border-radius: 12px;
-  background: #ffe9d6;
+  background: var(--peach-tint);
   border: 1.5px solid var(--ink);
   font-size: 16px;
   line-height: 24px;
@@ -1235,7 +1406,7 @@ textarea {
   border-radius: 16px;
   background: #0b1745;
   overflow: hidden;
-  color: var(--cream);
+  color: #faf3e6;
   text-decoration: none;
   cursor: pointer;
   padding: 0;
@@ -1268,4 +1439,220 @@ textarea {
   height: 100%;
   object-fit: cover;
   opacity: 0.7;
+}
+
+/* ---------- poster with the title on a fade ----------
+   Used by every card view (Continue watching, pick cards, Library cards). The poster
+   fades out at the bottom (a mask, so there's no edge line) and the title sits on
+   that fade, anchored to the bottom: a two-line title grows up into the poster, so
+   cards never reserve an empty second line. The line right after (.card-sub, the
+   year) follows straight on, lined up with the title's left edge.
+   Markup: <div class="… has-cap">poster…<div class="card-cap"><h3>title</h3></div></div>
+           <p class="m-sub card-sub">2024</p> */
+.has-cap {
+  position: relative;
+}
+.has-cap .art {
+  -webkit-mask-image: linear-gradient(#000 45%, transparent 96%);
+  mask-image: linear-gradient(#000 45%, transparent 96%);
+}
+.has-cap .art .jp {
+  display: none; /* the placeholder art's name would sit under the title */
+}
+.card-cap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: 44px 12px 0;
+  pointer-events: none; /* the poster link underneath stays clickable */
+}
+.card-cap .title-link {
+  pointer-events: auto;
+}
+.card-cap h2,
+.card-cap h3 {
+  min-height: 0;
+  margin: 0;
+}
+.m-sub.card-sub,
+.card-sub {
+  margin-top: -6px;
+  padding-left: 12px;
+}
+
+/* ---------- confirmation pop-up (NEKAI.ui.confirm) ----------
+   For critical actions: log out, remove from list, clear Lolli's chat, delete account.
+   A native modal <dialog>, centered over a dimmed backdrop; fades and scales in and out. */
+.cdlg {
+  width: min(400px, calc(100vw - 32px));
+  padding: 28px 24px 20px;
+  border: 1.5px solid var(--ink);
+  border-radius: 20px;
+  background: var(--white);
+  color: var(--ink);
+  text-align: center;
+  box-shadow: 0 24px 60px rgb(var(--shadow-rgb) / 0.28);
+  animation: cdlgIn 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.cdlg::backdrop {
+  background: rgb(var(--shadow-rgb) / 0.42);
+  animation: cdlgFade 0.2s ease;
+}
+.cdlg.is-closing {
+  animation: cdlgOut 0.16s ease forwards;
+}
+.cdlg.is-closing::backdrop {
+  animation: cdlgFade 0.16s ease reverse forwards;
+}
+@keyframes cdlgIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+}
+@keyframes cdlgOut {
+  to {
+    opacity: 0;
+    transform: translateY(4px) scale(0.97);
+  }
+}
+@keyframes cdlgFade {
+  from {
+    opacity: 0;
+  }
+}
+.cdlg-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 12px;
+  border-radius: 50%;
+  background: var(--blue-tint);
+  color: var(--blue-text);
+}
+.cdlg.is-danger .cdlg-icon {
+  background: var(--peach-tint);
+  color: var(--accent-text);
+}
+.cdlg-title {
+  margin: 0;
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+.cdlg-body {
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--muted);
+}
+.cdlg-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+.cdlg-actions .btn {
+  flex: 1 1 0;
+  min-width: 0;
+}
+/* destructive confirm: dark orange with white text (about 5:1 contrast) */
+.btn-danger {
+  background: var(--red-dark);
+  border-color: var(--ink);
+  color: #ffffff;
+}
+.btn-danger:hover {
+  background: #963700;
+}
+@media (max-width: 420px) {
+  .cdlg-actions {
+    flex-direction: column-reverse; /* the confirm button on top, cancel under it */
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cdlg,
+  .cdlg::backdrop,
+  .cdlg.is-closing,
+  .cdlg.is-closing::backdrop {
+    animation: none;
+  }
+}
+.opt-reduce-motion .cdlg,
+.opt-reduce-motion .cdlg::backdrop,
+.opt-reduce-motion .cdlg.is-closing,
+.opt-reduce-motion .cdlg.is-closing::backdrop {
+  animation: none;
+}
+
+/* ---------- chips on a poster's top-left corner ----------
+   e.g. "EP 1090" and "AIRING" side by side (the rating button takes the top-right) */
+.poster-chips {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 3; /* above the poster image */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: calc(100% - 96px); /* stay clear of the rating button */
+  pointer-events: none;
+}
+/* AIRING: the show is still coming out, so its count is "aired so far" */
+.air-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--blue);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgb(var(--shadow-rgb) / 0.2);
+}
+.air-chip i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--yellow); /* the palette's light orange: a small "live" dot */
+}
+/* in a line of text (Library list rows): "1999 • Airing • Action", a small peach pill
+   with dark-orange text (orange text alone wouldn't be readable enough on cream) */
+.air-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--peach-tint);
+  color: var(--accent-text);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+/* "S2" beside a title: the show's second (third…) season */
+.season-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--peach-tint);
+  color: var(--accent-text);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  vertical-align: 2px;
+  white-space: nowrap;
 }

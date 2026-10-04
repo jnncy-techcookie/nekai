@@ -187,8 +187,61 @@
 .gpill-more svg {
   color: currentColor;
 }
+.gpill[aria-expanded="true"] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--cream);
+}
+.gpill[aria-expanded="true"] svg {
+  color: var(--yellow);
+}
+.gpill[aria-expanded="true"] svg:last-child {
+  transform: rotate(180deg);
+}
 .gpill-more[aria-expanded="true"] svg {
   transform: rotate(180deg);
+}
+.gpill.is-full,
+.genre-box .chip.is-full {
+  opacity: 0.5;
+}
+.genre-filter {
+  position: relative;
+}
+.genre-box {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 8px);
+  left: 0;
+  width: min(560px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1.5px solid var(--ink);
+  border-radius: 16px;
+  background: var(--white);
+  box-shadow: 0 12px 32px rgb(var(--shadow-rgb) / 0.18);
+}
+.genre-box[hidden] {
+  display: none;
+}
+.genre-box-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.genre-box-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.genre-note {
+  margin-top: 8px;
+  color: var(--red);
 }
 .opt-strong .gpill {
   border-color: var(--ink);
@@ -221,10 +274,57 @@
   .genre-pills::-webkit-scrollbar {
     display: none;
   }
+  /* inside the wheel's card: stay within its padding */
+  #picker .genre-pills {
+    margin: 0;
+    padding: 2px 0;
+  }
   .gpill {
     flex-shrink: 0;
   }
 }
+.results-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.results-pagination .btn {
+  width: 48px;
+  min-width: 48px;
+  padding: 0;
+}
+.results-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+/* TV / Movie / OVA / ONA: the page arrows' grey fill and thin grey border, slightly smaller */
+.results-toolbar [data-type] {
+  height: 34px;
+  padding: 0 10px;
+  border: 1.5px solid #8c91a8;
+  border-radius: 8px;
+  background: var(--tint-2);
+  color: var(--ink);
+  font-size: 14px;
+}
+.results-toolbar [data-type]:hover {
+  background: var(--tint);
+}
+.results-toolbar [data-type][aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--white);
+}
+.results-toolbar .results-pagination {
+  margin-left: auto;
+  flex-wrap: nowrap;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .gpill:active {
     transform: none;
@@ -254,7 +354,7 @@ fieldset {
   background: radial-gradient(
     ellipse 70% 80% at 50% 38%,
     #1b2a66 0%,
-    var(--ink) 72%
+    var(--navy) 72%
   );
   overflow: hidden;
 }
@@ -335,7 +435,7 @@ fieldset {
 }
 /* card back artwork: one image shared by every card, so it downloads once */
 .wc-back {
-  background: #0f1f5c url("../../assets/images/mystery-anime.png") center/cover
+  background: var(--navy) url("../../assets/images/mystery-anime.png") center/cover
     no-repeat;
   transition: box-shadow 0.2s ease;
 }
@@ -347,7 +447,7 @@ fieldset {
 .wc-front {
   transform: rotateY(180deg);
   border: 2px solid var(--red);
-  background: var(--ink);
+  background: var(--navy);
 }
 .wc-front .art {
   width: 100%;
@@ -389,8 +489,8 @@ fieldset {
 }
 .btn-spin:disabled {
   background: var(--red);
-  border-color: var(--ink);
-  color: var(--ink);
+  border-color: var(--navy);
+  color: var(--navy);
   opacity: 0.7;
 }
 

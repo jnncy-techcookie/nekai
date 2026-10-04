@@ -1,32 +1,333 @@
 /* =========================================================
    PROFILE
+   After Letterboxd's profile pattern: a banner header with the avatar overlapping it,
+   the name and a strip of headline numbers; posters and achievements in the main column,
+   level, genres and library counts in a narrow sidebar. Borderless soft cards, like Home.
    ========================================================= */
-.profile {
+.pf-hero {
+  position: relative;
+  border-radius: 20px;
+  background: var(--white);
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgb(var(--shadow-rgb) / 0.06);
+}
+/* section headings use the site-wide .sec-title (helpers.css) */
+.pf-sec .sec-head .btn-ghost {
+  height: 32px;
+  padding: 0 10px;
+  font-size: 14px;
+}
+.opt-strong .pf-hero,
+.opt-strong .pf-card {
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+}
+/* the banner: cobalt with the seigaiha waves from Home (shared rule in home.css) */
+.pf-banner {
+  position: relative;
+  isolation: isolate;
+  height: 132px;
+  background: var(--blue);
+  overflow: hidden;
+}
+.pf-id {
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+  padding: 0 28px;
+  margin-top: -36px; /* the avatar overlaps the banner by a third; the name sits clear below it */
+  flex-wrap: wrap;
+}
+.pf-avatar {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: var(--pink);
+  box-shadow:
+    0 0 0 5px var(--white),
+    0 10px 24px rgb(var(--shadow-rgb) / 0.2);
+}
+.pf-lv {
+  position: absolute;
+  right: -2px;
+  bottom: 6px;
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: var(--red-dark);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow: 0 0 0 3px var(--white);
+}
+.pf-who {
+  flex: 1 1 280px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0; /* name, handle and bio read as one tight block */
+  padding-top: 60px; /* clears the banner */
+}
+.pf-name {
+  margin: 0;
+  font-size: 24px;
+  line-height: 26px; /* little extra leading: the handle sits right under the name */
+  font-weight: 800;
+  color: var(--ink);
+}
+.pf-handle {
+  margin: 0;
+  font-size: 14px;
+  line-height: 16px;
+  margin-top: 4px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.pf-bio {
+  margin: 6px 0 0; /* the bio uses the full width beside the avatar before wrapping */
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--ink);
+}
+.pf-actions {
+  display: flex;
+  gap: 8px;
+  padding-bottom: 4px;
+}
+.pf-actions .btn {
+  height: 40px;
+  padding: 0 14px;
+  font-size: 14px;
+}
+/* Edit profile / Share list use the shared soft button (.btn-soft, components.css) */
+/* headline numbers: Letterboxd's strip of big numbers with small labels, thin dividers between */
+.pf-nums {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 20px 0 0;
+  padding: 16px 28px 20px;
+  border-top: 1px solid var(--line);
+}
+.pf-nums > div {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 2px;
+  padding: 0 24px;
+  border-left: 1px solid var(--line);
+}
+.pf-nums > div:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+.pf-nums dd {
+  margin: 0;
+  font-size: 24px;
+  line-height: 30px;
+  font-weight: 800;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+/* top genres: the last cell, its tags where the big number would be */
+.pf-nums-genres dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+}
+.pf-nums-genres .tag {
+  height: 26px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+.pf-nums dt {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgb(var(--ink-rgb) / 0.55);
+}
+
+/* ---------- body: main column + sidebar ---------- */
+.pf-grid {
   display: grid;
-  grid-template-columns: 352px minmax(0, 1fr);
-  gap: 32px;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
   align-items: start;
 }
-.me-banner {
+.pf-main,
+.pf-side {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+.pf-sec {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+/* sidebar: its own "Your stats" heading, so its first card lines up with the posters beside it */
+.pf-main > .pf-sec:first-child > .sec-head,
+.pf-side > .sec-head {
+  min-height: 32px; /* the height of "View Library", so both heading rows match */
+}
+.pf-side {
+  gap: 14px;
+}
+.pf-side-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.pf-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border-radius: 18px;
+  background: var(--white);
+  box-shadow: 0 2px 10px rgb(var(--shadow-rgb) / 0.06);
+}
+.pf-side-h {
+  margin: 0;
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+/* posters */
+.pf-posters {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+/* no rated shows yet: the note spans the whole row instead of one poster's column */
+.pf-posters > p {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.pf-poster {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  color: var(--ink);
+  text-decoration: none;
+}
+.pf-poster-art {
   position: relative;
-  height: 208px;
-  background: var(--ink);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
+  display: block;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgb(var(--shadow-rgb) / 0.14);
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-.me-house {
-  width: 176px;
-  height: 176px;
-  background: var(--cream);
-  clip-path: polygon(50% 0, 100% 32%, 100% 100%, 0 100%, 0 32%);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
+.pf-poster-art .art {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 0;
 }
+.pf-poster-art .art .jp {
+  display: none;
+}
+.pf-poster:hover .pf-poster-art {
+  transform: translateY(-3px);
+}
+.pf-poster:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 3px;
+  border-radius: 12px;
+}
+.pf-poster-t {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pf-rate {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow: 0 1px 4px rgb(var(--shadow-rgb) / 0.2);
+}
+
+/* sidebar: level */
+.pf-xp {
+  height: 10px;
+  border-radius: 999px;
+  background: rgb(var(--ink-rgb) / 0.08);
+  overflow: hidden;
+}
+.pf-xp span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--red);
+}
+.pf-xp-cap {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--muted);
+  font-weight: 700;
+}
+.pf-xp-cap strong {
+  color: var(--ink);
+}
+/* where the XP came from: one row per source, then the total */
+.pf-xp-from {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.pf-xp-from li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(15, 31, 92, 0.08);
+}
+.pf-xp-from .muted {
+  font-weight: 600;
+}
+.pf-xp-from .pf-xp-total {
+  border-bottom: 0;
+  font-weight: 800;
+}
+
+/* sidebar: genres */
 .genre-bar {
   display: flex;
-  height: 24px;
+  height: 12px;
   border-radius: 999px;
   overflow: hidden;
 }
@@ -35,36 +336,80 @@
 }
 .legend {
   list-style: none;
+  margin: 0;
   padding: 0;
   display: flex;
-  gap: 24px;
+  gap: 8px 16px;
   flex-wrap: wrap;
 }
 .legend li {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 16px;
-  line-height: 24px;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 18px;
   font-weight: 700;
 }
 .legend i {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
 }
+
+/* sidebar: library counts, each opens that Library tab */
+.pf-lib {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.pf-lib li + li {
+  border-top: 1px solid var(--line);
+}
+.pf-lib a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 6px;
+  margin: 0 -6px;
+  border-radius: 10px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.pf-lib a span {
+  flex: 1;
+}
+.pf-lib a strong {
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+.pf-lib a svg {
+  color: var(--muted);
+  opacity: 0.5;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.pf-lib a:hover {
+  background: var(--tint);
+}
+.pf-lib a:hover svg {
+  opacity: 1;
+  transform: translateX(3px);
+}
+
+/* achievements: sticker grid on a soft card */
 .ach {
   list-style: none;
-  padding: 0;
+  margin: 0;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 32px 16px;
+  gap: 24px 16px;
 }
 .ach li {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   text-align: center;
 }
 .ach-badge {
@@ -72,16 +417,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 72px;
-  height: 72px;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 4px;
   border-radius: 50%;
   font-family: "Dela Gothic One", sans-serif;
-  font-size: 24px;
-  line-height: 32px;
+  font-size: 22px;
+  line-height: 28px;
 }
 .ach li.locked .ach-badge {
-  border: 1.5px dashed #8c91a8;
-  background: #f1e8d6;
+  border: 1.5px dashed rgb(var(--ink-rgb) / 0.3);
+  background: rgb(var(--ink-rgb) / 0.04);
+  color: rgb(var(--ink-rgb) / 0.45);
+}
+.ach li.locked > .small {
+  color: rgb(var(--ink-rgb) / 0.6);
 }
 .ach-lock {
   position: absolute;
@@ -90,9 +440,103 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   background: var(--ink);
   color: var(--white);
+}
+.pf-earned {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--blue-text);
+}
+
+/* ---------- narrower content ---------- */
+/* two columns: when the left column is taller, the sidebar stretches to end where it does and
+   Your Library takes the height that's left, spreading its rows. When the sidebar is taller
+   (e.g. a new account with nothing on the left yet), it simply keeps its own height. */
+@container main (min-width: 981px) {
+  .pf-grid {
+    align-items: stretch;
+  }
+  .pf-side-cards {
+    flex: 1;
+    min-height: 0;
+  }
+  .pf-side-cards > :last-child {
+    flex: 1;
+    min-height: 0;
+  }
+  .pf-side-cards > :last-child .pf-lib {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+}
+@container main (max-width: 980px) {
+  /* not enough room beside Best streak: top genres get their own line, under a faint rule */
+  .pf-nums > .pf-nums-genres {
+    flex-basis: 100%;
+    margin-top: 14px;
+    padding: 12px 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+  .pf-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+}
+@container main (max-width: 600px) {
+  .pf-id {
+    padding: 0 18px;
+  }
+  .pf-who {
+    padding-top: 0;
+    flex-basis: 100%;
+  }
+  .pf-nums {
+    padding: 14px 18px 18px;
+    row-gap: 12px;
+  }
+  /* three per line on phones: each line starts without a divider */
+  .pf-nums {
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    justify-content: start;
+  }
+  .pf-nums > div {
+    padding: 0 14px;
+  }
+  .pf-nums > div:nth-child(3n + 1) {
+    padding-left: 0;
+    border-left: 0;
+  }
+  /* top genres take a full line of their own */
+  .pf-nums > .pf-nums-genres {
+    grid-column: 1 / -1;
+    padding-left: 0;
+    border-left: 0;
+  }
+  .pf-nums dd {
+    font-size: 20px;
+    line-height: 26px;
+  }
+  .pf-posters {
+    grid-template-columns: repeat(3, minmax(0, 1fr)); /* all five, three then two */
+  }
+  .ach {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pf-poster-art,
+  .pf-lib a svg {
+    transition: none;
+  }
 }

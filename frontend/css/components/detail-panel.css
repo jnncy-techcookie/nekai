@@ -5,7 +5,7 @@
      content reflows into what's left (see the container rules at the bottom).
    - 768–1023px: no room to split, so the panel takes the content's place.
    - Under 768px: same, under the mobile top bar, scrolling with the page.
-   The watchlist controls reuse the soft My Anime styles (.my-list) for the stepper,
+   The watchlist controls reuse the soft Library styles (.library-list) for the stepper,
    stars and status pill. */
 .dp-host {
   display: none;
@@ -106,7 +106,7 @@
   border-radius: 50%;
   background: var(--white);
   color: var(--ink);
-  box-shadow: 0 2px 10px rgba(15, 31, 92, 0.25);
+  box-shadow: 0 2px 10px rgb(var(--shadow-rgb) / 0.25);
   cursor: pointer;
   transition:
     transform 0.15s ease,
@@ -118,9 +118,10 @@
 }
 
 /* poster hero fading into the panel */
+/* the banner: a dimmed backdrop now that the poster below carries the sharp artwork */
 .dp-hero {
   position: relative;
-  height: 300px;
+  height: 220px;
   overflow: hidden;
   background: var(--ink);
 }
@@ -134,6 +135,11 @@
   object-position: center 20%;
   aspect-ratio: auto;
   border-radius: 0;
+}
+/* no blur: the image is dimmed over the navy behind it, so the sharp poster stands out */
+.dp-hero img,
+.dp-hero .art {
+  opacity: 0.55;
 }
 .dp-hero::after {
   content: "";
@@ -156,6 +162,39 @@
   padding: 0 24px 32px;
   margin-top: -28px;
 }
+/* poster overlapping the banner's bottom edge, title and Japanese title beside it */
+.dp-head {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+}
+.dp-poster {
+  position: relative;
+  flex-shrink: 0;
+  width: 104px;
+  height: 148px;
+  margin-top: -84px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--ink);
+  box-shadow:
+    0 0 0 3px var(--white),
+    0 12px 28px rgb(var(--shadow-rgb) / 0.28);
+}
+.dp-poster img,
+.dp-poster .art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  aspect-ratio: auto;
+  border-radius: 0;
+}
+.dp-head-text {
+  min-width: 0;
+  padding-bottom: 4px;
+}
 .dp-title {
   margin: 0;
   font-size: 26px;
@@ -171,45 +210,152 @@
   color: var(--muted);
 }
 
-/* stat row: score · type · episodes · year */
-.dp-stats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+/* "Season 1 of 2" under the title */
+.dp-season-of {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 700;
+  color: var(--muted);
+}
+/* Seasons: one chip per season. Orange = the one you're viewing; muted grey with a check =
+   completed; an orange dot = one you're watching; plain = not in your Library */
+.dp-seasons {
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  padding: 14px 0;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+}
+.dp-season {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 16px;
+  border: 1.5px solid rgb(var(--ink-rgb) / 0.22); /* clear edge against the panel */
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+.dp-season:hover {
+  background: rgb(var(--ink-rgb) / 0.05);
+  color: var(--ink);
+}
+.dp-season.is-done {
+  border-color: transparent;
+  background: rgb(var(--ink-rgb) / 0.07);
+  color: rgb(var(--ink-rgb) / 0.62);
+}
+/* the season you're viewing: the palette's deeper orange with white text (about 5.4:1) */
+.dp-season.is-current {
+  border-color: transparent;
+  background: var(--red-dark);
+  color: #ffffff;
+}
+.dp-season.is-current:hover {
+  background: var(--red-dark);
+  color: #ffffff;
+}
+.dp-season:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+.dp-season-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--red);
+}
+.dp-also {
+  margin: 0;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.dp-also a {
+  color: var(--blue-text);
+  text-decoration: none;
+}
+.dp-also a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dp-season {
+    transition: none;
+  }
+}
+
+/* stat row: score · type · episodes · year. Quiet fields: each field
+   only as wide as its content, the group centered, thin dividers between (two by two when narrow) */
+.dp-stats {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0;
 }
 .dp-stat {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  color: var(--blue);
-}
-.dp-stat div {
-  display: flex;
   flex-direction: column;
+  align-items: center;
+  gap: 1px;
   min-width: 0;
+  padding: 0 20px;
+  text-align: center;
+  border-left: 1px solid var(--line);
 }
-.dp-stat strong {
-  font-size: 16px;
+.dp-stat:first-child {
+  border-left: 0;
+}
+.dp-val {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 15px;
   line-height: 20px;
   font-weight: 800;
   color: var(--ink);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.dp-stat span {
+/* each value's icon sits beside the value (never the label): the star in orange, the rest cobalt */
+.dp-val svg {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  color: var(--blue-text);
+}
+.dp-sub {
   font-size: 12px;
   line-height: 16px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--muted);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.dp-stat svg {
-  flex-shrink: 0;
+.dp-stat.is-airing .dp-sub {
+  color: var(--accent-text);
+}
+/* small caps label above each value so it's clear what the number means */
+.dp-stat .dp-label,
+.dp-label {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgb(var(--ink-rgb) / 0.45); /* recedes so the values lead */
+}
+.dp-genres {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 .dp-tags {
   display: flex;
@@ -222,8 +368,8 @@
   height: 30px;
   padding: 0 14px;
   border-radius: 999px;
-  background: #ffe9d6;
-  color: var(--red-dark);
+  background: var(--peach-tint);
+  color: var(--accent-text);
   font-size: 13px;
   font-weight: 800;
 }
@@ -231,18 +377,39 @@
 .dp-sec {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
+.dp-sec,
+.dp-genres,
+.dp-lib {
+  margin-top: 12px; /* with the panel's 20px gap: 32px of air before each section */
+}
+/* section headings (Genres, Synopsis, Your library, Details, Trailer, Episodes):
+   bigger navy text with a short orange accent bar, so each section clearly starts */
 .dp-h {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin: 0;
-  font-size: 13px;
-  line-height: 18px;
+  font-size: 18px;
+  line-height: 24px;
   font-weight: 800;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  color: var(--red-dark);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
 }
+.dp-h::before {
+  content: "";
+  flex-shrink: 0;
+  width: 4px;
+  height: 18px;
+  border-radius: 2px;
+  background: var(--red);
+}
+/* the count after a heading (Episodes · 1,174) stays a step quieter */
 .dp-h .muted {
+  font-size: 15px;
+  font-weight: 700;
   letter-spacing: 0;
   text-transform: none;
 }
@@ -263,7 +430,7 @@
   padding: 4px 0;
   border: 0;
   background: none;
-  color: var(--blue);
+  color: var(--blue-text);
   font-family: inherit;
   font-size: 14px;
   font-weight: 800;
@@ -288,6 +455,154 @@
 .dp-add .btn {
   height: 44px;
   padding: 0 16px;
+}
+/* ---------- Your library: the viewer's own space ----------
+   A softly raised card on the panel, headed like the panel's other sections (YOUR LIBRARY),
+   so it stands out without looking like it came from elsewhere. Status and rating share a row,
+   then episodes, then the review. Labels are small and faint like the stats. */
+.dp-lib {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 18px;
+  background: var(--white);
+  box-shadow:
+    0 8px 24px rgb(var(--shadow-rgb) / 0.1),
+    0 1px 4px rgb(var(--shadow-rgb) / 0.06);
+}
+.opt-strong .dp-lib {
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+}
+.dp-lib .dp-add {
+  margin: 0;
+}
+/* the card's heading: the panel's section style, a size up, with a faint line under it */
+.dp-lib > .dp-h {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.dp-lib-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+.dp-grow {
+  flex: 1;
+  min-width: 0;
+}
+.dp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dp-field-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.dp-field-label {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgb(var(--ink-rgb) / 0.62); /* readable, still quieter than the values */
+}
+.dp-lib .rp-btn {
+  height: 40px;
+}
+.dp-count {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 700;
+  color: rgb(var(--ink-rgb) / 0.62);
+  font-variant-numeric: tabular-nums;
+}
+/* review box: a soft cream fill, a cobalt ring while writing */
+.dp-review-text {
+  width: 100%;
+  min-height: 104px;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 14px;
+  background: rgb(var(--ink-rgb) / 0.035); /* a whisper of tint on the card */
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 600;
+  resize: vertical;
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.dp-review-text::placeholder {
+  color: rgb(var(--ink-rgb) / 0.45);
+}
+.dp-review-text:focus {
+  outline: 0;
+  background: var(--white);
+  box-shadow: 0 0 0 2px var(--blue);
+}
+/* the episode counter in this card: the same lighter tint as the review box */
+.dp-lib .dp-prog .stepper {
+  background: rgb(var(--ink-rgb) / 0.035);
+}
+.dp-lib .dp-prog .step {
+  background: rgb(var(--ink-rgb) / 0.07);
+}
+.dp-lib .dp-prog .step:hover {
+  background: rgb(var(--ink-rgb) / 0.12);
+}
+.dp-lib .dp-prog .step:disabled {
+  background: transparent;
+}
+.dp-review-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px; /* a little air under the review box */
+}
+.dp-review-actions .btn {
+  height: 38px;
+  padding: 0 16px;
+  border: 0;
+  font-size: 14px;
+  transition:
+    opacity 0.15s ease,
+    background-color 0.15s ease;
+}
+/* clear contrast: Save is cobalt with white text (8.6:1), Cancel is soft cream with navy text */
+.dp-review-actions #dp-review-save {
+  background: var(--blue);
+  color: #ffffff;
+}
+.dp-review-actions #dp-review-save:not(:disabled):hover {
+  background: var(--ink);
+}
+.dp-review-actions #dp-review-cancel {
+  background: var(--tint);
+  color: var(--ink);
+}
+.dp-review-actions #dp-review-cancel:not(:disabled):hover {
+  background: var(--tint-2);
+}
+.dp-review-actions .btn:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+/* nothing to save yet: dimmed, not greyed-out boxes */
+.dp-review-actions .btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dp-review-text,
+  .dp-review-actions .btn {
+    transition: none;
+  }
 }
 .dp-prog {
   display: flex;
@@ -315,49 +630,172 @@
   overflow-wrap: anywhere;
 }
 
+/* ---------- trailer: a poster with a round play button (YouTube / streaming style) ---------- */
 .dp .trailer {
-  border-radius: 14px;
+  border-radius: 16px;
 }
-.dp .trailer-play {
-  height: 52px;
+.dp .trailer-thumb {
+  opacity: 1;
+  transition: transform 0.3s ease;
+}
+/* a dark fade at the bottom for the caption */
+.dp button.trailer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(15, 31, 92, 0.1) 40%, rgba(15, 31, 92, 0.78));
+}
+.dp-play-btn {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  padding-left: 4px; /* optically centers the triangle */
+  border-radius: 50%;
+  background: var(--red);
+  color: var(--ink);
+  box-shadow: 0 8px 22px rgb(var(--shadow-rgb) / 0.35);
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.dp button.trailer:hover .dp-play-btn {
+  transform: scale(1.08);
+}
+.dp button.trailer:hover .trailer-thumb {
+  transform: scale(1.03);
+}
+.dp button.trailer:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 3px;
+}
+.dp-trailer-cap {
+  position: absolute;
+  left: 16px;
+  bottom: 12px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+.dp-trailer-cap strong {
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 800;
+  color: #faf3e6;
+}
+.dp-trailer-cap span {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 700;
+  color: rgba(250, 243, 230, 0.75);
+}
+/* while playing: Full screen and Watch on YouTube under the video */
+.dp-trailer {
+  display: flex;
+  flex-direction: column;
   gap: 10px;
-  padding: 0 20px 0 12px;
+}
+.dp-trailer-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dp-trailer-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--tint);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.dp-trailer-btn:hover {
+  background: var(--tint-2);
+  color: var(--ink);
+}
+.dp-trailer-btn:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+/* full screen: the player fills the screen, with no rounded corners */
+#dp-trailer-frame:fullscreen {
+  border-radius: 0;
+  background: #000;
+}
+#dp-trailer-frame:fullscreen iframe {
+  width: 100%;
+  height: 100%;
 }
 
 /* episodes */
+.dp-ep-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.dp-ep-head .dp-h { margin: 0; }
+.dp-ep-pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  white-space: nowrap;
+}
+.dp-ep-pagination .btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+
+/* ---------- episodes: light rows like a streaming list ----------
+   "E1" before the title, the air date under it; watched rows recede with a small check,
+   and the next one to watch is highlighted. */
 .dp-eps {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
 }
 .dp-ep {
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) auto;
-  gap: 12px;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  gap: 10px;
   align-items: center;
-  padding: 8px 10px;
+  padding: 10px 10px;
   border-radius: 12px;
-  background: var(--paper);
+}
+.dp-ep + .dp-ep {
+  box-shadow: 0 -1px 0 var(--line); /* a faint divider, hidden next to the highlighted row */
+}
+.dp-ep.next,
+.dp-ep.next + .dp-ep {
+  box-shadow: none;
 }
 .dp-ep-n {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: var(--white);
-  font-family: "Dela Gothic One", sans-serif;
-  font-size: 14px;
-  color: var(--ink);
-}
-.dp-ep.watched .dp-ep-n {
-  background: var(--teal);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 800;
+  color: rgb(var(--ink-rgb) / 0.45);
+  font-variant-numeric: tabular-nums;
 }
 .dp-ep-t {
+  margin: 0;
   font-size: 14px;
   line-height: 20px;
   font-weight: 800;
@@ -366,20 +804,65 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.dp-ep .caption {
+  margin: 0;
+  font-size: 12px;
+  line-height: 16px;
+}
+/* watched: the title recedes, a small cobalt check */
+.dp-ep.watched .dp-ep-t {
+  color: rgb(var(--ink-rgb) / 0.6);
+}
+.dp-ep-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #ffffff;
+}
+/* up next: the one row that stands out */
+.dp-ep.next {
+  background: var(--peach-tint);
+}
+.dp-ep.next .dp-ep-n {
+  color: var(--accent-text);
+}
 .dp-ep-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--blue);
+  color: #ffffff;
   font-size: 12px;
   font-weight: 800;
-  color: var(--red-dark);
   white-space: nowrap;
 }
-.dp-ep-tag.done {
-  color: var(--blue);
+@media (prefers-reduced-motion: reduce) {
+  .dp .trailer-thumb,
+  .dp-play-btn,
+  .dp-trailer-btn {
+    transition: none;
+  }
+  .dp button.trailer:hover .dp-play-btn,
+  .dp button.trailer:hover .trailer-thumb {
+    transform: none;
+  }
 }
 
 
 @media (max-width: 767px) {
   .dp-hero {
-    height: 260px;
+    height: 180px;
+  }
+  .dp-poster {
+    width: 84px;
+    height: 120px;
+    margin-top: -68px;
   }
   .dp-pad {
     padding: 0 16px 32px;
@@ -389,10 +872,22 @@
 .dp {
   container: dp / inline-size;
 }
+/* narrow panels (phones): the four fields stay on one line, just tighter and a touch smaller */
 @container dp (max-width: 520px) {
-  .dp-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    row-gap: 12px;
+  .dp-stat {
+    padding: 0 10px;
+  }
+  .dp-val {
+    font-size: 14px;
+    line-height: 18px;
+  }
+  .dp-sub {
+    font-size: 11px;
+    line-height: 14px;
+  }
+  .dp-stat .dp-label {
+    font-size: 10px;
+    letter-spacing: 0.04em;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -411,53 +906,87 @@
    The page layouts switch columns with viewport media queries, which don't know the
    content just gave ~38% of the window to the panel. While it's open, these container
    queries apply the same narrower layouts based on .main's real width. */
-.app > .main {
-  container: main / inline-size;
-}
 @container main (max-width: 1040px) {
-  .dp-open .home-top,
   .dp-open .profile {
     grid-template-columns: minmax(0, 1fr);
   }
   .dp-open .grid-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  /* My Anime table rows stack, as they do under 1280px */
+  /* Library table rows stack, as they do under 1280px */
   .dp-open .list-head {
     display: none;
   }
+  /* two lines beside the poster:
+     [poster] title ............ [rating] [delete]
+     [poster] [episode counter ....] [status]      */
   .dp-open .list-row {
-    grid-template-columns: 48px minmax(0, 1fr) auto;
-    grid-template-areas: "art title actions" "art controls controls";
-    row-gap: 12px;
+    grid-template-columns: 72px minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "art title rate actions"
+      "art eps status status";
+    column-gap: 12px;
+    row-gap: 10px;
   }
-  .dp-open .list-row > .art {
+  /* the poster runs the full height of the row */
+  .dp-open .list-row > .art.thumb {
     grid-area: art;
-    align-self: start;
+    align-self: stretch;
+    width: 72px;
+    height: 100%;
+    min-height: 96px;
+    aspect-ratio: auto;
   }
   .dp-open .list-row > .l-title {
     grid-area: title;
+    align-self: start;
+  }
+  /* the title stays on one line; a long one ends in "…" before it reaches the rating */
+  .dp-open .list-row .m-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dp-open .list-row .m-title .title-link {
+    display: inline;
   }
   .dp-open .list-row > .l-actions {
     grid-area: actions;
     align-self: start;
   }
+  /* the controls join the row's grid so each can take its own spot */
   .dp-open .list-row .l-controls {
-    grid-area: controls;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 12px 24px;
+    display: contents;
   }
-  .dp-open .list-row .l-eps {
-    width: 220px;
+  .dp-open .list-row .m-rate {
+    grid-area: rate;
+    align-self: start;
   }
   .dp-open .list-row .m-rate-label {
-    display: inline;
+    display: none;
+  }
+  .dp-open .list-row .l-eps {
+    grid-area: eps;
+    width: 100%;
+    max-width: 260px;
   }
   .dp-open .list-row .l-status {
-    width: 170px;
-    margin-left: auto;
+    grid-area: status;
+    width: 100%;
+    min-width: 150px;
+    margin-left: 0;
+  }
+}
+/* very narrow beside the panel: the counter and status each get a full line */
+@container main (max-width: 520px) {
+  .dp-open .list-row {
+    grid-template-areas:
+      "art title rate actions"
+      "art eps eps eps"
+      "art status status status";
+  }
+  .dp-open .list-row .l-eps {
+    max-width: none;
   }
 }
 @container main (max-width: 860px) {

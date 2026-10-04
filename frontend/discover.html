@@ -13,16 +13,15 @@
   <!-- boot.js applies saved layout settings before the first paint; the rest run once the page is parsed,
        and blocking="render" holds the first paint until the sidebar and content are built (no flash) -->
   <script src="js/core/boot.js"></script>
-  <script src="js/data/sample-data.js" defer blocking="render"></script>
-  <script src="js/core/store.js" defer blocking="render"></script>
-  <script src="js/services/jikan.js" defer blocking="render"></script>
-  <script src="js/core/ui.js" defer blocking="render"></script>
-  <script src="js/core/detail-panel.js" defer blocking="render"></script>
-  <script src="js/pages/discover.js" defer blocking="render"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" defer></script>
+  <script src="js/data/sample-data.js" defer></script>
+  <script src="js/core/supabase.js" defer></script>
+  <!-- start.js checks the session, loads the user's data, then runs these in order -->
+  <script src="js/core/start.js" defer data-app="js/core/store.js js/services/tenrai.js js/services/recommend.js js/core/ui.js js/core/lolli.js js/core/panes.js js/core/detail-panel.js js/pages/discover.js"></script>
 </head>
 <body class="paper">
   <div class="app">
-    <main id="main" class="main" tabindex="-1">
+    <main id="main" class="main tight" tabindex="-1">
       <noscript><p class="notice">NEKAI needs JavaScript turned on to search anime.</p></noscript>
 
       <section aria-labelledby="page-h" class="stack gap-24">
@@ -49,20 +48,25 @@
           </div>
         </div>
         <p id="q-err" class="error disc-err" role="alert" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.5"></path></svg><span></span></p>
-        <div id="genre-pills" class="genre-pills" role="group" aria-label="Browse by genre"></div>
+        <div class="genre-filter">
+          <div id="genre-pills" class="genre-pills" role="group" aria-label="Browse by genre, pick up to 5"></div>
+          <div id="genre-box" class="genre-box" role="group" aria-label="All genres" hidden></div>
+          <p id="genre-note" class="small semibold genre-note" role="status" hidden></p>
+        </div>
       </section>
 
       <section id="results" aria-live="polite" class="stack gap-24" hidden></section>
 
       <section id="picker" aria-labelledby="pk-h" class="card pad-32 stack gap-24">
-        <div class="stack gap-8">
-          <h2 id="pk-h" class="h2 sec-title"><span class="pill pill-red">RANDOM</span>What should I watch next?</h2>
-          <p class="body muted">Spin the wheel for something you haven’t seen. Pick genres to narrow it down, or leave them all off for anything. We’ll skip what you’ve watched or dropped.</p>
+        <div class="stack sec-intro">
+          <h2 id="pk-h" class="h2 sec-title">What should I watch next?</h2>
+          <p class="body muted">Spin the wheel for something you haven’t seen. Pick up to 5 genres and the pick will have all of them, or leave them off for a completely random anime. We’ll skip what you’ve watched or dropped.</p>
         </div>
-        <fieldset>
-          <legend class="sr">Genres</legend>
-          <div id="genres" class="row gap-8"></div>
-        </fieldset>
+        <div class="genre-filter">
+          <div id="wheel-pills" class="genre-pills" role="group" aria-label="Genres for the wheel, pick up to 5"></div>
+          <div id="wheel-box" class="genre-box" role="group" aria-label="All genres" hidden></div>
+          <p id="wheel-note" class="small semibold genre-note" role="status" hidden></p>
+        </div>
         <div class="wheel">
           <span class="wheel-pointer" aria-hidden="true"></span>
           <div class="wheel-viewport" aria-hidden="true"><div id="wheel-track" class="wheel-track"></div></div>
@@ -75,17 +79,19 @@
       </section>
 
       <section aria-labelledby="np-h" class="stack gap-24">
-        <div class="stack gap-8">
-          <h2 id="np-h" class="h2 sec-title"><span class="pill pill-ink">FOR YOU</span>Nekai’s Picks</h2>
-          <p class="body muted">Personalized from your genres, ratings and watch history.</p>
+        <div class="page-actions">
+          <div class="stack sec-intro">
+            <h2 id="np-h" class="h2 sec-title">Nekai’s Picks</h2>
+            <p id="picks-status" class="body muted row gap-8" role="status"></p>
+          </div>
+          <button type="button" id="picks-new" class="btn btn-soft">New picks</button>
         </div>
         <div id="picks"></div>
-        <p class="small muted row gap-8" style="align-items:flex-start;flex-wrap:nowrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true" style="flex-shrink:0"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8v.5"></path></svg><span>Match estimates fit, not enjoyment: genre overlap (60%), genres you rated highly (30%) and titles you finished or dropped (10%).</span></p>
       </section>
 
       <section aria-labelledby="pop-h" class="stack gap-24">
-        <div class="stack gap-8">
-          <h2 id="pop-h" class="h2 sec-title"><span class="pill pill-red">HOT</span>Popular right now</h2>
+        <div class="stack sec-intro">
+          <h2 id="pop-h" class="h2 sec-title">Popular right now</h2>
           <p id="pop-sub" class="body muted">The top-rated shows airing now on MyAnimeList.</p>
         </div>
         <div id="popular"></div>

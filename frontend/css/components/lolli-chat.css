@@ -1,0 +1,444 @@
+/* =========================================================
+   LOLLI CHAT
+   A floating Lolli button sits bottom right on every page (built in js/core/ui.js).
+   Clicking it pops the chat box out of the button: the box scales up from the
+   button's center while fading in, with a slight springy settle. The × in the chat
+   header (or Esc) shrinks it back into the button. Only transform and opacity animate,
+   so the browser composites it on the GPU without repainting the chat each frame.
+   Phones: a bottom sheet that slides up.
+   ========================================================= */
+
+/* ---------- floating button ---------- */
+.lolli-fab {
+  position: fixed;
+  right: 36px;
+  bottom: 36px;
+  z-index: 46;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent; /* the robot itself is the button, like a sticker */
+  color: var(--ink);
+  cursor: pointer;
+  filter:
+    drop-shadow(0 0 10px rgba(247, 130, 58, 0.45))
+    drop-shadow(0 8px 14px rgb(var(--shadow-rgb) / 0.22));
+  transition:
+    transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+    filter 0.2s ease,
+    background-color 0.2s ease,
+    opacity 0.16s ease 0.14s; /* after closing: reappears as the chat shrinks into it */
+}
+.lolli-fab:hover {
+  transform: translateY(-3px) scale(1.06);
+  filter:
+    drop-shadow(0 0 16px rgba(247, 130, 58, 0.6))
+    drop-shadow(0 12px 18px rgb(var(--shadow-rgb) / 0.26));
+}
+.lolli-fab:active {
+  transform: scale(0.95);
+}
+.lolli-fab:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 3px;
+}
+.lolli-fab-face {
+  display: inline-flex;
+}
+.lolli-fab-face .lolli-img {
+  width: 64px;
+  height: 64px;
+}
+html.theme-dark .lolli-fab {
+  filter:
+    drop-shadow(0 0 12px rgba(255, 162, 92, 0.55))
+    drop-shadow(0 0 28px rgba(255, 162, 92, 0.22));
+}
+html.theme-dark .lolli-fab:hover {
+  filter:
+    drop-shadow(0 0 16px rgba(255, 162, 92, 0.75))
+    drop-shadow(0 0 34px rgba(255, 162, 92, 0.3));
+}
+/* floating: while the chat is closed, Lolli drifts gently up and down */
+.lolli-fab-face {
+  animation: lolliFloat 4s ease-in-out infinite;
+}
+@keyframes lolliFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+.lchat-open .lolli-fab-face,
+.opt-reduce-motion .lolli-fab-face {
+  animation: none;
+}
+.lolli-img {
+  display: block;
+}
+/* while the chat is open, the button shrinks away: the chat takes its corner */
+.lchat-open .lolli-fab {
+  opacity: 0;
+  transform: scale(0.7);
+  pointer-events: none;
+  transition:
+    opacity 0.14s ease,
+    transform 0.14s ease; /* opening: the button gives way as the chat pops out */
+}
+
+/* ---------- chat box: grows out of the button ---------- */
+.lchat {
+  position: fixed;
+  right: 36px;
+  bottom: 36px; /* the same corner as the Lolli button */
+  z-index: 47;
+  display: flex;
+  flex-direction: column;
+  width: min(400px, calc(100vw - 32px));
+  height: min(600px, calc(100vh - 48px));
+  border: 0;
+  border-radius: 20px;
+  background: var(--cream);
+  box-shadow:
+    0 24px 60px rgb(var(--shadow-rgb) / 0.22),
+    0 4px 12px rgb(var(--shadow-rgb) / 0.1);
+  overflow: hidden;
+  /* grows from the button's center: both sit 24px from the corner, the button is 64px */
+  transform-origin: calc(100% - 32px) calc(100% - 32px);
+  transform: scale(0.15);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  will-change: transform, opacity;
+  /* closing: shrink back into the button */
+  transition:
+    transform 0.26s cubic-bezier(0.5, 0, 0.75, 0),
+    opacity 0.18s ease 0.08s,
+    visibility 0s linear 0.26s;
+}
+.lchat.is-open {
+  transform: none;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  /* opening: pop out with a small overshoot */
+  transition:
+    transform 0.42s cubic-bezier(0.34, 1.36, 0.64, 1),
+    opacity 0.16s ease,
+    visibility 0s;
+}
+
+.lchat-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  gap: 10px;
+  padding: 8px 8px 8px 12px;
+  background: var(--blue);
+  color: #faf3e6;
+}
+.lchat-head .h3 {
+  font-size: 16px;
+  line-height: 20px;
+  color: #faf3e6;
+}
+.lchat-head .caption {
+  font-size: 12px;
+  line-height: 16px;
+  color: #ffd3b3;
+  font-weight: 700;
+}
+.lchat-head .btn-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 0;
+  background: transparent;
+  color: #faf3e6;
+}
+.lchat-head .btn-icon:hover {
+  background: rgba(250, 243, 230, 0.14);
+  color: #ffffff;
+}
+.lchat-head .btn-icon:focus-visible {
+  outline: 3px solid #ffd3b3;
+  outline-offset: 1px;
+}
+.lchat-face {
+  display: inline-flex;
+}
+
+.lchat-log {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--paper);
+}
+.lchat-msg {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: 88%;
+}
+.lchat-user {
+  align-self: flex-end;
+}
+.lchat-avatar {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.lchat-bubble {
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 18px 18px 18px 6px;
+  background: var(--white);
+  box-shadow: 0 2px 8px rgb(var(--shadow-rgb) / 0.08);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 22px;
+  overflow-wrap: anywhere;
+}
+.lchat-user .lchat-bubble {
+  border-radius: 18px 18px 6px 18px;
+  background: var(--blue);
+  box-shadow: none;
+  color: #faf3e6;
+}
+.lchat-bubble p + p,
+.lchat-bubble p + ul,
+.lchat-bubble ul + p {
+  margin-top: 8px;
+}
+.lchat-bubble ul {
+  margin: 0;
+  padding-left: 20px;
+}
+.lchat-bubble li + li {
+  margin-top: 4px;
+}
+.is-error .lchat-bubble {
+  background: var(--peach-tint);
+}
+.lchat-retry {
+  height: 36px;
+  margin-top: 8px;
+  padding: 0 12px;
+  border: 0;
+  background: var(--peach-tint);
+  color: var(--accent-text);
+}
+
+.lchat-typing {
+  display: inline-flex;
+  gap: 4px;
+  padding: 6px 0;
+}
+.lchat-typing i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ink);
+  animation: lchatDot 1s infinite ease-in-out;
+}
+.lchat-typing i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.lchat-typing i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes lchatDot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+.lchat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-left: 36px;
+}
+.lchat-chips .chip {
+  height: auto;
+  min-height: 40px;
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 14px;
+  line-height: 20px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--peach-tint);
+  color: var(--ink);
+  transition: background-color 0.15s ease;
+}
+.lchat-chips .chip:hover {
+  background: #ffd3b3;
+}
+
+.lchat-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 12px 12px 4px;
+}
+.lchat-form .btn-icon {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 50%;
+}
+.lchat-form textarea {
+  flex: 1 1 auto;
+  min-height: 48px;
+  max-height: 120px;
+  padding: 13px 16px;
+  border: 0;
+  border-radius: 24px;
+  background: var(--tint);
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  line-height: 22px;
+  resize: none;
+}
+.lchat-form textarea:focus {
+  outline: 0;
+  background: var(--white);
+  box-shadow: 0 0 0 2px var(--blue);
+}
+/* the AI disclaimer: small, regular weight, faded so it stays out of the way */
+.lchat-note {
+  padding: 2px 16px 10px;
+  text-align: center;
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 400;
+  color: rgb(var(--ink-rgb) / 0.5);
+}
+
+/* ---------- reduced motion: a plain fade, no pop ---------- */
+.opt-reduce-motion .lchat {
+  transform: none;
+  opacity: 0;
+  transition: opacity 0.2s ease, visibility 0s linear 0.2s;
+}
+.opt-reduce-motion .lchat.is-open {
+  opacity: 1;
+  transition: opacity 0.2s ease, visibility 0s;
+}
+.opt-reduce-motion .lolli-fab {
+  transform: none;
+}
+.opt-reduce-motion .lchat-typing i {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lchat {
+    transform: none;
+    opacity: 0;
+    transition: opacity 0.2s ease, visibility 0s linear 0.2s;
+  }
+  .lchat.is-open {
+    opacity: 1;
+    transition: opacity 0.2s ease, visibility 0s;
+  }
+  .lolli-fab,
+  .lolli-fab:hover,
+  .lchat-open .lolli-fab {
+    transform: none;
+  }
+  .lchat-typing i {
+    animation: none;
+  }
+  .lolli-fab-face {
+    animation: none;
+  }
+}
+
+/* ---------- phones: the button sits above the tab bar; the chat is a bottom sheet ---------- */
+@media (max-width: 767px) {
+  .lolli-fab {
+    right: 20px;
+    bottom: 104px; /* clear the 80px tab bar */
+    width: 56px;
+    height: 56px;
+  }
+  .lolli-fab-face .lolli-img {
+    width: 56px;
+    height: 56px;
+  }
+  .lchat {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: min(85vh, 640px);
+    border-radius: 20px 20px 0 0;
+    transform-origin: bottom center;
+    transform: translateY(100%);
+    opacity: 1;
+    transition:
+      transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      visibility 0s linear 0.3s;
+  }
+  .lchat.is-open {
+    transform: none;
+    transition:
+      transform 0.36s cubic-bezier(0.2, 0.8, 0.2, 1),
+      visibility 0s;
+  }
+  .opt-reduce-motion .lchat {
+    transform: none;
+    opacity: 0;
+    transition: opacity 0.2s ease, visibility 0s linear 0.2s;
+  }
+  .opt-reduce-motion .lchat.is-open {
+    opacity: 1;
+    transition: opacity 0.2s ease, visibility 0s;
+  }
+}
+@media (max-width: 767px) and (prefers-reduced-motion: reduce) {
+  .lchat {
+    transform: none;
+    opacity: 0;
+    transition: opacity 0.2s ease, visibility 0s linear 0.2s;
+  }
+  .lchat.is-open {
+    opacity: 1;
+    transition: opacity 0.2s ease, visibility 0s;
+  }
+}
+
+/* greeting's call to action (e.g. "Log an episode" from a streak reminder) */
+.lchat-cta {
+  height: 36px;
+  margin-top: 8px;
+  padding: 0 14px;
+}
+
+/* Settings → Stronger outlines: outlines come back for people who need clearer edges */
+.opt-strong .lchat,
+.opt-strong .lolli-fab,
+.opt-strong .lchat-bubble,
+.opt-strong .lchat-form textarea {
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+}

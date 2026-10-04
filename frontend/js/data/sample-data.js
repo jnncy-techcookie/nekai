@@ -1,6 +1,7 @@
-/* NEKAI sample data.
- * Keys are real MyAnimeList IDs, so every title can be refreshed from the Jikan API.
- * Community scores and some fields are offline placeholders until Jikan responds.
+/* NEKAI app data: curated titles, starter picks, genre colours and list statuses.
+ * There is no sample user data: every account starts empty.
+ * Keys are real MyAnimeList IDs, so every title can be refreshed from the Tenrai API.
+ * Community scores and some fields are offline placeholders until Tenrai responds.
  */
 window.NEKAI = window.NEKAI || {};
 NEKAI.data = {
@@ -546,74 +547,53 @@ NEKAI.data = {
       },
     },
   },
-  // Ordered most-recently-updated first
-  seedList: [
-    { id: 52991, status: "watching", watched: 27, rating: 5 },
-    { id: 21, status: "watching", watched: 1089, rating: 4 },
-    { id: 57334, status: "watching", watched: 7, rating: 4 },
-    { id: 52701, status: "watching", watched: 18, rating: 5 },
-    { id: 54492, status: "watching", watched: 9, rating: 4 },
-    { id: 52588, status: "watching", watched: 11, rating: 3 },
-    { id: 52215, status: "watching", watched: 20, rating: 0 },
-    { id: 52299, status: "plan", watched: 0, rating: 0 },
-    { id: 33352, status: "plan", watched: 0, rating: 0 },
-    { id: 50265, status: "plan", watched: 0, rating: 0 },
-    { id: 40834, status: "plan", watched: 0, rating: 0 },
-    { id: 1, status: "plan", watched: 0, rating: 0 },
-    { id: 32182, status: "completed", watched: 12, rating: 5 },
-    { id: 34599, status: "completed", watched: 13, rating: 5 },
-    { id: 44511, status: "completed", watched: 12, rating: 4 },
-    { id: 49596, status: "completed", watched: 24, rating: 0 },
-    { id: 20583, status: "completed", watched: 25, rating: 4 },
-    { id: 457, status: "completed", watched: 26, rating: 5 },
-    { id: 52034, status: "dropped", watched: 4, rating: 3 },
-  ],
+  // Starter picks shown until the AI has made picks from the user's own history
   picks: [
     {
       id: 37521,
-      why: "Adventure and Drama, like Frieren, which you rated 5★",
+      why: "Sweeping Adventure and Drama, a fan favourite",
       synopsis:
         "A young warrior rides with the mercenaries who killed his father, chasing revenge across Viking-age Europe until he has to ask what strength is for.",
     },
     {
       id: 5114,
-      why: "Fantasy adventure with the found-family feel of Delicious in Dungeon",
+      why: "Fantasy adventure with a found-family heart",
       synopsis:
         "Two brothers pay a terrible price for a failed alchemy ritual and set out to find the Philosopher’s Stone to get their bodies back.",
     },
     {
       id: 11061,
-      why: "Big adventure arcs, like Delicious in Dungeon (5★)",
+      why: "Big adventure arcs that keep raising the stakes",
       synopsis:
         "A boy leaves his island to become a Hunter and find the father who left him, making friends and rivals in brutal exams along the way.",
     },
     {
       id: 4081,
-      why: "Gentle Supernatural stories, like Mushishi (5★)",
+      why: "Gentle Supernatural stories, one at a time",
       synopsis:
         "A boy who can see spirits inherits his grandmother’s book of their names and starts giving them back, one quiet encounter at a time.",
     },
     {
       id: 9253,
-      why: "Twisty Sci-Fi, like Kaiju No. 8",
+      why: "Twisty Sci-Fi that rewards paying attention",
       synopsis:
         "A self-styled mad scientist finds a way to text the past, and every small change he makes starts to cost more than he expected.",
     },
     {
       id: 46102,
-      why: "A Mystery pick: you rated The Apothecary Diaries 4★",
+      why: "A clever Mystery with a slow-burn reveal",
       synopsis:
         "A quiet walrus taxi driver is pulled into a missing-girl case through the strange passengers who ride in his cab.",
     },
     {
       id: 20,
-      why: "Long-running action, like One Piece",
+      why: "Long-running action to settle into",
       synopsis:
         "An outcast ninja with a fox spirit sealed inside him trains to lead his village and win the respect it never gave him.",
     },
     {
       id: 37999,
-      why: "Lighter Comedy to balance your list",
+      why: "Lighter Comedy for an easy watch",
       synopsis:
         "Two top students are in love, and both are too proud to confess, so every conversation turns into a battle of wits.",
     },
@@ -621,22 +601,6 @@ NEKAI.data = {
   synopses: {
     37521:
       "Thorfinn grows up among the mercenaries who killed his father, fighting for their leader Askeladd in exchange for the right to challenge him to a duel. As Viking raids push into England, his need for revenge collides with the ambitions of a young prince and with a harder question: what does it really mean to be a warrior?",
-  },
-  genreIds: {
-    Action: 1,
-    Adventure: 2,
-    Comedy: 4,
-    Mystery: 7,
-    Drama: 8,
-    Fantasy: 10,
-    Horror: 14,
-    Romance: 22,
-    "Sci-Fi": 24,
-    Sports: 30,
-    "Slice of Life": 36,
-    Supernatural: 37,
-    Suspense: 41,
-    Thriller: 41,
   },
   genreColors: {
     Action: { bg: "#FFE0CC", fg: "#9A3800" },
@@ -659,14 +623,4 @@ NEKAI.data = {
     completed: { label: "Completed", color: "#1F3FA6" },
     dropped: { label: "Dropped", color: "#4A5378" },
   },
-  pickerGenres: [
-    "Action",
-    "Comedy",
-    "Romance",
-    "Fantasy",
-    "Adventure",
-    "Slice of Life",
-    "Mystery",
-    "Horror",
-  ],
 };

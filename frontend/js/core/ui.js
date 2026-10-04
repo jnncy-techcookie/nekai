@@ -76,6 +76,7 @@
       '<circle cx="12" cy="12" r="9"></circle><path d="M8 14q4 4 8 0M9 9.5h.01M15 9.5h.01"></path>',
     arrow: '<path d="M4 12h14"></path><path d="M13 6l6 6-6 6"></path>',
     moon: '<path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"></path>',
+    sun: '<circle cx="12" cy="12" r="4"></circle><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4"></path>',
     swords:
       '<path d="M4 4l9 9M20 4l-9 9"></path><path d="M6.5 14.5l3 3M17.5 14.5l-3 3M5 19l2.5-2.5M19 19l-2.5-2.5"></path>',
     mountain:
@@ -116,6 +117,7 @@
   }
   var STAR =
     "M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z";
+  // colors go in style (not attributes) so theme variables like var(--white) work
   function star(size, fill, stroke) {
     return (
       '<svg width="' +
@@ -124,34 +126,42 @@
       size +
       '" viewBox="0 0 24 24" aria-hidden="true"><path d="' +
       STAR +
-      '" fill="' +
+      '" style="fill:' +
       fill +
-      '"' +
-      (stroke
-        ? ' stroke="#0F1F5C" stroke-width="1.5" stroke-linejoin="round"'
-        : "") +
+      (stroke ? ';stroke:var(--ink)" stroke-width="1.5" stroke-linejoin="round"' : '"') +
       "></path></svg>"
     );
   }
   var AVATAR =
     '<svg width="32" height="32" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="16" r="11" fill="#FAF3E6" stroke="#0F1F5C" stroke-width="2.2"></circle><path d="M5 13c2-7 16-9 20-1c-5-1-8-4-9-5c-2 3-6 5-11 6z" fill="#0F1F5C"></path><circle cx="11.5" cy="17" r="1.4" fill="#0F1F5C"></circle><circle cx="18.5" cy="17" r="1.4" fill="#0F1F5C"></circle><path d="M12.5 21.5q2.5 2 5 0" stroke="#0F1F5C" stroke-width="1.8" fill="none" stroke-linecap="round"></path></svg>';
+  // Lolli's face: the robot image (assets/images/lolli.png), at n px
   function lolliSvg(n) {
-    return (
-      '<svg width="' +
-      n +
-      '" height="' +
-      n +
-      '" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 28v10" stroke="#0F1F5C" stroke-width="2.5" stroke-linecap="round"></path><circle cx="20" cy="16" r="13" fill="#FFD3B3" stroke="#0F1F5C" stroke-width="1.5"></circle><path d="M20 16a4 4 0 118 0 8 8 0 11-16 0" fill="none" stroke="#FFFBF2" stroke-width="2.2" stroke-linecap="round"></path><circle cx="15" cy="17" r="1.6" fill="#0F1F5C"></circle><circle cx="25" cy="17" r="1.6" fill="#0F1F5C"></circle><path d="M18 21q2 1.6 4 0" stroke="#0F1F5C" stroke-width="1.5" fill="none" stroke-linecap="round"></path></svg>'
-    );
+    return '<img class="lolli-img" src="assets/images/lolli.png" alt="" width="' + n + '" height="' + n + '">';
   }
 
+
   /* ---------- settings applied to <html> ---------- */
+  // NEKAI's cat logo: the light version (orange) or the dark one (navy), swapped by the theme
+  var LOGO =
+    '<span class="brand-mark brand-logo" aria-hidden="true">' +
+    '<img class="logo-l" src="assets/images/logo-light.png" alt="" width="44" height="44">' +
+    '<img class="logo-d" src="assets/images/logo-dark.png" alt="" width="44" height="44"></span>' +
+    // the NEKAI wordmark: orange + navy on light, orange + cream on dark
+    '<span class="brand-word brand-wordmark" aria-hidden="true">' +
+    '<img class="logo-l" src="assets/images/logo-text-light.png?v=2" alt="" width="104" height="24">' +
+    '<img class="logo-d" src="assets/images/logo-text-dark.png?v=2" alt="" width="105" height="24"></span>';
   function applySettings() {
     var st = S.state.settings,
       h = document.documentElement;
-    h.classList.toggle("opt-large-text", !!st.text);
-    h.classList.toggle("opt-strong", !!st.contrast);
+    h.classList.remove("opt-large-text", "opt-strong"); // Larger text and Stronger outlines were retired
     h.classList.toggle("opt-reduce-motion", !!st.motion);
+    h.classList.toggle("theme-dark", !!st.dark);
+    // every theme button (sidebar, phone top bar) shows the current state
+    Array.prototype.forEach.call(document.querySelectorAll("[data-act=theme]"), function (b) {
+      b.setAttribute("aria-pressed", !!st.dark);
+      var i = b.querySelector(".theme-ico");
+      if (i) i.innerHTML = icon(st.dark ? "sun" : "moon");
+    });
   }
   function reducedMotion() {
     return (
@@ -164,14 +174,72 @@
   /* ---------- app shell ---------- */
   var NAV = [
     ["index.html", "Home", "home"],
-    ["my-anime.html", "My Anime", "list"],
+    ["library.html", "Library", "list"],
     ["discover.html", "Discover", "compass"],
     ["profile.html", "Profile", "user"],
   ];
 
+  /* ---------- streak reminders + milestones ---------- */
+  var STREAK_MILESTONES = [3, 7, 14, 30, 50, 100, 365];
+  var REMIND_FROM_HOUR = 18; // "about to end": the evening of a day with nothing logged yet
+
+  // The reminder text when Streak reminders is on and a running streak has nothing logged today, else ""
+  function streakReminder() {
+    var st = S.streak();
+    if (!S.state.settings.streak || !st.current || st.loggedToday) return "";
+    return (
+      "Your " +
+      st.current +
+      "-day streak ends at midnight. Log one episode to keep it going!"
+    );
+  }
+  // After an action that may have logged today's first episode: the toast suffix, plus confetti on a milestone
+  function streakNews(res) {
+    if (!res || !res.streakUp) return "";
+    var n = S.streak().current;
+    if (STREAK_MILESTONES.indexOf(n) === -1)
+      return n > 1 ? " · Day " + n + " of your streak" : " · Streak started";
+    confetti();
+    sound("done");
+    return " · " + n + "-day streak!"; // badges (like Week Streak) are announced by the unlock news below
+  }
+
+  /* ---------- achievement unlocks ---------- */
+  // The store reports unlocks while an action runs, just before that action shows its toast.
+  // The news rides along on that toast (keeping its Undo); an action with no toast gets one of its own.
+  var unlockNews = "";
+  function unlockText(list) {
+    var names = list.map(function (a) {
+      return a.name;
+    });
+    var joined =
+      names.length > 1
+        ? names.slice(0, -1).join(", ") + " and " + names[names.length - 1]
+        : names[0];
+    return joined + (names.length > 1 ? " badges" : " badge") + " earned! +" + names.length * S.xpRules.badge + " XP";
+  }
+  S.onUnlock(function (list) {
+    unlockNews = unlockText(list);
+    confetti();
+    sound("done");
+    setTimeout(function () {
+      if (unlockNews) toast(""); // no action toast took it
+    }, 0);
+  });
+
   function shell(opts) {
+    // A new account picks its 3 genres before anything else
+    if (S.state.onboarding) { location.replace("welcome.html"); return; }
     // opts: { page: "index.html", lolli: "message", lolliCta: [href, label] }
     applySettings();
+    var reminder =
+      new Date().getHours() >= REMIND_FROM_HOUR ? streakReminder() : "";
+    if (reminder) {
+      opts = Object.assign({}, opts, {
+        lolli: reminder,
+        lolliCta: ["library.html", "Log an episode"],
+      });
+    }
     var app = $(".app");
     var ui = S.state.ui,
       st = S.state.settings,
@@ -193,23 +261,15 @@
         "</span></a>"
       );
     }).join("");
-    var cta = opts.lolliCta
-      ? '<a class="btn btn-accent self-start" href="' +
-        opts.lolliCta[0] +
-        '" style="padding:0 16px">' +
-        esc(opts.lolliCta[1]) +
-        "</a>"
-      : "";
     var lolliOn = st.lolli !== false;
+    // Lolli is a floating chat button now (js/core/lolli.js); the page's tip opens its chat
+    NEKAI.ui.lolliTip = { text: opts.lolli || "", cta: opts.lolliCta || null };
     var side = document.createElement("aside");
-    side.className =
-      "side" +
-      (ui.navOpen === false ? " is-collapsed" : "") +
-      (ui.lolliHidden ? " lolli-hidden" : "");
+    side.className = "side" + (ui.navOpen === false ? " is-collapsed" : "");
     side.setAttribute("aria-label", "Sidebar");
     side.innerHTML =
       '<div class="side-head">' +
-      '<a class="brand" href="index.html" aria-label="NEKAI home"><span class="brand-mark">ネ</span><span class="brand-word">NEKAI</span></a>' +
+      '<a class="brand" href="index.html" aria-label="NEKAI home">' + LOGO + "</a>" +
       '<button type="button" class="side-toggle" data-act="nav" aria-expanded="' +
       (ui.navOpen !== false) +
       '" aria-label="' +
@@ -222,23 +282,10 @@
       navLinks +
       "</nav>" +
       '<div class="side-foot">' +
-      (lolliOn
-        ? '<section class="lolli" aria-label="Lolli, your watch buddy"><div class="row gap-8" style="flex-wrap:nowrap">' +
-          lolliSvg(40) +
-          '<div class="grow"><div class="h3">Lolli</div><div class="caption muted">Your watch buddy</div></div>' +
-          '<button type="button" class="btn btn-ghost btn-icon" data-act="lolli-hide" aria-label="Hide Lolli">' +
-          icon("x", 16) +
-          "</button></div>" +
-          '<p class="small semibold">' +
-          esc(opts.lolli || "") +
-          "</p>" +
-          cta +
-          "</section>" +
-          '<button type="button" class="side-link lolli-mini" data-act="lolli-show" title="Lolli has a tip">' +
-          lolliSvg(32) +
-          '<span class="side-label">Lolli</span></button>'
-        : "") +
-      '<a class="side-link" href="settings.html"' +
+      '<button type="button" class="side-link side-theme" data-act="theme" aria-pressed="' + !!S.state.settings.dark + '" title="Dark mode">' +
+      '<span class="theme-ico">' + icon(S.state.settings.dark ? "sun" : "moon") + "</span>" +
+      '<span class="side-label">Dark mode</span><span class="side-switch" aria-hidden="true"><span></span></span></button>' +
+      '<a class="side-link" href="settings.html" data-nav-settings' +
       (here === "settings.html" ? ' aria-current="page"' : "") +
       ' title="Settings">' +
       icon("gear") +
@@ -256,12 +303,18 @@
       '<span class="side-label">Log out</span></button>' +
       "</div>";
     app.insertBefore(side, app.firstChild);
+    // Settings opened from here shows no Back button; from anywhere else (e.g. Edit profile) it does
+    side.addEventListener("click", function (e) {
+      if (!e.target.closest("[data-nav-settings]")) return;
+      try { sessionStorage.setItem("nekai:settingsFromNav", "1"); } catch (err) { /* storage unavailable */ }
+    });
 
     var top = document.createElement("header");
     top.className = "mtop";
     top.innerHTML =
-      '<a class="brand" href="index.html" aria-label="NEKAI home"><span class="brand-mark">ネ</span><span class="brand-word">NEKAI</span></a>' +
-      '<a class="btn btn-secondary btn-icon ml-auto" href="discover.html#q" aria-label="Search">' +
+      '<a class="brand" href="index.html" aria-label="NEKAI home">' + LOGO + "</a>" +
+      '<button type="button" class="btn btn-secondary btn-icon ml-auto" data-act="theme" aria-pressed="' + !!S.state.settings.dark + '" aria-label="Dark mode"><span class="theme-ico">' + icon(S.state.settings.dark ? "sun" : "moon") + "</span></button>" +
+      '<a class="btn btn-secondary btn-icon" href="discover.html#q" aria-label="Search">' +
       icon("search") +
       "</a>" +
       '<a class="avatar" href="profile.html" aria-label="Your profile">' +
@@ -286,6 +339,19 @@
     var main = $(".main");
     app.insertBefore(top, main);
     document.body.appendChild(tabs);
+    // Lolli: a floating chat button, bottom right (the chat itself is js/core/lolli.js)
+    if (lolliOn) {
+      var fab = document.createElement("button");
+      fab.type = "button";
+      fab.className = "lolli-fab";
+      fab.setAttribute("data-lolli-chat", "");
+      fab.setAttribute("aria-label", "Chat with Lolli");
+      fab.setAttribute("aria-expanded", "false");
+      fab.setAttribute("aria-controls", "lchat");
+      fab.title = "Chat with Lolli";
+      fab.innerHTML = '<span class="lolli-fab-face" aria-hidden="true">' + lolliSvg(44) + "</span>";
+      document.body.appendChild(fab);
+    }
     // On desktop the content panel scrolls by itself; focus it so arrow keys, Page Down and Space scroll it right away
     if (main && (!document.activeElement || document.activeElement === document.body)) main.focus({ preventScroll: true });
 
@@ -294,6 +360,13 @@
     toasts.setAttribute("role", "status");
     toasts.setAttribute("aria-live", "polite");
     document.body.appendChild(toasts);
+    // Also nudge once a day with a toast, in case Lolli is hidden or turned off
+    if (reminder && ui.streakNudged !== S.dayKey()) {
+      S.setUi({ streakNudged: S.dayKey() });
+      setTimeout(function () {
+        toast(reminder);
+      }, 800);
+    }
 
     var skip = document.createElement("a");
     skip.className = "skip";
@@ -304,9 +377,84 @@
 
   /* ---------- toast with optional Undo ---------- */
   var toastTimer;
+  /* ---------- confirmation pop-up for critical actions ----------
+     confirmDialog({ title, body, confirm, cancel, danger, icon }) → Promise<boolean>.
+     A native <dialog> (showModal): it sits above everything, keeps focus inside,
+     Esc or the backdrop cancels, and focus goes back to whatever opened it. */
+  var dlgOpen = null;
+  function confirmDialog(o) {
+    o = o || {};
+    if (dlgOpen) dlgOpen.cancel();
+    var back = document.activeElement;
+    var d = document.createElement("dialog");
+    d.className = "cdlg" + (o.danger ? " is-danger" : "");
+    d.setAttribute("aria-labelledby", "cdlg-h");
+    d.setAttribute("aria-describedby", "cdlg-d");
+    d.innerHTML =
+      '<div class="cdlg-icon" aria-hidden="true">' + icon(o.icon || (o.danger ? "alert" : "logout"), 26, 2.4) + "</div>" +
+      '<h2 id="cdlg-h" class="cdlg-title">' + esc(o.title || "Are you sure?") + "</h2>" +
+      (o.body ? '<p id="cdlg-d" class="cdlg-body">' + esc(o.body) + "</p>" : "") +
+      '<div class="cdlg-actions">' +
+        '<button type="button" class="btn btn-secondary" data-cdlg="no">' + esc(o.cancel || "Cancel") + "</button>" +
+        '<button type="button" class="btn ' + (o.danger ? "btn-danger" : "btn-primary") + '" data-cdlg="yes">' + esc(o.confirm || "Confirm") + "</button>" +
+      "</div>";
+    document.body.appendChild(d);
+    return new Promise(function (resolve) {
+      var done = false;
+      function finish(ok) {
+        if (done) return;
+        done = true;
+        dlgOpen = null;
+        d.classList.add("is-closing"); // fade/scale out, then remove
+        setTimeout(function () {
+          if (d.open) d.close();
+          d.remove();
+          if (!ok && back && document.contains(back)) back.focus({ preventScroll: true });
+        }, reduceMotion() ? 0 : 160);
+        resolve(ok);
+      }
+      dlgOpen = { cancel: function () { finish(false); } };
+      d.addEventListener("click", function (ev) {
+        var b = ev.target.closest("[data-cdlg]");
+        if (b) finish(b.dataset.cdlg === "yes");
+        else if (ev.target === d) finish(false); // a click on the backdrop
+      });
+      d.addEventListener("cancel", function (ev) {
+        ev.preventDefault(); // Esc: close with the same animation
+        finish(false);
+      });
+      d.showModal();
+      // the safe choice gets focus, so a stray Enter doesn't confirm
+      d.querySelector('[data-cdlg="no"]').focus();
+    });
+  }
+  function reduceMotion() {
+    return (
+      document.documentElement.classList.contains("opt-reduce-motion") ||
+      matchMedia("(prefers-reduced-motion: reduce)").matches
+    );
+  }
+  function logOut() {
+    confirmDialog({
+      title: "Log out of NEKAI?",
+      body: "Your list, ratings and streak stay saved to your account. Sign back in any time.",
+      confirm: "Log out",
+      icon: "logout",
+    }).then(function (ok) {
+      if (!ok) return;
+      NEKAI.db.signOut().then(function () {
+        location.href = "signin.html";
+      });
+    });
+  }
+
   function toast(msg, undo) {
     var region = $(".toast-region");
     if (!region) return;
+    if (unlockNews) {
+      msg = msg ? msg + " · " + unlockNews : unlockNews;
+      unlockNews = "";
+    }
     clearTimeout(toastTimer);
     region.innerHTML =
       '<div class="toast"><span class="toast-icon">' +
@@ -462,6 +610,20 @@
       "</div>"
     );
   }
+  // "S2" badge beside the title of a show's second (third…) season; season 1 has none
+  // A genre tag's color family, so dark mode can restyle it (light mode keeps the inline colors)
+  function genreTone(c) {
+    return /^#[89]A/i.test(c.fg) ? "orange" : /^#1[6F]/i.test(c.fg) ? "blue" : "neutral";
+  }
+  function seasonBadge(a) {
+    return a && a.seasonNo > 1
+      ? ' <span class="season-badge" title="Season ' + a.seasonNo + '">S' + a.seasonNo + "</span>"
+      : "";
+  }
+  // "AIRING" chip for posters of shows that are still coming out
+  function airingChip(a) {
+    return a && a.airing ? '<span class="air-chip"><i aria-hidden="true"></i>Airing</span>' : "";
+  }
   function detailsHref(a) {
     return "#anime-" + a.id;
   }
@@ -478,9 +640,12 @@
       ' aria-label="One episode fewer">' +
       icon("minus", 20, 2.6) +
       "</button>" +
-      // Unknown total: the watched count with a small "EP Unknown" inside the counter (no extra line below)
-      (e.known
-        ? '<span class="step-val" aria-live="polite">' + esc(e.stepText) + "</span>"
+      // One line, like "7 / 12". Ongoing shows count against the episodes aired so far
+      // ("1,089 / 1,174"; the AIRING chip on the poster says it's still airing).
+      // Only a show with no total that isn't airing gets the small "EP Unknown" line.
+      (e.known || e.ongoing
+        ? '<span class="step-val" aria-live="polite">' + esc(e.stepText) +
+          (e.ongoing ? '<span class="sr"> episodes aired so far, still airing</span>' : "") + "</span>"
         : '<span class="step-val two" aria-live="polite">' + e.watched.toLocaleString("en-US") +
           '<small><span class="sr">episodes, total </span>EP Unknown</small></span>') +
       '<button type="button" class="step" data-act="inc" data-id="' +
@@ -511,7 +676,7 @@
         ' out of 10" aria-pressed="' +
         (i * 2 === e.rating) +
         '">' +
-        star(24, e.rating >= i * 2 - 0.5 ? "#FFA25C" : "#FFFBF2", true) +
+        star(24, e.rating >= i * 2 - 0.5 ? "#FFA25C" : "var(--white)", true) +
         "</button>";
     }
     return h + "</div>";
@@ -523,7 +688,7 @@
       '" class="input select status-select" data-act="status" data-id="' +
       e.id +
       '" style="color:' +
-      (e.status ? D.statuses[e.status].color : "#0F1F5C") +
+      (e.status ? "var(--status-" + e.status + ")" : "var(--ink)") +
       '">' +
       Object.keys(D.statuses)
         .map(function (k) {
@@ -543,26 +708,28 @@
   }
   function scoreBadge(a) {
     return (
-      '<span class="score" title="Community score from Jikan (MyAnimeList)">' +
-      star(16, "#0F1F5C") +
+      '<span class="score" title="Community score from Tenrai (MyAnimeList)">' +
+      star(16, "currentColor") +
       esc(a.scoreText) +
-      '<span class="caption muted">Jikan</span></span>'
+      '<span class="caption muted">Tenrai</span></span>'
     );
   }
-  function emptyState(pill, title, body, actionHtml) {
+  // Empty state ("nothing here"): icon, small eyebrow, the message and its actions.
+  // opts.icon picks the icon (default inbox), opts.tag the heading level (default h2).
+  function emptyState(pill, title, body, actionHtml, opts) {
+    opts = opts || {};
+    var tag = opts.tag || "h2";
     return (
-      '<div class="card empty"><div class="empty-top"><span class="pill pill-yellow">' +
+      '<div class="empty"><span class="empty-icon" aria-hidden="true">' +
+      icon(opts.icon || "inbox", 26, 2.2) +
+      '</span><p class="empty-kicker">' +
       esc(pill) +
-      '</span></div><div class="empty-body">' +
-      '<span class="empty-icon">' +
-      icon("inbox", 32) +
-      '</span><h2 class="h2">' +
+      "</p><" + tag + ' class="empty-title">' +
       esc(title) +
-      '</h2><p class="body muted" style="max-width:448px">' +
-      esc(body) +
-      "</p>" +
-      (actionHtml || "") +
-      "</div></div>"
+      "</" + tag + ">" +
+      (body ? '<p class="empty-text">' + esc(body) + "</p>" : "") +
+      (actionHtml ? '<div class="empty-actions">' + actionHtml + "</div>" : "") +
+      "</div>"
     );
   }
 
@@ -574,11 +741,26 @@
     }
     var c = S.counts().completed;
     toast(
-      a.title + " completed! Finisher badge " + Math.min(c, 10) + " / 10",
+      a.title +
+        " completed! Finisher badge " +
+        Math.min(c, 10) +
+        " / 10" +
+        streakNews(res),
       res && res.undo,
     );
   }
   var actions = {
+    // Dark mode: saved with the other settings; colors ease over briefly so the switch isn't a flash
+    theme: function () {
+      var h = document.documentElement;
+      if (!reducedMotion()) {
+        h.classList.add("theme-anim");
+        clearTimeout(actions.themeT);
+        actions.themeT = setTimeout(function () { h.classList.remove("theme-anim"); }, 400);
+      }
+      S.setSettings({ dark: !S.state.settings.dark });
+      applySettings();
+    },
     nav: function () {
       var side = $(".side"),
         open = side.classList.toggle("is-collapsed") === false;
@@ -590,27 +772,19 @@
         open ? "Collapse sidebar" : "Expand sidebar",
       );
     },
-    "lolli-hide": function () {
-      $(".side").classList.add("lolli-hidden");
-      S.setUi({ lolliHidden: true });
-    },
-    "lolli-show": function () {
-      var side = $(".side");
-      side.classList.remove("lolli-hidden", "is-collapsed");
-      S.setUi({ lolliHidden: false, navOpen: true });
-    },
     inc: function (id) {
       var a = S.anime(id),
         r = S.inc(id);
       if (!r) return;
       sound("tick");
-      if (r.finished)
-        toast(a.title + ": all " + a.episodes + " episodes watched");
-      else
+      if (r.finished) afterComplete(r, S.anime(id));
+      else {
+        var news = streakNews(r);
         toast(
-          a.title + ": episode " + r.watched + " marked as watched",
+          a.title + ": episode " + r.watched + " marked as watched" + news,
           r.undo,
         );
+      }
     },
     dec: function (id) {
       S.dec(id);
@@ -625,12 +799,19 @@
       toast("Rated " + a.title + " " + n + "/10", undo);
     },
     logout: function () {
-      S.setSignedIn(false);
-      location.href = "signin.html";
+      logOut();
     },
     remove: function (id) {
       var a = S.anime(id);
-      toast(a.title + " removed from your list", S.remove(id));
+      confirmDialog({
+        title: "Remove " + a.title + "?",
+        body: "Its progress, rating and review will be removed from your Library.",
+        confirm: "Remove",
+        danger: true,
+        icon: "trash",
+      }).then(function (ok) {
+        if (ok) toast(a.title + " removed from your list", S.remove(id));
+      });
     },
     toggle: function (id) {
       var e = S.entry(id);
@@ -697,6 +878,26 @@
     }
   }
 
+  /* ---------- match % tiers ---------- */
+  function matchTier(pct) {
+    if (pct >= 80) return { key: "high", label: "High" };
+    if (pct >= 65) return { key: "mid", label: "Medium" };
+    return { key: "low", label: "Low" };
+  }
+  function matchBadge(pct) {
+    var t = matchTier(pct);
+    // Reads as "78% High match"
+    return (
+      '<span class="match-pill match-' +
+      t.key +
+      '">' +
+      pct +
+      '%<span class="match-tier">' +
+      t.label +
+      '</span><span class="sr"> match</span></span>'
+    );
+  }
+
   /* ---------- Picked for you row ---------- */
   // opts.lite: browse-only card (no Add, no quick-info button, no "Not interested")
   function pickCard(a, opts) {
@@ -707,7 +908,7 @@
       .map(function (g) {
         var c = D.genreColors[g] || { bg: "#EDE4D2", fg: "#4A5378" };
         return (
-          '<span role="listitem" class="gtag" style="background:' +
+          '<span role="listitem" class="gtag gtag-' + genreTone(c) + '" style="background:' +
           c.bg +
           ";color:" +
           c.fg +
@@ -722,20 +923,19 @@
       a.id +
       '">' +
       '<div class="pick-card">' +
-      '<div class="pick-media"><a class="pick-hit" href="' +
+      // title on the poster's fade, year right under it (see .has-cap in components.css)
+      '<div class="pick-media has-cap"><a class="pick-hit" href="' +
       detailsHref(a) +
       '" tabindex="-1" aria-hidden="true">' +
       art(a) +
       "</a>" +
-      '<span class="match-green">' +
-      a.match +
-      "% match</span>" +
-      "</div>" +
-      '<h3 class="pick-title"><a class="title-link" href="' +
+      matchBadge(a.match) +
+      '<div class="card-cap"><h3 class="pick-title"><a class="title-link" href="' +
       detailsHref(a) +
       '">' +
       esc(a.title) +
-      "</a></h3>" +
+      "</a>" + seasonBadge(S.anime(a.id) || a) + "</h3></div></div>" +
+      (a.year ? '<p class="m-sub card-sub">' + esc(a.year) + "</p>" : "") +
       '<div class="pick-stats"><span class="pick-score" aria-label="Community score ' +
       a.scoreText +
       ' out of 10">' +
@@ -779,13 +979,19 @@
           icon("dots", 20) +
           "</button></div>") +
       "</div>" +
-      '<div class="qi" id="qi-' +
+      // opts.preview === false: card only, no hover preview panel
+      (opts.preview === false
+        ? ""
+        : '<div class="qi" id="qi-' +
       a.id +
       '" role="group" aria-label="Quick info: ' +
       esc(a.title) +
       '">' +
+      // opts.wide (Discover's Picks and Popular): the title is the way into full details
       '<div class="qi-head"><p class="qi-title">' +
-      esc(a.title) +
+      (opts.wide
+        ? '<a class="title-link" href="' + detailsHref(a) + '">' + esc(a.title) + "</a>"
+        : esc(a.title)) +
       "</p>" +
       '<div class="qi-chips"><span class="qi-chip hl" aria-label="Community score ' +
       a.scoreText +
@@ -798,7 +1004,7 @@
       esc(a.epsText) +
       "</span></div></div>" +
       '<p class="qi-syn">' +
-      esc(a.synopsis || "Synopsis loads from Jikan.") +
+      esc(a.synopsis || "Synopsis loads from Tenrai.") +
       "</p>" +
       '<dl class="qi-dl"><dt>Japanese</dt><dd>' +
       esc(a.jp || "–") +
@@ -816,20 +1022,69 @@
           esc(a.why) +
           "</span></p>"
         : "") +
-      '<div class="qi-foot"><a class="btn btn-see" href="' +
+      // opts.wide: full-size Add to Library, plus Not interested when opts.dismiss
+      (opts.wide
+        ? '<div class="qi-foot qi-foot-wide"><button type="button" class="btn ' +
+          (e.inList ? "btn-accent" : "btn-primary btn-add") +
+          '" data-act="toggle" data-id="' +
+          a.id +
+          '" aria-pressed="' +
+          e.inList +
+          '" aria-label="' +
+          (e.inList
+            ? "Remove " + esc(a.title) + " from your Library"
+            : "Add " + esc(a.title) + " to your Library") +
+          '">' +
+          icon(e.inList ? "check" : "plus", 20, 2.6) +
+          (e.inList ? "In Library" : "Add to Library") +
+          "</button>" +
+          (opts.dismiss
+            ? '<button type="button" class="btn btn-secondary" data-act="dismiss" data-id="' +
+              a.id +
+              '" aria-label="Not interested in ' +
+              esc(a.title) +
+              '">' +
+              icon("x", 20) +
+              "Not interested</button>"
+            : "") +
+          "</div>" +
+          "</div>"
+        : '<div class="qi-foot"><a class="btn btn-see" href="' +
       detailsHref(a) +
       '" style="flex-grow:1">See full details</a>' +
+      // Lite cards have no Add button on the face, so the preview carries it
       (opts.lite
-        ? ""
-        : '<button type="button" class="btn btn-secondary btn-icon" data-act="dismiss" data-id="' +
+        ? '<button type="button" class="btn ' +
+          (e.inList ? "btn-accent" : "btn-primary btn-add") +
+          ' btn-icon" data-act="toggle" data-id="' +
           a.id +
-          '" style="width:44px;height:44px" aria-label="Not interested in ' +
-          esc(a.title) +
-          '" title="Not interested">' +
-          icon("x", 20) +
-          "</button>") +
+          '" aria-pressed="' +
+          e.inList +
+          '" style="width:44px;height:44px" aria-label="' +
+          (e.inList
+            ? "Remove " + esc(a.title) + " from your list"
+            : "Add " + esc(a.title) + " to Plan to Watch") +
+          '" title="' +
+          (e.inList ? "In your list" : "Add to Plan to Watch") +
+          '">' +
+          icon(e.inList ? "check" : "plus", 20, 2.6) +
+          "</button>"
+        : dismissBtn(a)) +
       "</div>" +
-      "</div></article>"
+      "</div>")) +
+      "</article>"
+    );
+  }
+
+  function dismissBtn(a) {
+    return (
+      '<button type="button" class="btn btn-secondary btn-icon" data-act="dismiss" data-id="' +
+      a.id +
+      '" style="width:44px;height:44px" aria-label="Not interested in ' +
+      esc(a.title) +
+      '" title="Not interested">' +
+      icon("x", 20) +
+      "</button>"
     );
   }
 
@@ -857,12 +1112,29 @@
     clearTimeout(closeTimer);
     var go = function () {
       if (openCard && openCard !== card) closePanel(true);
-      var row = card.closest(".pick-row"),
+      var row = card.closest(".pick-row, .pick-grid"),
         r = card.getBoundingClientRect();
-      card.classList.toggle(
-        "flip",
-        !!row && r.right + r.width * 1.54 > row.getBoundingClientRect().right,
-      );
+      var qi = card.querySelector(".qi");
+      qi.style.left = "";
+      card.classList.remove("flip", "centered");
+      if (row) {
+        // Open on the right if the preview fits inside the row (rows and grids clip what spills
+        // past their edges), else on the left; if neither side has room (a card in the middle
+        // of a narrow row, e.g. beside the details panel), center it over the card instead,
+        // nudged to stay inside the row.
+        var g = row.getBoundingClientRect(),
+          w = qi.offsetWidth,
+          need = w + 16,
+          right = g.right - r.right >= need,
+          left = r.left - g.left >= need;
+        if (!right && left) card.classList.add("flip");
+        else if (!right) {
+          var x = r.left + r.width / 2 - w / 2;
+          x = Math.max(g.left + 8, Math.min(g.right - w - 8, x));
+          card.classList.add("centered");
+          qi.style.left = x - r.left + "px";
+        }
+      }
       card.classList.add("is-open");
       var m = card.querySelector("[data-more]");
       if (m) m.setAttribute("aria-expanded", "true");
@@ -877,8 +1149,16 @@
     var keep = host.querySelector(".pick-row");
     var scroll = keep ? keep.scrollLeft : 0,
       wasOpen = openKey;
+    // Previews with a "why we picked it" line or the full-size footer are taller, so give the row more room below the cards
+    var tall =
+      !!(opts && opts.wide) ||
+      items.some(function (a) {
+        return a.why;
+      });
     host.innerHTML =
-      '<div class="pick-wrap"><div class="pick-row" role="region" aria-label="' +
+      '<div class="pick-wrap"><div class="pick-row' +
+      (tall ? " pick-row-tall" : "") +
+      '" role="region" aria-label="' +
       esc(label) +
       '" tabindex="0">' +
       items
@@ -899,20 +1179,19 @@
       fr = host.querySelector(".fade-r"),
       prev = host.querySelector(".prev"),
       next = host.querySelector(".next");
-    var scrolled = !!scroll;
+    // Arrows show whenever there's more to see that way (a mouse wheel can't scroll the row sideways)
     function sync() {
       var left = row.scrollLeft > 8,
         end = row.scrollLeft + row.clientWidth >= row.scrollWidth - 8;
       fl.hidden = !left;
       fr.hidden = end;
-      prev.hidden = !(scrolled && left);
-      next.hidden = !(scrolled && !end);
+      prev.hidden = !left;
+      next.hidden = end;
     }
     row.scrollLeft = scroll;
     row.addEventListener(
       "scroll",
       function () {
-        scrolled = true;
         if (openKey) closePanel(true);
         sync();
       },
@@ -937,7 +1216,27 @@
     host._onResize = sync;
     window.addEventListener("resize", sync);
     sync();
+    bindPicks(row, wasOpen);
+  }
 
+  // Same cards as pickRow, laid out in a wrapping grid (no sideways scrolling); opts.preview === false skips the hover preview
+  function pickGrid(host, items, label, opts) {
+    var wasOpen = openKey;
+    host.innerHTML =
+      '<div class="pick-grid" role="region" aria-label="' +
+      esc(label) +
+      '">' +
+      items
+        .map(function (a) {
+          return pickCard(a, opts);
+        })
+        .join("") +
+      "</div>";
+    if (!opts || opts.preview !== false)
+      bindPicks(host.querySelector(".pick-grid"), wasOpen);
+  }
+
+  function bindPicks(row, wasOpen) {
     // Hover intent: a quick pass tilts/lifts (CSS); resting ~450ms opens the panel
     $$(".pick", row).forEach(function (card) {
       card.addEventListener("mouseenter", function () {
@@ -975,6 +1274,11 @@
       if (again) {
         openKey = null;
         openPanel(again, 0);
+      } else {
+        // The open card left the row (e.g. a pick added to the Library): keep keyboard focus in the row
+        openKey = null;
+        openCard = null;
+        if (document.activeElement === document.body) row.focus({ preventScroll: true });
       }
     }
   }
@@ -985,17 +1289,24 @@
     if (openKey && !e.target.closest(".pick")) closePanel(true);
   });
 
-  /* Picks = curated candidates the user hasn't hidden, sorted by live match % */
+  /* Picks = the AI's picks when there are some (see services/recommend.js), otherwise
+   * the curated candidates; minus hidden ones and anything already in the Library,
+   * sorted by live match %. A pick added from the row disappears (the toast has Undo). */
+  function aiPicks() {
+    var r = S.state.recs;
+    return !!(r && r.items && r.items.length);
+  }
   function picks() {
-    return D.picks
+    return (aiPicks() ? S.state.recs.items : D.picks)
       .filter(function (p) {
-        return !S.state.hidden[String(p.id)];
+        var id = String(p.id);
+        return !S.state.hidden[id] && !S.state.list[id] && S.anime(id);
       })
       .map(function (p) {
         var a = S.anime(p.id);
         a.why = p.why;
         a.synopsis = a.synopsis || p.synopsis;
-        a.match = S.match(a);
+        a.match = p.fit != null ? S.blendMatch(a, p.fit) : S.match(a);
         return a;
       })
       .sort(function (x, y) {
@@ -1005,6 +1316,7 @@
 
   NEKAI.ui = {
     esc: esc,
+    genreTone: genreTone,
     $: $,
     $$: $$,
     icon: icon,
@@ -1012,6 +1324,8 @@
     AVATAR: AVATAR,
     shell: shell,
     toast: toast,
+    confirm: confirmDialog,
+    logOut: logOut,
     confetti: confetti,
     sound: sound,
     reducedMotion: reducedMotion,
@@ -1019,13 +1333,25 @@
     applySettings: applySettings,
     art: art,
     stepper: stepper,
+    airingChip: airingChip,
+    seasonBadge: seasonBadge,
     stars: stars,
     statusSelect: statusSelect,
     scoreBadge: scoreBadge,
     emptyState: emptyState,
     detailsHref: detailsHref,
     pickRow: pickRow,
+    pickGrid: pickGrid,
     picks: picks,
+    aiPicks: aiPicks,
+    matchTier: matchTier,
     afterComplete: afterComplete,
+    streakReminder: streakReminder,
+    lolliSvg: lolliSvg,
   };
+
+  // Changes save to Supabase in the background; say so when one doesn't make it
+  NEKAI.db.onSaveError(function () {
+    toast("Couldn’t save your last change. Check your connection and reload the page.");
+  });
 })();
