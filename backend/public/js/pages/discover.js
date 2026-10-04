@@ -419,11 +419,11 @@
     if (ui.pick && !ui.finding) {
       var e = S.entry(ui.pick);
       U.render(out, '<div class="wheel-result"><span class="eyebrow">YOUR PICK</span>' +
-        '<h3 class="h2">' + esc(e.title) + "</h3>" +
+        '<h3 class="h2"><a class="title-link" href="' + U.detailsHref(e) + '">' + esc(e.title) + "</a></h3>" +
         '<div class="row gap-16" style="justify-content:center">' + U.scoreBadge(e) + '<span class="small muted semibold">' + esc([e.type, e.epsText, e.genres.join(" · ")].filter(Boolean).join(" · ")) + "</span></div>" +
         '<div class="row gap-16" style="justify-content:center;margin-top:8px">' +
           '<button type="button" class="btn ' + (e.inList ? "btn-accent" : "btn-primary btn-add") + '" data-act="toggle" data-id="' + e.id + '" aria-pressed="' + e.inList + '">' + (e.inList ? "✓ " + D.statuses[e.status].label : "Add to Library") + "</button>" +
-          '<a class="btn btn-secondary" href="' + U.detailsHref(e) + '">View details</a></div></div>');
+          '<button type="button" class="btn btn-secondary" data-pick-inline-again>' + icon("play", 16) + "Spin again</button></div></div>');
     } else if (ui.pickNone && !ui.finding) {
       U.render(out, '<div class="prompt" role="status" style="background:#FFE9D6;border-color:var(--ink);color:var(--ink)">' +
         (names.length ? "No anime you haven’t seen has all of these genres: " + esc(names.join(", ")) + ". Remove a genre to widen the pool." : "Couldn’t find an anime you haven’t seen. Spin again.") + "</div>");
@@ -533,6 +533,9 @@
     if (e.target.id === "clear" || e.target.id === "clear2") clearSearch();
   });
   U.$("#find").addEventListener("click", find);
+  U.$("#pick-out").addEventListener("click", function (e) {
+    if (e.target.closest("[data-pick-inline-again]")) find();
+  });
 
   S.subscribe(function () { renderResults(); renderPicker(); renderPicks(); renderPopular(); if (dlg.open) renderPickDialog(); });
   renderSearch(); loadGenres(); renderResults(); renderPicker(); renderPopular(); renderPicks(); layoutWheel(HOME, 0);
