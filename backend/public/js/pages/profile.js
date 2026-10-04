@@ -87,9 +87,12 @@
         '<p class="caption muted">Streak days earn ' + R.streakDay + " XP × the day of the streak, up to day " + R.streakCap + ". Each level costs 100 XP more than the last.</p>" +
       "</div>";
 
-    U.$("#mix").innerHTML = '<div class="genre-bar" role="img" aria-label="' + esc(mix.map(function (g) { return g.name + " " + g.pct + "%"; }).join(", ")) + '">' +
-      mix.map(function (g, i) { return '<span style="width:' + g.pct + "%;background:" + GCOL[i % GCOL.length] + '"></span>'; }).join("") + "</div>" +
-      '<ul class="legend">' + mix.map(function (g, i) { return '<li><i aria-hidden="true" style="background:' + GCOL[i % GCOL.length] + '"></i>' + esc(g.name) + " <strong>" + g.pct + "%</strong></li>"; }).join("") + "</ul>";
+    U.$("#mix").innerHTML = mix.length
+      ? '<div class="genre-bar" role="img" aria-label="' + esc(mix.map(function (g) { return g.name + " " + g.pct + "%"; }).join(", ")) + '">' +
+        mix.map(function (g, i) { return '<span style="width:' + g.pct + "%;background:" + GCOL[i % GCOL.length] + '"></span>'; }).join("") + "</div>" +
+        '<ul class="legend">' + mix.map(function (g, i) { return '<li><i aria-hidden="true" style="background:' + GCOL[i % GCOL.length] + '"></i>' + esc(g.name) + " <strong>" + g.pct + "%</strong></li>"; }).join("") + "</ul>"
+      : '<div class="genre-bar genre-bar-empty" role="img" aria-label="Favorite genres 0%"></div>' +
+        '<p class="genre-empty"><strong>0%</strong><span>No genre activity yet</span></p>';
 
     U.$("#lib").innerHTML = [["watching", "Watching", c.watching], ["plan", "Plan to Watch", c.plan], ["completed", "Completed", c.completed], ["dropped", "Dropped", c.dropped]]
       .map(function (r) { return '<li><a href="library.html?tab=' + r[0] + '"><span>' + r[1] + "</span><strong>" + r[2] + "</strong>" + icon("arrow", 14, 2.4) + "</a></li>"; }).join("");
