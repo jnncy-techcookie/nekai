@@ -44,7 +44,7 @@
         '<div class="pf-avatar">' + U.avatar(FACE) + '<span class="pf-lv">LV ' + lv.level + "</span></div>" +
         '<div class="pf-who">' +
           '<h2 id="me-h" class="pf-name">' + esc(p.name) + "</h2>" +
-          '<p class="pf-handle">@' + esc(p.handle) + " · Member since " + p.since + "</p>" +
+          '<p class="pf-meta">Member since ' + p.since + "</p>" +
           (p.bio ? '<p class="pf-bio">' + esc(p.bio) + "</p>" : "") +
         "</div>" +
         '<div class="pf-actions"><a class="btn btn-soft" href="settings.html">' + icon("edit", 18) + "Edit profile</a>" +
