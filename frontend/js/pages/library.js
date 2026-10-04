@@ -4,13 +4,13 @@
   var S = NEKAI.store, U = NEKAI.ui, D = NEKAI.data, esc = U.esc, icon = U.icon;
   if (!S.state.signedIn) { location.replace("signin.html"); return; }
 
-  // Lolli points at the show closest to its finale
+  // Neko points at the show closest to its finale
   var close = S.ids(function (e) { return e.status === "watching"; }).map(S.entry)
     .filter(function (e) { return e.known && e.episodes - e.watched >= 1; })
     .sort(function (a, b) { return (a.episodes - a.watched) - (b.episodes - b.watched); })[0];
   U.shell({
     page: "library.html",
-    lolli: close ? (close.episodes - close.watched === 1 ? close.title + " is one episode from the finale. Want to finish it tonight?"
+    neko: close ? (close.episodes - close.watched === 1 ? close.title + " is one episode from the finale. Want to finish it tonight?"
       : close.title + " has " + (close.episodes - close.watched) + " episodes left. You’re nearly there!") : "Your list is looking tidy. Find something new in Discover."
   });
 
@@ -44,9 +44,14 @@
   // Remove button (asks first, through data-act="remove")
   function del(e) { return '<button type="button" class="m-del" data-act="remove" data-id="' + e.id + '" aria-label="Remove ' + esc(e.title) + ' from your list" title="Remove from list">' + icon("trash", 18) + "</button>"; }
 
+  // Multi-select checkbox: shows on hover (desktop) and on every item while selecting
+  function check(e) {
+    return '<button type="button" class="sel-check" role="checkbox" aria-checked="false" data-sel="' + e.id + '" aria-label="Select ' + esc(e.title) + '">' + icon("check", 14, 3.2) + "</button>";
+  }
+
   // List: [poster] [title, year · genre] [stepper] [rating] [status] [delete]
   function row(e) {
-    return '<article class="card-sm list-row list-cols">' + U.art(e, { thumb: true }) +
+    return '<article class="card-sm list-row list-cols" data-item="' + e.id + '"><div class="l-art">' + U.art(e, { thumb: true }) + check(e) + "</div>" +
       '<div class="l-title">' + title(e) + sub(e, true) + "</div>" +
       '<div class="l-controls"><div class="l-eps">' + U.stepper(e) + "</div>" + rating(e) + status(e) + "</div>" +
       '<div class="l-actions">' + del(e) + "</div>" +
@@ -54,8 +59,8 @@
   }
   // Card: poster with the rating button on it and the title on its fade, then year · genres, stepper, status + delete
   function card(e) {
-    return '<article class="card-sm anime-card">' +
-      '<div class="ac-top has-cap"><a class="ac-media" href="' + U.detailsHref(e) + '" tabindex="-1" aria-hidden="true">' + U.art(e) + "</a>" + U.ratingBtn(e) +
+    return '<article class="card-sm anime-card" data-item="' + e.id + '">' +
+      '<div class="ac-top has-cap"><a class="ac-media" href="' + U.detailsHref(e) + '" tabindex="-1" aria-hidden="true">' + U.art(e) + "</a>" + check(e) + U.ratingBtn(e) +
         (e.airing ? '<div class="poster-chips">' + U.airingChip(e) + "</div>" : "") +
         '<div class="card-cap">' + title(e, "ac-title") + "</div></div>" +
       '<div class="ac-body">' +
@@ -101,12 +106,18 @@
       panel.classList.remove("tab-enter"); void panel.offsetWidth; // restart the animation on quick repeat clicks
       panel.classList.add("tab-enter");
     }
+    // Selection follows what's on screen: anime that left this view (moved, removed, filtered out) drop out of it
+    visible = rows.map(function (e) { return String(e.id); });
+    sel.ids.forEach(function (id) { if (visible.indexOf(id) === -1) sel.ids.delete(id); });
+    if (sel.on && !visible.length) sel.on = false;
+    paintSel();
   }
   // Set by a tab or view change so render() replays the panel's enter animation
   var switched = false;
   // Changes tab and keeps it in the URL (?tab=…), so reloads and links land on it
   function switchTab(tab) {
     if (tab === ui.tab) return;
+    clearSel(); // a selection belongs to one tab: don't carry hidden picks to the next
     ui.tab = tab; switched = true; history.replaceState(null, "", "?tab=" + ui.tab); render();
   }
 
@@ -135,6 +146,175 @@
     switchTab(TABS[i][0]); U.$("#tab-" + ui.tab).focus();
   });
   U.$("#panel").addEventListener("click", function (e) { if (e.target.id === "clear-q") { ui.q = ""; U.$("#q").value = ""; render(); U.$("#q").focus(); } });
+
+  /* ---------- multi-select ----------
+     Ways in: the checkbox that shows when you hover an item (and on every item once selecting),
+     the Select button, Ctrl/Cmd+click (add one), Shift+click (a range), Ctrl/Cmd+A (everything
+     in view) and, on touch screens, a long press. While selecting, clicking an item ticks it
+     instead of opening it; Esc, Cancel or the bar's ✕ stops. The bar at the bottom moves the
+     selected anime to another list or removes them, as one change with one Undo. */
+  var sel = { on: false, ids: new Set(), anchor: null };
+  var visible = []; // ids on screen, in order (set by render)
+  var menuOpen = false; // the bar's "Move to" menu
+  var panelEl = U.$("#panel"), bulk = U.$("#bulk-bar"), selBtn = U.$("#select-toggle");
+  var MOVE = ["watching", "plan", "completed", "dropped"];
+
+  function clearSel() { sel.on = false; sel.ids.clear(); sel.anchor = null; menuOpen = false; }
+  function endSel() { clearSel(); paintSel(); }
+  function toggleOne(id) {
+    sel.on = true;
+    if (sel.ids.has(id)) sel.ids.delete(id); else sel.ids.add(id);
+    sel.anchor = id;
+    paintSel();
+  }
+  // Shift+click: everything between the last clicked item and this one, in on-screen order
+  function selectRange(id) {
+    var a = visible.indexOf(sel.anchor), b = visible.indexOf(id);
+    if (a === -1 || b === -1) return toggleOne(id);
+    for (var i = Math.min(a, b); i <= Math.max(a, b); i++) sel.ids.add(visible[i]);
+    sel.on = true; sel.anchor = id;
+    paintSel();
+  }
+  function selectAll() { visible.forEach(function (id) { sel.ids.add(id); }); sel.on = true; paintSel(); }
+  function plural(n) { return n === 1 ? "1 anime" : n + " anime"; }
+
+  // Updates the checkboxes, the Select button and the bar in place (the list itself isn't rebuilt)
+  function paintSel() {
+    var n = sel.ids.size;
+    panelEl.classList.toggle("is-selecting", sel.on);
+    document.documentElement.classList.toggle("lib-selecting", sel.on); // Neko's button steps aside for the bar
+    U.$$("[data-item]", panelEl).forEach(function (el) {
+      var on = sel.ids.has(el.dataset.item);
+      el.classList.toggle("is-selected", on);
+      var c = el.querySelector(".sel-check");
+      if (c) c.setAttribute("aria-checked", on);
+    });
+    selBtn.hidden = !visible.length;
+    selBtn.setAttribute("aria-pressed", sel.on);
+    selBtn.innerHTML = sel.on ? icon("x", 15, 2.6) + "<span>Cancel</span>" : icon("check", 15, 2.8) + "<span>Select</span>";
+    if (!sel.on) { bulk.classList.remove("is-open"); bulk.hidden = true; bulk.innerHTML = ""; return; }
+    // keep keyboard focus on the same bar control across the rebuild
+    var focused = bulk.contains(document.activeElement) ? document.activeElement.dataset.bulk : null;
+    var here = ui.tab === "all" ? null : ui.tab; // no point moving to the list you're looking at
+    var off = n ? "" : " disabled";
+    bulk.innerHTML =
+      '<span class="bb-count" aria-live="polite">' + (n ? plural(n) + " selected" : "Select anime to move or remove") + "</span>" +
+      '<div class="bb-actions">' +
+        '<div class="bb-move">' +
+          '<button type="button" class="bb-btn bb-primary" data-bulk="menu" aria-haspopup="menu" aria-expanded="' + (menuOpen && !!n) + '"' + off + "><span>Move to</span>" + icon("chevD", 16, 2.6) + "</button>" +
+          (menuOpen && n ? '<div class="bb-menu" role="menu" aria-label="Move selected anime to">' + MOVE.filter(function (k) { return k !== here; }).map(function (k) {
+            return '<button type="button" role="menuitem" data-bulk="move" data-to="' + k + '"><i class="bb-dot st-' + k + '" aria-hidden="true"></i>' + esc(D.statuses[k].label) + "</button>";
+          }).join("") + "</div>" : "") +
+        "</div>" +
+        '<button type="button" class="bb-btn" data-bulk="remove"' + off + ">" + icon("trash", 16, 2.4) + "<span>Remove</span></button>" +
+        '<button type="button" class="bb-btn bb-ghost" data-bulk="all">' + (n && n === visible.length ? "Clear all" : "Select all") + "</button>" +
+        '<button type="button" class="bb-btn bb-ghost bb-x" data-bulk="close" aria-label="Stop selecting" title="Stop selecting (Esc)">' + icon("x", 18, 2.4) + "</button>" +
+      "</div>";
+    bulk.hidden = false;
+    requestAnimationFrame(function () { bulk.classList.add("is-open"); });
+    if (focused) { var f = bulk.querySelector('[data-bulk="' + focused + '"]:not(:disabled)'); if (f) f.focus(); }
+  }
+
+  // Item clicks: the checkbox, Ctrl/Cmd+click and Shift+click always select; while selecting,
+  // any click on an item ticks it. Runs before the links, steppers and menus inside the item.
+  // The item just long-pressed: the click that ends that press (if the phone sends one) is swallowed,
+  // so it doesn't untick the item straight away. Clicks on other items are never affected.
+  var longPressed = null; // { id, until }
+  panelEl.addEventListener("click", function (e) {
+    var item = e.target.closest("[data-item]");
+    if (!item) return;
+    if (longPressed && longPressed.id === item.dataset.item && Date.now() < longPressed.until) {
+      longPressed = null; e.preventDefault(); e.stopPropagation(); return;
+    }
+    var box = e.target.closest(".sel-check"), mod = e.ctrlKey || e.metaKey;
+    if (!box && !mod && !e.shiftKey && !sel.on) return; // a normal click: everything works as usual
+    e.preventDefault(); e.stopPropagation();
+    if (e.shiftKey && sel.anchor != null) selectRange(item.dataset.item);
+    else toggleOne(item.dataset.item);
+  }, true);
+  // Shift+click would also highlight text between the clicks
+  panelEl.addEventListener("mousedown", function (e) {
+    if (e.shiftKey && e.target.closest("[data-item]")) e.preventDefault();
+  });
+
+  // Touch: hold an item for half a second to start selecting (like the phone apps)
+  var press = null;
+  panelEl.addEventListener("pointerdown", function (e) {
+    if (e.pointerType === "mouse") return;
+    var item = e.target.closest("[data-item]");
+    if (!item || e.target.closest(".sel-check")) return;
+    press = { x: e.clientX, y: e.clientY, t: setTimeout(function () {
+      press = null;
+      longPressed = { id: item.dataset.item, until: Date.now() + 1500 };
+      if (!sel.ids.has(item.dataset.item)) toggleOne(item.dataset.item);
+      try { if (navigator.vibrate) navigator.vibrate(12); } catch (err) { /* not supported */ }
+    }, 500) };
+  });
+  function cancelPress(e) {
+    if (!press) return;
+    if (e.type === "pointermove" && Math.abs(e.clientX - press.x) < 10 && Math.abs(e.clientY - press.y) < 10) return;
+    clearTimeout(press.t); press = null;
+  }
+  ["pointermove", "pointerup", "pointercancel"].forEach(function (t) { panelEl.addEventListener(t, cancelPress); });
+  // no "open link / copy" menu on a long press
+  panelEl.addEventListener("contextmenu", function (e) {
+    if ((longPressed || sel.on) && e.target.closest("[data-item]")) e.preventDefault();
+  });
+
+  selBtn.addEventListener("click", function () {
+    if (sel.on) endSel();
+    else if (visible.length) { sel.on = true; paintSel(); }
+  });
+
+  // The bar's buttons
+  bulk.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-bulk]");
+    if (!b || b.disabled) return;
+    var act = b.dataset.bulk, ids = Array.from(sel.ids);
+    if (act === "menu") {
+      menuOpen = !menuOpen; paintSel();
+      if (menuOpen) { var first = bulk.querySelector('[role="menuitem"]'); if (first) first.focus(); }
+    } else if (act === "all") {
+      if (sel.ids.size === visible.length) sel.ids.clear(); else selectAll();
+      paintSel();
+    } else if (act === "close") {
+      endSel(); selBtn.focus();
+    } else if (act === "move") {
+      var to = b.dataset.to, label = D.statuses[to].label;
+      var r = S.setStatusMany(ids, to);
+      endSel();
+      if (r.firstCompletion) { U.confetti(); U.sound("done"); }
+      U.toast(r.moved ? "Moved " + plural(r.moved) + " to " + label : "Already in " + label, r.moved ? r.undo : null);
+    } else if (act === "remove") {
+      U.confirm({
+        title: "Remove " + plural(ids.length) + " from your Library?",
+        body: "Their progress, ratings and reviews will be removed too.",
+        confirm: "Remove", danger: true, icon: "trash"
+      }).then(function (ok) {
+        if (!ok) return;
+        var undo = S.removeMany(ids);
+        endSel();
+        U.toast(plural(ids.length) + " removed from your list", undo);
+      });
+    }
+  });
+  // The "Move to" menu closes on a click anywhere else
+  document.addEventListener("click", function (e) {
+    if (menuOpen && !e.target.closest(".bb-move")) { menuOpen = false; paintSel(); }
+  });
+  // Esc closes the menu, then stops selecting; Ctrl/Cmd+A selects everything in view
+  document.addEventListener("keydown", function (e) {
+    if (document.querySelector("dialog[open]")) return; // the confirm dialog handles its own keys
+    if (e.key === "Escape") {
+      if (menuOpen) { menuOpen = false; paintSel(); var m = bulk.querySelector('[data-bulk="menu"]'); if (m) m.focus(); e.preventDefault(); }
+      else if (sel.on) { endSel(); e.preventDefault(); }
+      return;
+    }
+    var typing = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable;
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.key === "a" || e.key === "A") && !typing && visible.length) {
+      e.preventDefault(); selectAll();
+    }
+  });
 
   S.subscribe(render);
   render();

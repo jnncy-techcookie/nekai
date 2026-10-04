@@ -92,7 +92,7 @@ html.theme-dark .dp-review-actions #dp-review-save:not(:disabled):hover {
 html.theme-dark .dp-play-btn {
   color: var(--navy);
 }
-html.theme-dark .lolli-fab {
+html.theme-dark .neko-fab {
   color: var(--navy);
 }
 html.theme-dark .lchat-face {
@@ -235,10 +235,10 @@ html.theme-dark .btn-primary,
 html.theme-dark .btn-primary:hover {
   border-color: transparent;
 }
-/* "Add" buttons keep their white text (the navy rule above is for other orange fills) */
+/* "Add" buttons: navy text too, like every orange button */
 html.theme-dark .btn-add,
 html.theme-dark .btn-add:hover {
-  color: #ffffff;
+  color: var(--navy);
 }
 
 /* disabled buttons: readable grey text on the grey fill (beats the navy-on-orange rule above) */

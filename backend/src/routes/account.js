@@ -16,6 +16,17 @@ router.delete("/", async (req, res) => {
     return res.status(401).json({ error: "Please sign in again, then retry." });
   }
 
+  // Profile pictures are files in storage, which the cascade doesn't reach: remove them first
+  // (best effort: a missing bucket or folder doesn't stop the account from being deleted)
+  try {
+    const { data: files } = await db.storage.from("avatars").list(user.id);
+    if (files && files.length) {
+      await db.storage.from("avatars").remove(files.map((f) => `${user.id}/${f.name}`));
+    }
+  } catch (err) {
+    console.error("Removing profile pictures failed:", err.message);
+  }
+
   const { error } = await db.auth.admin.deleteUser(user.id);
   if (error) {
     console.error("Deleting account failed:", error.message);

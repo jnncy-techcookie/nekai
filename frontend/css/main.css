@@ -6,7 +6,7 @@
 @import url("base/base.css");
 @import url("components/components.css");
 @import url("components/detail-panel.css");
-@import url("components/lolli-chat.css");
+@import url("components/neko-chat.css");
 @import url("layout/shell.css");
 @import url("layout/helpers.css");
 @import url("pages/home.css");
@@ -19,3 +19,4 @@
 @import url("utilities/preferences.css");
 @import url("utilities/theme-dark.css");
 @import url("layout/responsive.css");
+@import url("layout/mobile.css");

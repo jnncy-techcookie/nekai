@@ -6,7 +6,7 @@
   if (!S.state.signedIn) { location.replace("signin.html"); return; }
 
   var st = S.streak(), weekStreak = S.state.earned["Week Streak"] != null;
-  U.shell({ page: "profile.html", lolli: !S.state.settings.streak ? "Every episode, rating and finished show earns XP toward your next level."
+  U.shell({ page: "profile.html", neko: !S.state.settings.streak ? "Every episode, rating and finished show earns XP toward your next level."
     : weekStreak ? "Week Streak earned! Keep the run going." : "Only " + (7 - st.current) + " more day" + (7 - st.current === 1 ? "" : "s") + " of watching to earn your Week Streak sticker!" });
 
   var GCOL = ["#1F3FA6", "#F25C05", "#6F8FE8", "#FFA25C", "#FFD3B3", "#F7823A", "#B3B6C6"];
@@ -41,7 +41,7 @@
     U.$("#me").innerHTML =
       '<div class="pf-banner" aria-hidden="true"></div>' +
       '<div class="pf-id">' +
-        '<div class="pf-avatar">' + FACE + '<span class="pf-lv">LV ' + lv.level + "</span></div>" +
+        '<div class="pf-avatar">' + U.avatar(FACE) + '<span class="pf-lv">LV ' + lv.level + "</span></div>" +
         '<div class="pf-who">' +
           '<h2 id="me-h" class="pf-name">' + esc(p.name) + "</h2>" +
           '<p class="pf-handle">@' + esc(p.handle) + " · Member since " + p.since + "</p>" +
@@ -77,10 +77,15 @@
       '<div class="pf-xp" role="progressbar" aria-label="Level progress" aria-valuemin="0" aria-valuemax="' + lv.need + '" aria-valuenow="' + lv.into + '"><span style="width:' + Math.round(lv.into / lv.need * 100) + '%"></span></div>' +
       '<p class="pf-xp-cap"><strong>' + n(lv.into) + " / " + n(lv.need) + " XP</strong><span>" + n(lv.need - lv.into) + " to Level " + (lv.level + 1) + "</span></p>" +
       (lv.nextTitle ? '<p class="caption muted">Next title: <strong>' + esc(lv.nextTitle.title) + "</strong> at Level " + lv.nextTitle.level + "</p>" : "") +
-      '<ul class="pf-xp-from" aria-label="Where your ' + n(lv.xp) + ' XP came from">' + from.map(function (r) {
-        return "<li><span>" + r[0] + ' <span class="muted">· ' + r[2] + "</span></span><strong>" + n(r[1]) + "</strong></li>";
-      }).join("") + '<li class="pf-xp-total"><span>Total</span><strong>' + n(lv.xp) + " XP</strong></li></ul>" +
-      '<p class="caption muted">Streak days earn ' + R.streakDay + " XP × the day of the streak, up to day " + R.streakCap + ". Each level costs 100 XP more than the last.</p>";
+      // the breakdown sits behind a toggle (closed by default) so the card stays short
+      '<button type="button" class="pf-xp-toggle" data-xp-toggle aria-expanded="' + xpOpen + '" aria-controls="xp-more">' +
+        "<span>" + (xpOpen ? "Hide XP breakdown" : "See how your XP adds up") + "</span>" + icon("chevD", 16, 2.6) + "</button>" +
+      '<div id="xp-more" class="pf-xp-more"' + (xpOpen ? "" : " hidden") + ">" +
+        '<ul class="pf-xp-from" aria-label="Where your ' + n(lv.xp) + ' XP came from">' + from.map(function (r) {
+          return "<li><span>" + r[0] + ' <span class="muted">· ' + r[2] + "</span></span><strong>" + n(r[1]) + "</strong></li>";
+        }).join("") + '<li class="pf-xp-total"><span>Total</span><strong>' + n(lv.xp) + " XP</strong></li></ul>" +
+        '<p class="caption muted">Streak days earn ' + R.streakDay + " XP × the day of the streak, up to day " + R.streakCap + ". Each level costs 100 XP more than the last.</p>" +
+      "</div>";
 
     U.$("#mix").innerHTML = '<div class="genre-bar" role="img" aria-label="' + esc(mix.map(function (g) { return g.name + " " + g.pct + "%"; }).join(", ")) + '">' +
       mix.map(function (g, i) { return '<span style="width:' + g.pct + "%;background:" + GCOL[i % GCOL.length] + '"></span>'; }).join("") + "</div>" +
@@ -105,6 +110,16 @@
     var done = function () { U.toast("Link to your list copied"); };
     if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(url).then(done, function () { U.toast("Couldn’t copy. Your list link: " + url); });
     else U.toast("Your list link: " + url);
+  });
+
+  // The XP breakdown toggle. The card is rebuilt on every change, so the open state lives here
+  // and the click is handled on the card itself (focus is put back on the new button).
+  var xpOpen = false;
+  U.$("#level").addEventListener("click", function (e) {
+    if (!e.target.closest("[data-xp-toggle]")) return;
+    xpOpen = !xpOpen;
+    render();
+    U.$("#level [data-xp-toggle]").focus();
   });
 
   S.subscribe(render);

@@ -1,12 +1,12 @@
-/* Lolli chat: the floating Lolli button (and any other [data-lolli-chat] button) opens a chat box. Questions go to
- * the backend (/api/lolli/chat), which asks Gemini with a snapshot of the user's list.
- * The conversation is saved to Supabase (lolli_conversations / lolli_messages), so it follows the
+/* Neko chat: the floating Neko button (and any other [data-neko-chat] button) opens a chat box. Questions go to
+ * the backend (/api/neko/chat), which asks Gemini with a snapshot of the user's list.
+ * The conversation is saved to Supabase (the lolli_conversations / lolli_messages tables, named before Neko was renamed), so it follows the
  * user to other pages and devices. Clearing it starts a new conversation.
  */
 (function () {
   "use strict";
   var S = NEKAI.store, U = NEKAI.ui, esc = U.esc, icon = U.icon;
-  var DB = NEKAI.db.lolli;
+  var DB = NEKAI.db.neko;
   var MAX_KEEP = 30; // messages shown in the chat box (all of them stay saved)
   var MAX_SEND = 12; // messages sent with each question
   var SUGGESTIONS = [
@@ -16,7 +16,7 @@
     "How do I level up faster?",
   ];
 
-  var messages = []; // [{ id, role: "user" | "lolli", text }]
+  var messages = []; // [{ id, role: "user" | "neko", text }]
   var conversation = null; // id of the saved conversation, once there is one
   var loaded = null; // loads the latest conversation the first time the chat opens
   var saving = Promise.resolve(); // messages save one after another, in order
@@ -30,7 +30,7 @@
         conversation = c.id;
         messages = c.messages.concat(messages).slice(-MAX_KEEP);
       }).catch(function (err) {
-        console.error("Loading the Lolli chat failed:", err);
+        console.error("Loading the Neko chat failed:", err);
       }).then(function () {
         busy = false;
         if (panel) render();
@@ -48,13 +48,13 @@
     }).then(function (id) {
       return DB.add(id, msg);
     }).catch(function (err) {
-      console.error("Saving the Lolli chat failed:", err);
+      console.error("Saving the Neko chat failed:", err);
       U.toast("Couldn’t save this chat. It will be gone when you leave the page.");
     });
   }
 
-  /* ---------- what Lolli knows about the user ---------- */
-  // The snapshot sent with every question. Lolli only knows what's in here.
+  /* ---------- what Neko knows about the user ---------- */
+  // The snapshot sent with every question. Neko only knows what's in here.
   function context() {
     var st = S.streak(), t = S.totals(), lv = S.xp();
     var list = S.ids().map(S.entry).sort(function (a, b) { return b.updatedAt - a.updatedAt; }).slice(0, 40);
@@ -114,21 +114,21 @@
   // One chat message; screen readers hear who said it
   function bubble(role, html, extra) {
     return '<div class="lchat-msg lchat-' + role + (extra ? " " + extra : "") + '">' +
-      (role === "lolli" ? '<span class="lchat-avatar" aria-hidden="true">' + U.lolliSvg(28) + "</span>" : "") +
-      '<div class="lchat-bubble">' + (role === "user" ? '<span class="sr">You: </span>' : '<span class="sr">Lolli: </span>') + html + "</div></div>";
+      (role === "neko" ? '<span class="lchat-avatar" aria-hidden="true">' + U.nekoSvg(28) + "</span>" : "") +
+      '<div class="lchat-bubble">' + (role === "user" ? '<span class="sr">You: </span>' : '<span class="sr">Neko: </span>') + html + "</div></div>";
   }
   // Redraws the conversation: greeting and page tip, messages, typing dots, error, suggestions
   function render() {
-    // Lolli's greeting carries this page's tip (streak reminders and the like) and its link
-    var tip = U.lolliTip || {};
-    var html = bubble("lolli", "<p>Hi " + esc(S.state.profile.name) + "! I’m Lolli. Ask me for a recommendation, about your list and streak, or anything anime.</p>" +
+    // Neko's greeting carries this page's tip (streak reminders and the like) and its link
+    var tip = U.nekoTip || {};
+    var html = bubble("neko", "<p>Hi " + esc(S.state.profile.name) + "! I’m Neko. Ask me for a recommendation, about your list and streak, or anything anime.</p>" +
       (tip.text ? "<p>" + esc(tip.text) + "</p>" : "") +
       (tip.cta ? '<a class="btn btn-accent lchat-cta" href="' + esc(tip.cta[0]) + '">' + esc(tip.cta[1]) + "</a>" : ""));
     messages.forEach(function (m) {
       html += bubble(m.role, m.role === "user" ? "<p>" + esc(m.text).replace(/\n/g, "<br>") + "</p>" : format(m.text));
     });
-    if (busy) html += bubble("lolli", '<span class="lchat-typing" aria-label="Lolli is typing"><i></i><i></i><i></i></span>', "is-typing");
-    if (failed) html += bubble("lolli", "<p>" + esc(failed) + '</p><button type="button" class="btn btn-ghost lchat-retry" data-lchat="retry">Try again</button>', "is-error");
+    if (busy) html += bubble("neko", '<span class="lchat-typing" aria-label="Neko is typing"><i></i><i></i><i></i></span>', "is-typing");
+    if (failed) html += bubble("neko", "<p>" + esc(failed) + '</p><button type="button" class="btn btn-ghost lchat-retry" data-lchat="retry">Try again</button>', "is-error");
     if (!messages.length && !busy)
       html += '<div class="lchat-chips" aria-label="Suggested questions">' + SUGGESTIONS.map(function (s) {
         return '<button type="button" class="chip" data-lchat="ask">' + esc(s) + "</button>";
@@ -147,15 +147,15 @@
     panel.setAttribute("role", "dialog");
     panel.setAttribute("aria-labelledby", "lchat-h");
     panel.innerHTML =
-      '<header class="lchat-head"><span class="lchat-face" aria-hidden="true">' + U.lolliSvg(32) + "</span>" +
-        '<div class="grow"><h2 id="lchat-h" class="h3">Lolli</h2><p class="caption">Your watch buddy</p></div>' +
+      '<header class="lchat-head"><span class="lchat-face" aria-hidden="true">' + U.nekoSvg(32) + "</span>" +
+        '<div class="grow"><h2 id="lchat-h" class="h3">Neko</h2><p class="caption">Your watch buddy</p></div>' +
         '<button type="button" class="btn btn-ghost btn-icon" data-lchat="clear" aria-label="Start a new chat" title="New chat">' + icon("trash", 18) + "</button>" +
         '<button type="button" class="btn btn-ghost btn-icon" data-lchat="close" aria-label="Close chat">' + icon("x", 18) + "</button></header>" +
-      '<div class="lchat-log" role="log" aria-live="polite" aria-label="Conversation with Lolli" tabindex="0"></div>' +
-      '<form class="lchat-form"><label class="sr" for="lchat-in">Message Lolli</label>' +
-        '<textarea id="lchat-in" rows="1" maxlength="1000" placeholder="Ask Lolli anything about anime…" autocomplete="off"></textarea>' +
+      '<div class="lchat-log" role="log" aria-live="polite" aria-label="Conversation with Neko" tabindex="0"></div>' +
+      '<form class="lchat-form"><label class="sr" for="lchat-in">Message Neko</label>' +
+        '<textarea id="lchat-in" rows="1" maxlength="1000" placeholder="Ask Neko anything about anime…" autocomplete="off"></textarea>' +
         '<button type="submit" class="btn btn-accent btn-icon" aria-label="Send">' + icon("arrow", 20) + "</button></form>" +
-      '<p class="caption muted lchat-note">Lolli is an AI and can make mistakes.</p>';
+      '<p class="caption muted lchat-note">Neko is an AI and can make mistakes.</p>';
     document.body.appendChild(panel);
     logEl = panel.querySelector(".lchat-log");
     form = panel.querySelector("form");
@@ -188,7 +188,7 @@
         if (!messages.length && !failed) return; // nothing to clear
         U.confirm({
           title: "Start a new chat?",
-          body: "This clears your conversation with Lolli. It can’t be undone.",
+          body: "This clears your conversation with Neko. It can’t be undone.",
           confirm: "Clear chat",
           danger: true,
           icon: "trash",
@@ -199,7 +199,7 @@
           messages = [];
           failed = "";
           saving = saving.then(function () { return DB.clear(old); }).catch(function (err) {
-            console.error("Clearing the Lolli chat failed:", err);
+            console.error("Clearing the Neko chat failed:", err);
           });
           render();
           input.focus();
@@ -234,7 +234,7 @@
     busy = true;
     failed = "";
     render();
-    fetch("/api/lolli/chat", {
+    fetch("/api/neko/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -244,16 +244,16 @@
     })
       .then(function (res) {
         return res.json().catch(function () { return {}; }).then(function (body) {
-          if (!res.ok || !body.reply) throw new Error(body.error || "Lolli couldn’t answer just now. Please try again.");
+          if (!res.ok || !body.reply) throw new Error(body.error || "Neko couldn’t answer just now. Please try again.");
           return body.reply;
         });
       })
       .then(function (reply) {
-        save("lolli", reply);
+        save("neko", reply);
       })
       .catch(function (err) {
         failed = err && err.message && err.name !== "TypeError" ? err.message
-          : "Can’t reach Lolli. Check that the NEKAI server is running, then try again.";
+          : "Can’t reach Neko. Check that the NEKAI server is running, then try again.";
       })
       .then(function () {
         busy = false;
@@ -263,11 +263,11 @@
   }
 
   /* ---------- open / close ----------
-     The box stays in the page and animates with the .is-open class (see lolli-chat.css),
+     The box stays in the page and animates with the .is-open class (see neko-chat.css),
      so opening and closing are both smooth. */
-  // The floating Lolli button (added by ui.shell when Lolli is on)
+  // The floating Neko button (added by ui.shell when Neko is on)
   function fab() {
-    return document.querySelector(".lolli-fab");
+    return document.querySelector(".neko-fab");
   }
   function isOpen() {
     return !!panel && panel.classList.contains("is-open");
@@ -304,12 +304,12 @@
   }
 
   document.addEventListener("click", function (e) {
-    var b = e.target.closest("[data-lolli-chat]");
+    var b = e.target.closest("[data-neko-chat]");
     if (!b) return;
     e.preventDefault();
     if (isOpen()) close();
     else open(b);
   });
 
-  NEKAI.lolli = { open: open, close: close };
+  NEKAI.neko = { open: open, close: close };
 })();

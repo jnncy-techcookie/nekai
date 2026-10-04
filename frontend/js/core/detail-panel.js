@@ -449,7 +449,9 @@
           "Episodes" +
             (e.episodes
               ? ' <span class="muted">· ' + e.episodes + "</span>"
-              : ""),
+              : e.aired
+                ? ' <span class="muted">· ' + e.aired + " so far</span>"
+                : ""),
           episodes(e),
           episodePagination(e),
         ) +
@@ -474,6 +476,7 @@
           delete a.genres;
         } // keep curated names for sample titles
         S.cacheAnime(a);
+        loadAiredCount(id);
       })
       .catch(function () {
         if (st && st.id === id) st.failed = true;
@@ -491,6 +494,20 @@
     loadEpisodes(id, 1).then(function (ok) {
       if (ok && st === current && st.showAll && pagedEpisodes(S.entry(id))) changeEpisodePage(1);
     });
+  }
+  // Ongoing shows have no final count: fetch the latest aired episode number so the Episodes
+  // tile shows "12 so far" instead of "?". Refreshed every 6 hours (a new episode can drop any week),
+  // the same freshness Home uses; Home and the panel share the saved count.
+  var AIRED_TTL = 6 * 3600e3;
+  function loadAiredCount(id) {
+    var e = S.entry(id);
+    if (!e || !e.ongoing || (e.airedAt && Date.now() - e.airedAt < AIRED_TTL)) return;
+    J.airedCount(id)
+      .then(function (n) {
+        if (n) S.cacheAnime({ id: Number(id), airedEps: n, airedAt: Date.now() });
+        if (st && st.id === id) render();
+      })
+      .catch(function () { /* the tile keeps "?" */ });
   }
   // Appends one page of episodes from Tenrai and resolves true on success.
   // The answer is ignored if another anime was opened meanwhile (st !== current).

@@ -8,7 +8,7 @@
   U.shell({
     page: "index.html",
     // Streak nudges only when Settings → Streak reminders is on
-    lolli: !S.state.settings.streak ? "Welcome back! Pick up where you left off, or find something new in Discover."
+    neko: !S.state.settings.streak ? "Welcome back! Pick up where you left off, or find something new in Discover."
       : streak.loggedToday ? "Nice! Today counts toward your " + streak.current + "-day streak."
       : streak.current ? (streak.current === 1 ? "One day down!" : streak.current + " days in a row!") + " Log one episode today and your streak reaches " + (streak.current + 1) + "."
       : "Log an episode today to start a new streak."
@@ -22,15 +22,14 @@
       .sort(function (a, b) { return b.updatedAt - a.updatedAt; });
   }
 
-  // A brand-new account's first visit: "Welcome," instead of "Welcome back,"
+  // A brand-new account's first visit: "Welcome" instead of "Welcome back"
   var firstVisit = !!S.state.firstHome;
-  U.$(".greet-hello").textContent = firstVisit ? "Welcome," : "Welcome back,";
+  U.$(".greet-hello").textContent = firstVisit ? "Welcome" : "Welcome back";
   S.seenHome();
   // The first name, the line under the greeting, and the Status card
   function renderIntro() {
-    var c = S.counts(), st = S.streak();
+    var c = S.counts();
     U.$("#who").textContent = String(S.state.profile.name || "").trim().split(/\s+/)[0]; // first name only
-    U.$("#intro-sub").textContent = c.watching + " anime in progress" + (st.current ? " and a " + st.current + "-day watch streak. Keep it going!" : ". Log an episode to start a streak.");
     renderStatus(c);
   }
 

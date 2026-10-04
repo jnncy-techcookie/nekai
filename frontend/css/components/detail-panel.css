@@ -917,25 +917,35 @@
   .dp-open .list-head {
     display: none;
   }
-  /* two lines beside the poster:
-     [poster] title ............ [rating] [delete]
-     [poster] [episode counter ....] [status]      */
+  /* two lines beside the poster, as the Library does on narrower windows:
+     [poster] title .......................... [delete]
+     [poster] [episode counter ....] [rating] [status]
+     (on a row too narrow for that, the rating moves up beside delete: see below) */
   .dp-open .list-row {
     grid-template-columns: 72px minmax(0, 1fr) auto auto;
     grid-template-areas:
-      "art title rate actions"
-      "art eps status status";
+      "art title title actions"
+      "art eps rate status";
     column-gap: 12px;
     row-gap: 10px;
   }
-  /* the poster runs the full height of the row */
-  .dp-open .list-row > .art.thumb {
+  /* the poster fills its column, the full height of both rows
+     (.l-art wraps the thumbnail so the multi-select checkbox can sit on it) */
+  .dp-open .list-row > .l-art {
     grid-area: art;
     align-self: stretch;
     width: 72px;
-    height: 100%;
     min-height: 96px;
+  }
+  .dp-open .list-row > .l-art > .art.thumb {
+    width: 100%;
+    height: 100%;
     aspect-ratio: auto;
+  }
+  .dp-open .list-row > .l-art > .art.thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
   .dp-open .list-row > .l-title {
     grid-area: title;
@@ -960,7 +970,8 @@
   }
   .dp-open .list-row .m-rate {
     grid-area: rate;
-    align-self: start;
+    align-self: center;
+    justify-self: end;
   }
   .dp-open .list-row .m-rate-label {
     display: none;
@@ -975,6 +986,17 @@
     width: 100%;
     min-width: 150px;
     margin-left: 0;
+  }
+}
+/* a list under ~680px can't fit counter + rating + status on one line: the rating moves up beside delete */
+@container lib (max-width: 680px) {
+  .dp-open .list-row {
+    grid-template-areas:
+      "art title rate actions"
+      "art eps status status";
+  }
+  .dp-open .list-row .m-rate {
+    align-self: start;
   }
 }
 /* very narrow beside the panel: the counter and status each get a full line */

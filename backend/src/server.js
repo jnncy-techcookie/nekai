@@ -1,6 +1,6 @@
 /* NEKAI server: serves the frontend and the API routes it calls.
  *   /api/tenrai/*    anime data from Tenrai (MyAnimeList), see routes/anime.js
- *   /api/lolli/chat  the Lolli chatbot (Gemini), see routes/lolli.js
+ *   /api/neko/chat  the Neko chatbot (Gemini), see routes/neko.js
  *   /api/recommend   Nekai's Picks (Gemini + Tenrai), see routes/recommend.js
  *   /api/account     deleting the signed-in user's Supabase account, see routes/account.js
  * Sign-in and user data go straight from the browser to Supabase (frontend/js/core/supabase.js).
@@ -9,7 +9,7 @@
 const path = require("node:path");
 const express = require("express");
 const animeRoutes = require("./routes/anime");
-const lolliRoutes = require("./routes/lolli");
+const nekoRoutes = require("./routes/neko");
 const recommendRoutes = require("./routes/recommend");
 const accountRoutes = require("./routes/account");
 
@@ -41,7 +41,7 @@ app.get("/api/health", (req, res) => {
 // API routes come before the static files, so nothing in frontend/ can shadow them.
 // JSON bodies are parsed only for the routes that take one, each with a size cap.
 app.use("/api/tenrai", animeRoutes);
-app.use("/api/lolli", express.json({ limit: "32kb" }), lolliRoutes);
+app.use("/api/neko", express.json({ limit: "32kb" }), nekoRoutes);
 app.use("/api/recommend", express.json({ limit: "64kb" }), recommendRoutes);
 app.use("/api/account", accountRoutes);
 // Everything else is the static site: the HTML pages, css/, js/ and assets/

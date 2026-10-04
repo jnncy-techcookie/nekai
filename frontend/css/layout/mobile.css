@@ -1,0 +1,636 @@
+/* =========================================================
+   PHONES: one sizing layer for every page, loaded last (main.css).
+   Sized after mobile streaming apps (Crunchyroll, Netflix, Prime Video): 16px side
+   margins, a 56px top bar with a menu button (the sidebar becomes a drawer; no bottom tab
+   bar, which would clash with the browser's own buttons), 15px body text, 17px section titles,
+   posters in sideways rows a little under three to a screen, and compact 36-44px controls.
+   Only phones change (767px and narrower); tablet and desktop keep their sizes.
+   ========================================================= */
+/* the drawer's close button only exists on phones */
+.side-close {
+  display: none;
+}
+@media (max-width: 767px) {
+  /* ---------- shell: top bar, drawer, page rhythm, type ---------- */
+  body {
+    font-size: 15px;
+    line-height: 22px;
+  }
+  /* the top bar: no outline, a frosted bar the page scrolls under, with a soft shadow for its edge */
+  .mtop {
+    height: 56px;
+    gap: 6px;
+    padding: 0 12px;
+    border-bottom: 0;
+    background: rgb(var(--paper-rgb) / 0.82);
+    -webkit-backdrop-filter: saturate(1.4) blur(14px);
+    backdrop-filter: saturate(1.4) blur(14px);
+    box-shadow: 0 1px 0 rgb(var(--ink-rgb) / 0.06), 0 6px 18px rgb(var(--shadow-rgb) / 0.06);
+  }
+  html.theme-dark .mtop {
+    box-shadow: 0 1px 0 rgb(var(--ink-rgb) / 0.08), 0 6px 18px rgb(0 0 0 / 0.35);
+  }
+  .app:not(:has(> .mtop))::before {
+    border-bottom: 0;
+  }
+  /* profile: a small round avatar at the right, no outline */
+  .mtop .mtop-me {
+    width: 34px;
+    height: 34px;
+    margin-left: auto;
+    border: 0;
+    box-shadow: 0 0 0 2px rgb(var(--ink-rgb) / 0.08);
+  }
+  .mtop .mtop-me svg {
+    width: 26px;
+    height: 26px;
+  }
+  .mtop .mtop-me:focus-visible {
+    outline: 3px solid var(--blue);
+    outline-offset: 2px;
+  }
+  .app:not(:has(> .mtop))::before {
+    height: 56px;
+  }
+  .mtop .brand {
+    gap: 8px;
+  }
+  .mtop .brand-logo {
+    width: 34px;
+    height: 34px;
+  }
+  .mtop .brand-wordmark img {
+    height: 19px;
+  }
+  .mtop .btn-icon {
+    width: 40px;
+    height: 40px;
+  }
+  .mtop-menu {
+    margin-left: -6px; /* lines the icon itself up with the page's left edge */
+    color: var(--ink);
+  }
+  /* no bottom tab bar on phones (it would sit on the browser's own buttons): the menu button opens the sidebar */
+  .mtabs {
+    display: none;
+  }
+
+  /* ---------- the sidebar as a drawer ----------
+     The desktop sidebar, unchanged inside: it slides in from the left over a dimmed page. */
+  .side {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 70;
+    width: min(300px, 84vw);
+    height: 100%;
+    padding: calc(14px + env(safe-area-inset-top, 0px)) 14px calc(16px + env(safe-area-inset-bottom, 0px));
+    gap: 20px;
+    overflow-y: auto;
+    border-right: 0;
+    border-radius: 0 20px 20px 0;
+    box-shadow: 0 0 40px rgb(var(--shadow-rgb) / 0.3);
+    transform: translateX(-105%);
+    visibility: hidden;
+    transition:
+      transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
+      visibility 0s linear 0.28s;
+    view-transition-name: none;
+  }
+  .drawer-open .side {
+    transform: none;
+    visibility: visible;
+    transition:
+      transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+      visibility 0s;
+  }
+  html.theme-dark .side {
+    box-shadow: var(--dark-ring), 0 0 40px rgb(0 0 0 / 0.6);
+  }
+  /* the drawer always shows full labels, whatever the desktop collapse setting is */
+  .side.is-collapsed {
+    --side-w: auto;
+    gap: 20px;
+  }
+  .side.is-collapsed .side-head {
+    flex-direction: row;
+    gap: 16px;
+  }
+  .side.is-collapsed .side-label {
+    display: inline;
+  }
+  .side.is-collapsed .side-me .side-label {
+    display: flex; /* name above "Level 3" */
+  }
+  .side.is-collapsed .brand-word {
+    display: inline-flex;
+  }
+  .side.is-collapsed .side-link {
+    justify-content: flex-start;
+  }
+  .side.is-collapsed .side-switch {
+    display: revert;
+  }
+  .side.is-collapsed .side-me {
+    height: 52px;
+    padding: 0 8px;
+  }
+  .side.is-collapsed .avatar {
+    width: 40px;
+    height: 40px;
+  }
+  .side.is-collapsed .avatar svg {
+    width: auto;
+    height: auto;
+  }
+  .side-toggle {
+    display: none; /* collapsing is a desktop thing */
+  }
+  .side-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    margin-left: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .side-close:hover {
+    background: rgb(var(--ink-rgb) / 0.08);
+  }
+  .side-close:focus-visible {
+    outline: 3px solid var(--blue);
+    outline-offset: 2px;
+  }
+  .drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 69;
+    background: rgb(1 4 9 / 0.45);
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity 0.25s ease,
+      visibility 0s linear 0.25s;
+  }
+  .drawer-open .drawer-backdrop {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.25s ease, visibility 0s;
+  }
+  /* the page behind doesn't scroll while the drawer is open */
+  html.drawer-open,
+  html.drawer-open body {
+    overflow: hidden;
+  }
+  .opt-reduce-motion .side,
+  .opt-reduce-motion .drawer-backdrop {
+    transition: none;
+  }
+
+  .main {
+    gap: 28px;
+    padding: 16px var(--gutter) 32px;
+  }
+  .main.tight {
+    gap: 18px;
+  }
+  .h1 {
+    font-size: 26px;
+    line-height: 32px;
+  }
+  .title {
+    font-size: 20px;
+    line-height: 26px;
+  }
+  .h2 {
+    font-size: 18px;
+    line-height: 24px;
+  }
+  .sec-title {
+    font-size: 17px;
+    line-height: 22px;
+  }
+  .sec-title::before {
+    height: 17px;
+  }
+  .body {
+    font-size: 15px;
+    line-height: 22px;
+  }
+  .small {
+    font-size: 13px;
+    line-height: 18px;
+  }
+  .btn {
+    height: 44px;
+    padding: 0 18px;
+    font-size: 15px;
+  }
+  .btn-icon {
+    width: 44px;
+    padding: 0;
+  }
+  .pad-32 {
+    padding: 20px;
+  }
+  /* nothing to clear at the bottom any more: messages, Neko and the selection bar sit near the edge */
+  .toast-region {
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+  .neko-fab {
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    width: 52px;
+    height: 52px;
+  }
+  .neko-fab-face .neko-img {
+    width: 52px;
+    height: 52px;
+  }
+
+  /* ---------- Home: welcome banner ---------- */
+  .hello {
+    gap: 14px;
+    padding: 18px 16px 16px;
+    border-radius: 18px;
+  }
+  .hello-greet {
+    gap: 6px;
+  }
+  .hello .greet-hello {
+    font-size: 14px;
+    line-height: 18px;
+    letter-spacing: 2px;
+    margin-bottom: 2px;
+  }
+  .hello .name-pop.lg {
+    font-size: 52px;
+    line-height: 52px;
+  }
+  .hello-sub {
+    font-size: 14px;
+    line-height: 20px;
+  }
+  .hello-side {
+    gap: 10px;
+  }
+  .hello-panel {
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 14px;
+  }
+  .hp-head {
+    gap: 10px;
+  }
+  .hp-flame {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+  }
+  .hp-badge {
+    width: 36px;
+    height: 36px;
+    font-size: 15px;
+  }
+  .hp-title {
+    font-size: 15px;
+    line-height: 20px;
+  }
+  .week li {
+    gap: 4px;
+  }
+  .day {
+    width: 24px;
+    height: 24px;
+  }
+  .day svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  /* ---------- Home: "Pick up where you left off" card ---------- */
+  .cw-media {
+    aspect-ratio: 16 / 9;
+  }
+  .cw-cap {
+    padding: 36px 14px 10px;
+  }
+  .cw-title {
+    font-size: 18px;
+    line-height: 22px;
+  }
+  .cw-jp {
+    font-size: 12px;
+    line-height: 16px;
+  }
+  .cw-body {
+    gap: 14px;
+    padding: 14px 16px 12px;
+  }
+  .cw-eyebrow {
+    font-size: 11px;
+  }
+  .cw-ep-big {
+    font-size: 26px;
+    line-height: 30px;
+  }
+  .cw-meta {
+    gap: 6px 10px;
+    font-size: 13px;
+    line-height: 18px;
+  }
+  .cw-open {
+    font-size: 14px;
+  }
+
+  /* ---------- poster rows: Currently watching, Nekai's Picks ----------
+     sideways rows of portrait cards, a little under three to a screen, like streaming apps */
+  .cw-grid {
+    display: flex;
+    gap: 12px;
+    margin-inline: calc(var(--gutter) * -1);
+    padding: 4px var(--gutter) 8px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--gutter);
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+  .cw-grid::-webkit-scrollbar {
+    display: none;
+  }
+  .sec-head + #continue {
+    margin-top: -14px;
+  }
+  .cw-grid > .cw-card {
+    flex: 0 0 152px;
+    scroll-snap-align: start;
+  }
+  .cw-card,
+  .pick-card {
+    gap: 8px;
+    padding: 8px;
+    border-radius: 16px;
+  }
+  .cw-card-media,
+  .pick-media {
+    border-radius: 10px;
+  }
+  .cw-card-media .art,
+  .pick-media .art {
+    aspect-ratio: 3 / 4;
+    border-radius: 10px;
+  }
+  /* no hover lift on phone-sized screens: phones have no mouse, and on touch it only sticks after a tap */
+  .cw-card:hover,
+  .cw-card:focus-within,
+  .pick:hover .pick-card,
+  .pick:focus-within .pick-card,
+  .anime-card:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: var(--line);
+  }
+  .cw-ep {
+    height: 22px;
+    padding: 0 8px;
+    font-size: 11px;
+  }
+  .card-cap .m-title,
+  .card-cap h3 {
+    font-size: 14px;
+    line-height: 18px;
+  }
+  .card-sub,
+  .card-sub .m-sub {
+    font-size: 12px;
+    line-height: 16px;
+  }
+  .cw-card .stepper {
+    height: 36px;
+    gap: 4px;
+    padding: 3px;
+  }
+  .cw-card .step {
+    width: 30px;
+    height: 30px;
+  }
+  .cw-card .step-val {
+    font-size: 13px;
+  }
+
+  .pick-row {
+    gap: 12px;
+  }
+  .pick {
+    flex-basis: 156px;
+    min-width: 0; /* the stats line mustn't stretch the card past its width */
+  }
+  .pick-card {
+    min-width: 0;
+  }
+  .pick-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .pick-media .match-pill {
+    left: 6px;
+    top: 6px;
+    height: 24px;
+    padding: 0 8px;
+    font-size: 12px;
+  }
+  .pick-media .match-tier {
+    display: none;
+  }
+  .pick-title {
+    min-height: 36px;
+    font-size: 14px;
+    line-height: 18px;
+  }
+  .pick-stats {
+    flex-wrap: wrap;
+    gap: 4px 6px;
+    font-size: 12px;
+    line-height: 16px;
+  }
+  .pick-stats .pick-sep {
+    display: none;
+  }
+  .pick-tags {
+    height: 20px;
+    gap: 4px;
+  }
+  .gtag {
+    height: 20px;
+    padding: 0 8px;
+    font-size: 11px;
+  }
+  .pick-foot {
+    gap: 6px;
+  }
+  .pick-foot .btn {
+    height: 36px;
+    padding: 0 10px;
+    font-size: 13px;
+  }
+  .pick-foot .pick-more {
+    flex-basis: 36px;
+    width: 36px;
+    height: 36px;
+  }
+
+  /* ---------- Library ---------- */
+  .lib-meta {
+    margin-top: 0;
+  }
+  .card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .anime-card .ac-body {
+    gap: 8px;
+    padding: 10px;
+  }
+  .anime-card .ac-title {
+    font-size: 14px;
+    line-height: 18px;
+  }
+  .anime-card .stepper {
+    height: 36px;
+    gap: 4px;
+    padding: 3px;
+  }
+  .anime-card .step {
+    width: 30px;
+    height: 30px;
+  }
+  .anime-card .status-select {
+    height: 36px;
+    padding: 0 26px 0 10px;
+    font-size: 13px;
+    background-position: right 8px center;
+    background-size: 14px;
+  }
+  .anime-card .m-del {
+    width: 36px;
+    height: 36px;
+  }
+  .bulk-bar {
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* ---------- Profile ---------- */
+  .pf-banner {
+    height: 96px;
+  }
+  .pf-id {
+    gap: 12px;
+    margin-top: -30px;
+    padding: 0 16px;
+  }
+  .pf-avatar {
+    width: 84px;
+    height: 84px;
+  }
+  .pf-name {
+    font-size: 20px;
+    line-height: 24px;
+  }
+  .pf-handle {
+    font-size: 13px;
+  }
+  .pf-bio {
+    font-size: 14px;
+    line-height: 20px;
+  }
+  .pf-actions .btn {
+    height: 36px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+  .pf-nums {
+    padding: 12px 16px 16px;
+  }
+  .pf-nums dd {
+    font-size: 18px;
+    line-height: 24px;
+  }
+}
+
+/* ---------- Library list rows on phones ----------
+   [poster] Title · year · genres          [🗑]
+   [poster] [− 5 / 26 +]          [★ 6.0 ⌄]
+   [poster] [Watching                     ⌄]
+   about five rows to a screen instead of three */
+@media (max-width: 520px) {
+  .list-row {
+    grid-template-columns: 64px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "art title actions"
+      "art eps rate"
+      "art status status";
+    column-gap: 10px;
+    row-gap: 8px;
+    padding: 10px;
+    border-radius: 14px;
+  }
+  .list-row > .l-art {
+    width: 64px;
+    min-height: 0;
+  }
+  .list-row .m-title {
+    font-size: 15px;
+    line-height: 20px;
+  }
+  .list-row .m-sub {
+    font-size: 12px;
+    line-height: 16px;
+  }
+  .list-row .m-rate {
+    align-self: center;
+  }
+  .list-row .l-eps {
+    width: auto;
+    min-width: 0;
+  }
+  .list-row .l-status {
+    width: 100%;
+  }
+  .list-row .stepper,
+  .library-list .list-row .stepper {
+    height: 36px;
+    gap: 4px;
+    padding: 3px;
+  }
+  .list-row .step,
+  .library-list .list-row .step {
+    width: 30px;
+    height: 30px;
+  }
+  .list-row .step-val {
+    font-size: 14px;
+  }
+  .library-list .list-row .status-select {
+    height: 36px;
+    padding: 0 30px 0 12px;
+    font-size: 14px;
+    background-position: right 10px center;
+    background-size: 14px;
+  }
+  .list-row .rp-btn {
+    height: 36px;
+  }
+  .list-row .m-del {
+    width: 36px;
+    height: 36px;
+  }
+}

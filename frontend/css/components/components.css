@@ -32,11 +32,11 @@
   transform: translateY(1px);
 }
 .btn-primary {
-  background: var(--red);
+  background: var(--btn-orange);
   color: var(--ink);
 }
 .btn-primary:hover {
-  background: var(--orange);
+  background: var(--btn-orange-hover);
   color: var(--ink);
 }
 .btn-secondary {
@@ -1371,14 +1371,11 @@ textarea {
 .step-val.two{flex-direction:column;line-height:16px}
 .step-val.two small{font-size:10px;line-height:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
 
-/* Orange "Add" buttons use white text (the Added / accent state keeps navy).
-   Hover darkens instead of lightening, so the white text stays readable. */
+/* Orange "Add" buttons: navy text on the lighter button orange, like every orange button
+   (white text on orange read poorly) */
 .btn-primary.btn-add,
 .btn-primary.btn-add:hover {
-  color: #ffffff;
-}
-.btn-primary.btn-add:hover {
-  background: var(--red-dark);
+  color: var(--navy);
 }
 
 /* Notice banner (offline, no-JS and API messages) */
@@ -1428,8 +1425,8 @@ textarea {
   height: 64px;
   padding: 0 24px 0 16px;
   border-radius: 999px;
-  background: var(--red);
-  color: var(--ink);
+  background: var(--btn-orange);
+  color: var(--navy);
   font-weight: 800;
 }
 .trailer-thumb {
@@ -1483,7 +1480,7 @@ textarea {
 }
 
 /* ---------- confirmation pop-up (NEKAI.ui.confirm) ----------
-   For critical actions: log out, remove from list, clear Lolli's chat, delete account.
+   For critical actions: log out, remove from list, clear Neko's chat, delete account.
    A native modal <dialog>, centered over a dimmed backdrop; fades and scales in and out. */
 .cdlg {
   width: min(400px, calc(100vw - 32px));

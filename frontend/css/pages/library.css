@@ -36,13 +36,14 @@
 .list-bar.is-cards {
   display: none;
 }
+/* no outline: a soft filled pill, the selected layout highlighted inside it */
 .view-toggle {
   display: inline-flex;
   flex-shrink: 0;
-  border: 1.5px solid var(--ink);
-  border-radius: 8px;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 10px;
   background: var(--white);
-  overflow: hidden;
 }
 .view-btn {
   display: flex;
@@ -52,15 +53,13 @@
   height: 30px;
   padding: 0;
   border: 0;
+  border-radius: 7px;
   background: transparent;
   color: var(--muted);
   cursor: pointer;
   transition:
     background-color 0.2s ease,
     color 0.2s ease;
-}
-.view-btn + .view-btn {
-  border-left: 1.5px solid var(--ink);
 }
 .view-btn:hover {
   background: var(--cream);
@@ -383,56 +382,109 @@
   .list-head {
     display: none;
   }
+  /* two rows beside a full-height poster:
+       [poster] title · year · genres                 [delete]
+       [poster] [− 3 / 26 +]          [★ Rate] [Status ⌄]
+     when a row is too narrow for that second line, the rating moves up beside delete (below) */
   .list-row {
-    grid-template-columns: 72px minmax(0, 1fr) auto;
-    grid-template-areas: "art title actions" "art controls controls";
-    row-gap: 10px;
+    grid-template-columns: 72px minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "art title title actions"
+      "art eps rate status";
+    column-gap: 12px;
+    row-gap: 12px;
   }
-  /* the poster runs the full height of the row (title + controls) */
-  .list-row > .art.thumb {
+  /* the poster fills its column, the full height of both rows */
+  .list-row > .l-art {
     grid-area: art;
     align-self: stretch;
     width: 72px;
-    height: 100%;
     min-height: 96px;
+  }
+  .list-row > .l-art > .art.thumb {
+    width: 100%;
+    height: 100%;
     aspect-ratio: auto;
+  }
+  .list-row > .l-art > .art.thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
   .list-row > .l-title {
     grid-area: title;
+    align-self: start;
   }
   .list-row > .l-actions {
     grid-area: actions;
     align-self: start;
   }
-  /* counter, rating and status on one line (they wrap only if the row is truly too narrow) */
+  /* the controls are placed on the row's own grid (see the areas above) */
   .list-row .l-controls {
-    grid-area: controls;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px 16px;
+    display: contents;
   }
-  .list-row .l-eps {
-    width: 200px;
-    flex: 0 0 auto;
+  .list-row .m-rate {
+    grid-area: rate;
+    align-self: center;
+    justify-self: end;
   }
   .list-row .m-rate-label {
     display: none; /* the Rate button says what it is; the label only crowds the row */
   }
-  .list-row .l-status {
-    width: 170px;
-    margin-left: auto;
+  .list-row .l-eps {
+    grid-area: eps;
+    width: min(220px, 100%);
+    align-self: center;
   }
+  .list-row .l-status {
+    grid-area: status;
+    width: 170px;
+    justify-self: end;
+    align-self: center;
+  }
+  /* a row under ~680px can't fit counter + rating + status on one line:
+     the rating moves up to the title line, beside delete */
+  @container lib (max-width: 680px) {
+    .list-row {
+      grid-template-areas:
+        "art title rate actions"
+        "art eps status status";
+    }
+    .list-row .m-rate {
+      align-self: start;
+    }
+  }
+}
+/* the list measures its own width for the rule above (it narrows with the sidebar and details panel too) */
+.library-list {
+  container: lib / inline-size;
 }
 @media (max-width: 767px) {
   .list-row {
-    grid-template-areas: "art title actions" "controls controls controls";
     padding: 12px;
+  }
+}
+/* narrow phones: the counter and status can't share a line beside the poster, so they get
+   full-width rows below; the poster still spans the title and rating rows */
+@media (max-width: 520px) {
+  .list-row {
+    grid-template-columns: 64px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "art title actions"
+      "art rate rate"
+      "eps eps eps"
+      "status status status";
+  }
+  .list-row > .l-art {
+    width: 64px;
+    min-height: 88px;
+  }
+  .list-row .m-rate {
+    align-self: end;
   }
   .list-row .l-eps,
   .list-row .l-status {
     width: 100%;
-    margin-left: 0;
   }
 }
 
@@ -779,3 +831,386 @@
 }
 
 
+
+/* =========================================================
+   MULTI-SELECT
+   A round checkbox on each item (shown on hover, and on every item while selecting),
+   a Select / Cancel button beside the layout toggle, and a bar that slides up from the
+   bottom with Move to, Remove, Select all and ✕. The bar is sticky inside the page, so it
+   stays clear of the sidebar and, on phones, sits above the bottom tabs.
+   ========================================================= */
+.lib-meta-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.select-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px; /* matches the layout switch beside it */
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--white);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.select-toggle[hidden] {
+  display: none;
+}
+.select-toggle:hover {
+  background: var(--tint);
+}
+.select-toggle:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+.select-toggle[aria-pressed="true"] {
+  background: var(--yellow);
+  color: var(--navy);
+}
+@media (hover: hover) and (pointer: fine) {
+  .select-toggle {
+    height: 34px;
+  }
+}
+
+/* the list thumbnail gets a wrapper so its checkbox can sit on it */
+.l-art {
+  position: relative;
+  width: 48px;
+}
+
+/* the checkbox */
+.sel-check {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 2px solid var(--navy);
+  border-radius: 50%;
+  background: rgb(255 251 242 / 0.92);
+  color: transparent;
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.8);
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s cubic-bezier(0.2, 0.9, 0.3, 1.3),
+    background-color 0.15s ease;
+}
+.list-row .sel-check {
+  top: -6px;
+  left: -6px;
+  width: 24px;
+  height: 24px;
+}
+.sel-check:hover {
+  background: #fffbf2;
+  transform: scale(1.06);
+}
+.sel-check:focus-visible {
+  opacity: 1;
+  transform: none;
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+/* shown on hover (mouse) and on every item while selecting (mouse and touch) */
+@media (hover: hover) {
+  .library-list [data-item]:hover .sel-check {
+    opacity: 1;
+    transform: none;
+  }
+}
+.library-list.is-selecting .sel-check {
+  opacity: 1;
+  transform: none;
+}
+.sel-check[aria-checked="true"] {
+  background: var(--red);
+  border-color: var(--navy);
+  color: var(--navy);
+}
+
+/* while selecting, a click anywhere on an item ticks it: its own controls rest */
+.library-list.is-selecting [data-item] {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.library-list.is-selecting [data-item] * {
+  pointer-events: none;
+}
+.library-list.is-selecting [data-item] .sel-check {
+  pointer-events: auto;
+}
+.library-list.is-selecting .anime-card:hover {
+  transform: none;
+}
+.library-list [data-item] {
+  -webkit-touch-callout: none; /* no link menu on a long press */
+}
+.library-list [data-item].is-selected {
+  border-color: var(--red);
+  background: var(--peach-tint);
+  box-shadow: 0 0 0 1.5px var(--red);
+}
+/* on the peach tint, the beige counter and the tinted status pill would blend in:
+   they switch to the card color with a clear outline, like the rating button */
+.library-list [data-item].is-selected .stepper {
+  background: var(--white);
+  box-shadow: inset 0 0 0 1.5px var(--peach-line);
+}
+.library-list [data-item].is-selected .step:not(:disabled) {
+  background: var(--tint);
+}
+.library-list [data-item].is-selected .status-select {
+  background-color: var(--white);
+  border-color: currentColor;
+}
+.library-list [data-item].is-selected .m-del {
+  background: var(--white);
+}
+
+/* ---------- the bar ---------- */
+.bulk-bar {
+  position: sticky;
+  bottom: 20px;
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 8px auto 0;
+  padding: 8px 8px 8px 20px;
+  border-radius: 16px;
+  background: var(--ink);
+  color: var(--cream);
+  box-shadow:
+    0 16px 40px rgb(var(--shadow-rgb) / 0.28),
+    0 2px 8px rgb(var(--shadow-rgb) / 0.14);
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 0.2s ease,
+    transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.bulk-bar[hidden] {
+  display: none;
+}
+.bulk-bar.is-open {
+  opacity: 1;
+  transform: none;
+}
+/* dark theme: a light slate grey, clearly lighter than the cards so it stands apart (not the light
+   toast color), off-white text, a thin border so it lifts off the list, orange Move to as the accent */
+html.theme-dark .bulk-bar {
+  background: #3a424e;
+  color: #f3eee4;
+  box-shadow:
+    0 0 0 1px #525b68,
+    0 16px 40px rgb(0 0 0 / 0.55);
+}
+html.theme-dark .bb-btn {
+  background: rgb(243 238 228 / 0.1);
+}
+html.theme-dark .bb-btn:hover:not(:disabled) {
+  background: rgb(243 238 228 / 0.18);
+}
+html.theme-dark .bb-ghost {
+  background: transparent;
+}
+html.theme-dark .bb-primary {
+  background: var(--btn-orange);
+  color: #0f1f5c;
+}
+html.theme-dark .bb-primary:hover:not(:disabled) {
+  background: var(--btn-orange-hover);
+}
+html.theme-dark .bb-btn:focus-visible {
+  outline-color: var(--yellow);
+}
+.bb-count {
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.bb-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.bb-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--cream) 14%, transparent);
+  color: inherit;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.bb-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--cream) 24%, transparent);
+}
+.bb-btn:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+}
+.bb-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.bb-primary {
+  background: var(--btn-orange);
+  color: var(--navy);
+}
+.bb-primary:hover:not(:disabled) {
+  background: var(--btn-orange-hover);
+}
+.bb-ghost {
+  background: transparent;
+}
+.bb-x {
+  width: 40px;
+  padding: 0;
+  justify-content: center;
+}
+
+/* "Move to" menu: opens upward from its button */
+.bb-move {
+  position: relative;
+}
+.bb-menu {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+  padding: 6px;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
+  color: var(--ink);
+  box-shadow: 0 12px 32px rgb(var(--shadow-rgb) / 0.2);
+  animation: bbMenu 0.16s ease;
+}
+html.theme-dark .bb-menu {
+  box-shadow: var(--dark-ring), 0 12px 32px rgb(0 0 0 / 0.45);
+}
+@keyframes bbMenu {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.bb-menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+.bb-menu button:hover,
+.bb-menu button:focus-visible {
+  background: var(--tint);
+  outline: none;
+}
+.bb-dot {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+.bb-dot.st-watching {
+  background: var(--status-watching);
+}
+.bb-dot.st-plan {
+  background: var(--status-plan);
+}
+.bb-dot.st-completed {
+  background: var(--status-completed);
+}
+.bb-dot.st-dropped {
+  background: var(--status-dropped);
+}
+
+/* phones: full width, above the bottom tabs; the count gets its own line */
+@media (max-width: 767px) {
+  .bulk-bar {
+    bottom: 92px;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+    padding: 12px;
+  }
+  .bb-count {
+    flex: 1 1 100%;
+    padding-left: 4px;
+  }
+  .bb-actions {
+    flex: 1;
+  }
+  .bb-actions [data-bulk="all"] {
+    margin-left: auto;
+  }
+  .bb-btn {
+    padding: 0 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sel-check,
+  .bulk-bar {
+    transition: none;
+  }
+  .bb-menu {
+    animation: none;
+  }
+}
+.opt-reduce-motion .sel-check,
+.opt-reduce-motion .bulk-bar {
+  transition: none;
+}
+.opt-reduce-motion .bb-menu {
+  animation: none;
+}
+
+/* while selecting, Neko's floating button steps aside so it can't cover the bar's buttons */
+.lib-selecting .neko-fab {
+  opacity: 0;
+  transform: scale(0.8);
+  pointer-events: none;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}

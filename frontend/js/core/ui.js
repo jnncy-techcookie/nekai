@@ -69,6 +69,7 @@
     eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle>',
     info: '<circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8v.5"></path>',
     x: '<path d="M6 6l12 12M18 6L6 18"></path>',
+    menu: '<path d="M4 7h16M4 12h16M4 17h16"></path>',
     panel:
       '<rect x="3.5" y="4.5" width="17" height="15" rx="2"></rect><path d="M9.5 4.5v15"></path>',
     heart:
@@ -139,9 +140,14 @@
   }
   var AVATAR =
     '<svg width="32" height="32" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="16" r="11" fill="#FAF3E6" stroke="#0F1F5C" stroke-width="2.2"></circle><path d="M5 13c2-7 16-9 20-1c-5-1-8-4-9-5c-2 3-6 5-11 6z" fill="#0F1F5C"></path><circle cx="11.5" cy="17" r="1.4" fill="#0F1F5C"></circle><circle cx="18.5" cy="17" r="1.4" fill="#0F1F5C"></circle><path d="M12.5 21.5q2.5 2 5 0" stroke="#0F1F5C" stroke-width="1.8" fill="none" stroke-linecap="round"></path></svg>';
-  // Lolli's face: the robot image (assets/images/lolli.png), at n px
-  function lolliSvg(n) {
-    return '<img class="lolli-img" src="assets/images/lolli.png" alt="" width="' + n + '" height="' + n + '">';
+  // The signed-in user's picture: their uploaded photo, or the drawn face (fallback) when they have none
+  function avatar(fallback) {
+    var src = S.state.profile && S.state.profile.avatar;
+    return src ? '<img class="avatar-img" src="' + esc(src) + '" alt="" decoding="async">' : fallback || AVATAR;
+  }
+  // Neko's face: the robot image (assets/images/neko.png), at n px
+  function nekoSvg(n) {
+    return '<img class="neko-img" src="assets/images/neko.png" alt="" width="' + n + '" height="' + n + '">';
   }
 
 
@@ -235,19 +241,19 @@
     }, 0);
   });
 
-  // Builds the app frame around a page: sidebar, phone top bar and tabs, the Lolli button,
+  // Builds the app frame around a page: sidebar (a drawer on phones), phone top bar, the Neko button,
   // the toast region and the skip link. Every signed-in page calls it once, before rendering.
   function shell(opts) {
     // A new account picks its 3 genres before anything else
     if (S.state.onboarding) { location.replace("welcome.html"); return; }
-    // opts: { page: "index.html", lolli: "message", lolliCta: [href, label] }
+    // opts: { page: "index.html", neko: "message", nekoCta: [href, label] }
     applySettings();
     var reminder =
       new Date().getHours() >= REMIND_FROM_HOUR ? streakReminder() : "";
     if (reminder) {
       opts = Object.assign({}, opts, {
-        lolli: reminder,
-        lolliCta: ["library.html", "Log an episode"],
+        neko: reminder,
+        nekoCta: ["library.html", "Log an episode"],
       });
     }
     var app = $(".app");
@@ -271,15 +277,18 @@
         "</span></a>"
       );
     }).join("");
-    var lolliOn = st.lolli !== false;
-    // Lolli is a floating chat button now (js/core/lolli.js); the page's tip opens its chat
-    NEKAI.ui.lolliTip = { text: opts.lolli || "", cta: opts.lolliCta || null };
+    var nekoOn = st.neko !== false;
+    // Neko is a floating chat button now (js/core/neko.js); the page's tip opens its chat
+    NEKAI.ui.nekoTip = { text: opts.neko || "", cta: opts.nekoCta || null };
     var side = document.createElement("aside");
     side.className = "side" + (ui.navOpen === false ? " is-collapsed" : "");
+    side.id = "side-drawer";
     side.setAttribute("aria-label", "Sidebar");
     side.innerHTML =
       '<div class="side-head">' +
       '<a class="brand" href="index.html" aria-label="NEKAI home">' + LOGO + "</a>" +
+      // phones only: closes the drawer (the collapse toggle below is desktop only)
+      '<button type="button" class="side-close" aria-label="Close menu">' + icon("x") + "</button>" +
       '<button type="button" class="side-toggle" data-act="nav" aria-expanded="' +
       (ui.navOpen !== false) +
       '" aria-label="' +
@@ -302,7 +311,7 @@
       '<span class="side-label">Settings</span></a>' +
       '<hr class="side-sep">' +
       '<a class="side-link side-me" href="profile.html" title="Your profile"><span class="avatar">' +
-      AVATAR +
+      avatar() +
       '</span><span class="side-label"><span>' +
       esc(pr.name) +
       '</span><span class="small muted">Level ' +
@@ -319,47 +328,67 @@
       try { sessionStorage.setItem("nekai:settingsFromNav", "1"); } catch (err) { /* storage unavailable */ }
     });
 
+    // Phones: a top bar with the menu button (opens the sidebar as a drawer), the logo and profile.
+    // There's no bottom tab bar: on phone browsers it would sit on top of the browser's own buttons.
     var top = document.createElement("header");
     top.className = "mtop";
     top.innerHTML =
+      '<button type="button" class="btn btn-ghost btn-icon mtop-menu" aria-label="Open menu" aria-expanded="false" aria-controls="side-drawer">' +
+      icon("menu") +
+      "</button>" +
       '<a class="brand" href="index.html" aria-label="NEKAI home">' + LOGO + "</a>" +
-      '<button type="button" class="btn btn-secondary btn-icon ml-auto" data-act="theme" aria-pressed="' + !!S.state.settings.dark + '" aria-label="Dark mode"><span class="theme-ico">' + icon(S.state.settings.dark ? "sun" : "moon") + "</span></button>" +
-      '<a class="btn btn-secondary btn-icon" href="discover.html#q" aria-label="Search">' +
-      icon("search") +
-      "</a>" +
-      '<a class="avatar" href="profile.html" aria-label="Your profile">' +
-      AVATAR +
+      '<a class="avatar mtop-me" href="profile.html" aria-label="Your profile">' +
+      avatar() +
       "</a>";
-    var tabs = document.createElement("nav");
-    tabs.className = "mtabs";
-    tabs.setAttribute("aria-label", "Main");
-    tabs.innerHTML = NAV.map(function (n) {
-      return (
-        '<a class="mtab" href="' +
-        n[0] +
-        '"' +
-        (n[0] === here ? ' aria-current="page"' : "") +
-        '><span class="mtab-icon">' +
-        icon(n[2]) +
-        "</span>" +
-        n[1] +
-        "</a>"
-      );
-    }).join("");
     var main = $(".main");
     app.insertBefore(top, main);
-    document.body.appendChild(tabs);
-    // Lolli: a floating chat button, bottom right (the chat itself is js/core/lolli.js)
-    if (lolliOn) {
+    // the profile picture updates in the sidebar and top bar as soon as it changes (e.g. saved in Settings)
+    var shownAvatar = S.state.profile.avatar || "";
+    S.subscribe(function () {
+      var now = S.state.profile.avatar || "";
+      if (now === shownAvatar) return;
+      shownAvatar = now;
+      $$(".side-me .avatar, .mtop-me").forEach(function (el) { el.innerHTML = avatar(); });
+    });
+
+    // The drawer: the same sidebar, sliding in from the left over a dimmed page.
+    // Closes on the ✕, the dimmed page, Esc, or when the window grows back to the desktop layout.
+    var backdrop = document.createElement("div");
+    backdrop.className = "drawer-backdrop";
+    backdrop.setAttribute("aria-hidden", "true");
+    document.body.appendChild(backdrop);
+    var menuBtn = top.querySelector(".mtop-menu");
+    function setDrawer(open) {
+      var h = document.documentElement;
+      if (open === h.classList.contains("drawer-open")) return;
+      h.classList.toggle("drawer-open", open);
+      menuBtn.setAttribute("aria-expanded", open);
+      // while it's open, the page behind can't be tabbed into
+      if (main) main.inert = open;
+      top.inert = open;
+      if (open) side.querySelector(".side-close").focus();
+      else if (menuBtn.offsetParent) menuBtn.focus({ preventScroll: true });
+    }
+    menuBtn.addEventListener("click", function () { setDrawer(true); });
+    backdrop.addEventListener("click", function () { setDrawer(false); });
+    side.querySelector(".side-close").addEventListener("click", function () { setDrawer(false); });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && document.documentElement.classList.contains("drawer-open")) setDrawer(false);
+    });
+    var wide = matchMedia("(min-width: 768px)");
+    var onWide = function (e) { if (e.matches) setDrawer(false); };
+    if (wide.addEventListener) wide.addEventListener("change", onWide);
+    // Neko: a floating chat button, bottom right (the chat itself is js/core/neko.js)
+    if (nekoOn) {
       var fab = document.createElement("button");
       fab.type = "button";
-      fab.className = "lolli-fab";
-      fab.setAttribute("data-lolli-chat", "");
-      fab.setAttribute("aria-label", "Chat with Lolli");
+      fab.className = "neko-fab";
+      fab.setAttribute("data-neko-chat", "");
+      fab.setAttribute("aria-label", "Chat with Neko");
       fab.setAttribute("aria-expanded", "false");
       fab.setAttribute("aria-controls", "lchat");
-      fab.title = "Chat with Lolli";
-      fab.innerHTML = '<span class="lolli-fab-face" aria-hidden="true">' + lolliSvg(44) + "</span>";
+      fab.title = "Chat with Neko";
+      fab.innerHTML = '<span class="neko-fab-face" aria-hidden="true">' + nekoSvg(44) + "</span>";
       document.body.appendChild(fab);
     }
     // On desktop the content panel scrolls by itself; focus it so arrow keys, Page Down and Space scroll it right away
@@ -370,7 +399,7 @@
     toasts.setAttribute("role", "status");
     toasts.setAttribute("aria-live", "polite");
     document.body.appendChild(toasts);
-    // Also nudge once a day with a toast, in case Lolli is hidden or turned off
+    // Also nudge once a day with a toast, in case Neko is hidden or turned off
     if (reminder && ui.streakNudged !== S.dayKey()) {
       S.setUi({ streakNudged: S.dayKey() });
       setTimeout(function () {
@@ -1165,7 +1194,8 @@
       var qi = card.querySelector(".qi");
       qi.style.left = "";
       card.classList.remove("flip", "centered");
-      if (row) {
+      // phones show it as a bottom sheet (responsive.css): no side placement
+      if (row && !matchMedia("(max-width: 767px)").matches) {
         // Open on the right if the preview fits inside the row (rows and grids clip what spills
         // past their edges), else on the left; if neither side has room (a card in the middle
         // of a narrow row, e.g. beside the details panel), center it over the card instead,
@@ -1288,13 +1318,15 @@
 
   // Hover, focus, Esc and the ⋯ button for every card in a row or grid
   function bindPicks(row, wasOpen) {
-    // Hover intent: a quick pass tilts/lifts (CSS); resting ~450ms opens the panel
+    // Hover intent: a quick pass tilts/lifts (CSS); resting ~450ms opens the panel.
+    // Mouse and wider screens only: on phone-sized screens the ⋯ button opens it as a bottom sheet.
+    var HOVER_OPENS = "(hover: hover) and (min-width: 768px)";
     $$(".pick", row).forEach(function (card) {
       card.addEventListener("mouseenter", function () {
-        if (matchMedia("(hover: hover)").matches) openPanel(card, 450);
+        if (matchMedia(HOVER_OPENS).matches) openPanel(card, 450);
       });
       card.addEventListener("mouseleave", function () {
-        if (matchMedia("(hover: hover)").matches) closePanel(false);
+        if (matchMedia(HOVER_OPENS).matches) closePanel(false);
       });
       card.addEventListener("focusin", function (e) {
         if (e.target.matches(":focus-visible") && !e.target.closest(".qi"))
@@ -1401,6 +1433,7 @@
     icon: icon,
     star: star,
     AVATAR: AVATAR,
+    avatar: avatar,
     shell: shell,
     toast: toast,
     confirm: confirmDialog,
@@ -1426,7 +1459,7 @@
     matchTier: matchTier,
     afterComplete: afterComplete,
     streakReminder: streakReminder,
-    lolliSvg: lolliSvg,
+    nekoSvg: nekoSvg,
   };
 
   // Changes save to Supabase in the background; say so when one doesn't make it

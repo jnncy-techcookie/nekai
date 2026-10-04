@@ -4,7 +4,7 @@
   var S = NEKAI.store, U = NEKAI.ui, D = NEKAI.data, J = NEKAI.tenrai, esc = U.esc, icon = U.icon;
   if (!S.state.signedIn) { location.replace("signin.html"); return; }
 
-  U.shell({ page: "discover.html", lolli: "Not sure what to watch? Pick a genre or two below and I’ll find something you haven’t seen.", lolliCta: ["#picker", "Try it"] });
+  U.shell({ page: "discover.html", neko: "Not sure what to watch? Pick a genre or two below and I’ll find something you haven’t seen.", nekoCta: ["#picker", "Try it"] });
 
   var ui = { types: {}, genreList: null, genreFailed: false, results: [], submitted: "", searching: false, offline: false, error: "", finding: false, pick: null, pickNone: false, pickOffline: false, poolSize: {} };
 

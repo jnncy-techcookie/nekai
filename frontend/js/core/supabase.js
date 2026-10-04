@@ -9,6 +9,16 @@
   "use strict";
   window.NEKAI = window.NEKAI || {};
 
+  // Database names from when the chat buddy was called Lolli. The app calls it Neko now, but these
+  // tables and columns keep their names in Supabase (renaming them needs a migration), so every
+  // read and write goes through this map.
+  var DB = {
+    chats: "lolli_conversations",
+    messages: "lolli_messages",
+    nekoOn: "lolli", // user_settings: the Neko on/off switch
+    nekoHidden: "lolli_hidden", // user_settings: Neko's button tucked away
+  };
+
   var SUPABASE_URL = "https://vhusawbkfjwowxjsyfud.supabase.co";
   var SUPABASE_KEY = "sb_publishable_bTgixw_0O4hCQm0T0XE8XA_VIP5IE_n";
 
@@ -78,18 +88,19 @@
           handle: p.handle || "",
           email: user.email || "",
           bio: p.bio || "",
+          avatar: p.avatar_url || "", // the profile picture's public URL (avatars bucket), or none
           since: new Date(p.created_at || user.created_at || Date.now()).getFullYear(),
         },
         favGenres: p.favorite_genres || [],
         onboarding: !p.onboarding_completed,
         firstHome: !p.first_home_seen,
         settings: {
-          sound: !!s.sound, confetti: s.confetti !== false, lolli: s.lolli !== false, streak: s.streak !== false,
+          sound: !!s.sound, confetti: s.confetti !== false, neko: s[DB.nekoOn] !== false, streak: s.streak !== false,
           motion: !!s.motion, text: !!s.text, contrast: !!s.contrast, dark: !!s.dark,
         },
         ui: {
           navOpen: s.nav_open !== false,
-          lolliHidden: !!s.lolli_hidden,
+          nekoHidden: !!s[DB.nekoHidden],
           libraryView: s.library_view || "list",
           streakNudged: s.streak_nudged_on || undefined,
         },
@@ -225,12 +236,12 @@
 
     // Settings and layout
     var set = {};
-    ["sound", "confetti", "lolli", "streak", "motion", "text", "contrast", "dark"].forEach(function (k) {
-      if (!!prev.settings[k] !== !!next.settings[k]) set[k] = !!next.settings[k];
+    ["sound", "confetti", "neko", "streak", "motion", "text", "contrast", "dark"].forEach(function (k) {
+      if (!!prev.settings[k] !== !!next.settings[k]) set[k === "neko" ? DB.nekoOn : k] = !!next.settings[k];
     });
     var pu = prev.ui || {}, nu = next.ui || {};
     if (pu.navOpen !== nu.navOpen) set.nav_open = nu.navOpen !== false;
-    if (pu.lolliHidden !== nu.lolliHidden) set.lolli_hidden = !!nu.lolliHidden;
+    if (pu.nekoHidden !== nu.nekoHidden) set[DB.nekoHidden] = !!nu.nekoHidden;
     if (pu.libraryView !== nu.libraryView) set.library_view = nu.libraryView === "cards" ? "cards" : "list";
     if (pu.streakNudged !== nu.streakNudged) set.streak_nudged_on = nu.streakNudged || null;
     if (Object.keys(set).length) ops.push(function () { return sb.from("user_settings").update(set).eq("user_id", uid); });
@@ -243,6 +254,10 @@
     if (prev.onboarding !== next.onboarding) prof.onboarding_completed = !next.onboarding;
     if (prev.firstHome !== next.firstHome) prof.first_home_seen = !next.firstHome;
     if (Object.keys(prof).length) ops.push(function () { return sb.from("profiles").update(prof).eq("user_id", uid); });
+    // The picture is its own write, so a project that hasn't added the avatar_url column yet
+    // (backend/supabase/profile-pictures.sql) still saves the name, bio and the rest
+    if ((prev.profile.avatar || "") !== (next.profile.avatar || ""))
+      ops.push(function () { return sb.from("profiles").update({ avatar_url: next.profile.avatar || null }).eq("user_id", uid); });
 
     return ops;
   }
@@ -289,22 +304,51 @@
     return attempt(0);
   }
 
+  /* ---------- profile picture ----------
+     Files live in the public "avatars" bucket, one folder per user (avatars/<user id>/...).
+     Each upload gets a new file name, so browsers never show a cached old picture;
+     the older files in the folder are removed once the new one is up. */
+  var AVATARS = "avatars";
+  function avatarFiles() {
+    return sb.storage.from(AVATARS).list(user.id).then(function (r) {
+      return r.error || !r.data ? [] : r.data.map(function (f) { return user.id + "/" + f.name; });
+    });
+  }
+  // Uploads a picture (a Blob) and resolves with its public URL
+  function uploadAvatar(blob) {
+    var ext = blob.type === "image/webp" ? "webp" : blob.type === "image/png" ? "png" : "jpg";
+    var path = user.id + "/avatar-" + Date.now() + "." + ext;
+    return avatarFiles().then(function (old) {
+      return sb.storage.from(AVATARS).upload(path, blob, { contentType: blob.type, cacheControl: "31536000", upsert: false }).then(function (r) {
+        if (r.error) throw r.error;
+        if (old.length) sb.storage.from(AVATARS).remove(old); // best effort: a leftover file is harmless
+        return sb.storage.from(AVATARS).getPublicUrl(path).data.publicUrl;
+      });
+    });
+  }
+  // Deletes the user's picture files (the profile's avatar_url is cleared by sync)
+  function removeAvatar() {
+    return avatarFiles().then(function (old) {
+      return old.length ? sb.storage.from(AVATARS).remove(old) : null;
+    });
+  }
+
   // The access token the backend checks before account actions
   function token() {
     return sb.auth.getSession().then(function (r) { return r.data.session ? r.data.session.access_token : ""; });
   }
 
-  /* ---------- Lolli chats ---------- */
-  var lolli = {
+  /* ---------- Neko chats ---------- */
+  var neko = {
     // The latest open conversation and its messages: { id, messages: [{ id, role, text }] }
     latest: function () {
       if (!user) return Promise.resolve({ id: null, messages: [] });
-      return sb.from("lolli_conversations").select("conversation_id").eq("user_id", user.id).is("deleted_at", null)
+      return sb.from(DB.chats).select("conversation_id").eq("user_id", user.id).is("deleted_at", null)
         .order("updated_at", { ascending: false }).limit(1).then(must).then(function (rows) {
           if (!rows.length) return { id: null, messages: [] };
           var id = rows[0].conversation_id;
           return readAll(function () {
-            return sb.from("lolli_messages").select("message_id, role, content, created_at")
+            return sb.from(DB.messages).select("message_id, role, content, created_at")
               .eq("user_id", user.id).eq("conversation_id", id).is("deleted_at", null)
               .order("created_at", { ascending: true }).order("message_id", { ascending: true });
           }).then(function (msgs) {
@@ -314,12 +358,12 @@
     },
     start: function (title) {
       var id = crypto.randomUUID();
-      return sb.from("lolli_conversations").insert({
-        user_id: user.id, conversation_id: id, title: String(title || "Lolli chat").trim().slice(0, 120) || "Lolli chat",
+      return sb.from(DB.chats).insert({
+        user_id: user.id, conversation_id: id, title: String(title || "Neko chat").trim().slice(0, 120) || "Neko chat",
       }).then(must).then(function () { return id; });
     },
     add: function (conversationId, msg) {
-      return sb.from("lolli_messages").upsert({
+      return sb.from(DB.messages).upsert({
         user_id: user.id, conversation_id: conversationId, message_id: msg.id,
         role: msg.role, content: msg.text, sent_at: iso(),
       }, { onConflict: "user_id,message_id", ignoreDuplicates: true }).then(must);
@@ -327,7 +371,7 @@
     // Clearing a chat keeps it in history, marked deleted
     clear: function (conversationId) {
       if (!conversationId) return Promise.resolve();
-      return sb.from("lolli_conversations").update({ deleted_at: iso() })
+      return sb.from(DB.chats).update({ deleted_at: iso() })
         .eq("user_id", user.id).eq("conversation_id", conversationId).then(must);
     },
   };
@@ -348,8 +392,10 @@
     onSaveError: function (fn) { failListeners.push(fn); },
     flush: function () { return writes; },
     claimHandle: claimHandle,
+    uploadAvatar: uploadAvatar,
+    removeAvatar: removeAvatar,
     token: token,
-    lolli: lolli,
+    neko: neko,
     signOut: function () {
       return writes.then(function () { return sb.auth.signOut(); });
     },

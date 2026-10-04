@@ -488,7 +488,7 @@ fieldset {
   margin-left: -4px;
 }
 .btn-spin:disabled {
-  background: var(--red);
+  background: var(--btn-orange);
   border-color: var(--navy);
   color: var(--navy);
   opacity: 0.7;

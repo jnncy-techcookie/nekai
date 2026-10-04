@@ -17,7 +17,7 @@
   <script src="js/data/sample-data.js" defer></script>
   <script src="js/core/supabase.js" defer></script>
   <!-- start.js checks the session, loads the user's data, then runs these in order -->
-  <script src="js/core/start.js" defer data-app="js/core/store.js js/services/tenrai.js js/core/ui.js js/core/lolli.js js/pages/settings.js"></script>
+  <script src="js/core/start.js" defer data-app="js/core/store.js js/services/tenrai.js js/core/ui.js js/core/neko.js js/pages/settings.js"></script>
 </head>
 <body class="paper">
   <div class="app">
@@ -33,6 +33,22 @@
         <section aria-labelledby="acc-h" class="card pad-24">
           <form id="profile-form" class="stack gap-16" novalidate>
             <h2 id="acc-h" class="h2 sec-title">Profile details</h2>
+            <!-- profile picture: chosen here, applied with Save changes (settings.js) -->
+            <div class="pp-field" role="group" aria-labelledby="pp-label">
+              <span id="pp-label" class="label">Profile picture</span>
+              <div class="pp-row">
+                <div id="pp-preview" class="pp-preview" aria-hidden="true"></div>
+                <div class="pp-side">
+                  <div class="pp-actions">
+                    <button id="pp-pick" type="button" class="btn btn-soft">Upload photo</button>
+                    <button id="pp-remove" type="button" class="btn btn-ghost" hidden>Remove</button>
+                  </div>
+                  <input id="pp-file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" class="sr" tabindex="-1" aria-hidden="true">
+                  <p id="pp-help" class="help" aria-live="polite">JPG, PNG, WebP or GIF, up to 5 MB. It’s cropped to a square.</p>
+                  <p id="pp-err" class="error" role="alert" hidden></p>
+                </div>
+              </div>
+            </div>
             <div>
               <label class="label" for="dn">Display name <span class="muted" style="font-weight:500">(required)</span></label>
               <input id="dn" name="display-name" class="input" type="text" autocomplete="nickname" required aria-describedby="dn-help dn-err">

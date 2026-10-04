@@ -32,7 +32,7 @@
     <script
       src="js/core/start.js"
       defer
-      data-app="js/core/store.js js/services/tenrai.js js/core/ui.js js/core/lolli.js js/core/panes.js js/core/detail-panel.js js/pages/library.js"
+      data-app="js/core/store.js js/services/tenrai.js js/core/ui.js js/core/neko.js js/core/panes.js js/core/detail-panel.js js/pages/library.js"
     ></script>
   </head>
   <body class="paper">
@@ -125,12 +125,22 @@
           </div>
           <div class="lib-meta">
             <p id="q-count" class="lib-count" role="status"></p>
-            <div
-              id="view-toggle"
-              class="view-toggle"
-              role="group"
-              aria-label="Layout"
-            ></div>
+            <div class="lib-meta-tools">
+              <!-- turns selection mode on and off (filled by library.js) -->
+              <button
+                id="select-toggle"
+                type="button"
+                class="select-toggle"
+                aria-pressed="false"
+                title="Select several anime (Ctrl+click or Shift+click also work)"
+              ></button>
+              <div
+                id="view-toggle"
+                class="view-toggle"
+                role="group"
+                aria-label="Layout"
+              ></div>
+            </div>
           </div>
         </div>
 
@@ -147,6 +157,15 @@
             class="stack gap-16 library-list"
           ></div>
         </div>
+
+        <!-- bulk actions for the selected anime: slides up while selecting (library.js fills it) -->
+        <div
+          id="bulk-bar"
+          class="bulk-bar"
+          role="region"
+          aria-label="Actions for selected anime"
+          hidden
+        ></div>
       </main>
     </div>
   </body>

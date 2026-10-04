@@ -4,12 +4,12 @@
   var S = NEKAI.store, U = NEKAI.ui, D = NEKAI.data, icon = U.icon;
   if (!S.state.signedIn) { location.replace("signin.html"); return; }
 
-  U.shell({ page: "settings.html", lolli: "Turn me off here any time. I won’t take it personally… much." });
+  U.shell({ page: "settings.html", neko: "Turn me off here any time. I won’t take it personally… much." });
 
   // [setting key, label, description] for each switch, by section
   var SWITCHES = {
     experience: [["sound", "Sound effects", "Subtle sounds when you log an episode or finish a show."], ["confetti", "Completion confetti", "Celebrate the first time you mark an anime completed."],
-      ["lolli", "Lolli supporter", "A floating chat button in the corner, with reminders, recommendations and encouragement."], ["streak", "Streak reminders", "A nudge from Lolli when your watch streak is about to end."]],
+      ["neko", "Neko supporter", "A floating chat button in the corner, with reminders, recommendations and encouragement."], ["streak", "Streak reminders", "A nudge from Neko when your watch streak is about to end."]],
     access: [["dark", "Dark mode", "Deep navy background with light text. Also in the sidebar."], ["motion", "Reduce motion", "Turns off confetti, tilts, fades and other animation."]]
   };
   var EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -25,12 +25,12 @@
     U.render(U.$("#sw-exp"), SWITCHES.experience.map(switchRow).join(""));
     U.render(U.$("#sw-acc"), SWITCHES.access.map(switchRow).join(""));
   }
-  // A switch flips its setting. Turning Lolli on or off needs a reload, since the button is built with the page.
+  // A switch flips its setting. Turning Neko on or off needs a reload, since the button is built with the page.
   document.addEventListener("click", function (e) {
     var b = e.target.closest("[data-sw]"); if (!b) return;
     var k = b.dataset.sw, patch = {}; patch[k] = !S.state.settings[k];
     S.setSettings(patch); U.applySettings(); renderSwitches();
-    if (k === "lolli") U.toast(patch[k] ? "Lolli is back. Reload any page to see the chat button." : "Lolli is off. Reload any page to hide the chat button.");
+    if (k === "neko") U.toast(patch[k] ? "Neko is back. Reload any page to see the chat button." : "Neko is off. Reload any page to hide the chat button.");
   });
 
   /* ---------- back: to wherever Settings was opened from (not shown when opened from the sidebar) ---------- */
@@ -66,8 +66,71 @@
   var saveBtn = U.$("#save"), saving = false;
   function dirty() {
     var cur = S.state.profile;
-    return nm.value.trim() !== cur.name || em.value.trim() !== cur.email || bio.value.slice(0, 160) !== (cur.bio || "");
+    return nm.value.trim() !== cur.name || em.value.trim() !== cur.email || bio.value.slice(0, 160) !== (cur.bio || "") ||
+      pendingPic !== undefined;
   }
+
+  /* ---------- profile picture ----------
+     Choosing a photo previews it here; Save changes uploads it (or removes the saved one).
+     Photos are center-cropped to a square and shrunk to 256px first, so uploads stay small. */
+  var MAX_BYTES = 5 * 1024 * 1024, PIC_SIZE = 256;
+  var PIC_HELP = "JPG, PNG, WebP or GIF, up to 5 MB. It’s cropped to a square.";
+  var ppPreview = U.$("#pp-preview"), ppPick = U.$("#pp-pick"), ppRemove = U.$("#pp-remove"),
+    ppFile = U.$("#pp-file"), ppErr = U.$("#pp-err"), ppHelp = U.$("#pp-help");
+  var pendingPic; // undefined: unchanged · { blob, url }: a new photo to upload · null: remove the saved photo
+  function shownPic() { return pendingPic === undefined ? S.state.profile.avatar || "" : pendingPic ? pendingPic.url : ""; }
+  function paintPic() {
+    var src = shownPic();
+    ppPreview.innerHTML = src ? '<img src="' + U.esc(src) + '" alt="">' : U.AVATAR;
+    ppPick.textContent = src ? "Change photo" : "Upload photo";
+    ppRemove.hidden = !src;
+    ppHelp.textContent = pendingPic === undefined ? PIC_HELP
+      : pendingPic ? "New photo ready. Save changes to use it."
+      : "Your photo will be removed when you save changes.";
+  }
+  function picError(msg) { ppErr.hidden = !msg; ppErr.textContent = msg || ""; }
+  function dropPendingUrl() { if (pendingPic && pendingPic.url) URL.revokeObjectURL(pendingPic.url); }
+  // Center-crops to a square and shrinks to PIC_SIZE; resolves with a WebP (JPEG where WebP isn't supported)
+  function squareImage(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        var s = Math.min(img.naturalWidth, img.naturalHeight), c = document.createElement("canvas");
+        c.width = c.height = Math.min(PIC_SIZE, s);
+        var ctx = c.getContext("2d");
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(img, (img.naturalWidth - s) / 2, (img.naturalHeight - s) / 2, s, s, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        c.toBlob(function (b) {
+          if (b && b.type === "image/webp") return resolve(b);
+          c.toBlob(function (j) { if (j) resolve(j); else reject(new Error("encode")); }, "image/jpeg", 0.88);
+        }, "image/webp", 0.86);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error("decode")); };
+      img.src = url;
+    });
+  }
+  ppPick.addEventListener("click", function () { ppFile.click(); });
+  ppFile.addEventListener("change", function () {
+    var f = ppFile.files && ppFile.files[0];
+    ppFile.value = ""; // so picking the same file again still counts as a change
+    if (!f) return;
+    if (!/^image\/(jpeg|png|webp|gif)$/.test(f.type)) return picError("That file isn’t a supported image. Use a JPG, PNG, WebP or GIF.");
+    if (f.size > MAX_BYTES) return picError("That image is over 5 MB. Choose a smaller one.");
+    picError("");
+    squareImage(f).then(function (blob) {
+      dropPendingUrl();
+      pendingPic = { blob: blob, url: URL.createObjectURL(blob) };
+      paintPic(); syncSave();
+    }).catch(function () { picError("That image couldn’t be opened. Try another file."); });
+  });
+  // Remove: back to the drawn face (nothing to remove if there's no saved photo)
+  ppRemove.addEventListener("click", function () {
+    dropPendingUrl();
+    pendingPic = S.state.profile.avatar ? null : undefined;
+    picError(""); paintPic(); syncSave(); ppPick.focus();
+  });
+  paintPic();
   function syncSave() { if (!saving) saveBtn.disabled = !dirty(); }
   [nm, em, bio].forEach(function (f) { f.addEventListener("input", syncSave); });
   syncSave();
@@ -89,7 +152,17 @@
     var account = emailChanged ? NEKAI.db.client.auth.updateUser({ email: newEmail }) : Promise.resolve({});
     account.then(function (r) {
       if (r.error) throw r.error;
-      S.setProfile({ name: nm.value.trim(), bio: bio.value.slice(0, 160) });
+      // the picture first: a new one is uploaded, a removed one deleted; then everything saves together
+      return pendingPic === undefined ? undefined
+        : pendingPic ? NEKAI.db.uploadAvatar(pendingPic.blob).catch(function (err) {
+            throw new Error("Your photo couldn’t be uploaded" + (err && err.message ? " (" + err.message + ")" : "") + ". Your other changes weren’t saved either. Please try again.");
+          })
+        : NEKAI.db.removeAvatar().then(function () { return ""; }, function () { return ""; });
+    }).then(function (pic) {
+      var patch = { name: nm.value.trim(), bio: bio.value.slice(0, 160) };
+      if (pic !== undefined) patch.avatar = pic;
+      S.setProfile(patch);
+      dropPendingUrl(); pendingPic = undefined; paintPic();
       return NEKAI.db.flush();
     }).then(function () {
       U.toast(emailChanged ? "Saved. Confirm your new email from the link we sent to " + newEmail + "." : "Settings saved");
@@ -126,7 +199,7 @@
   U.$("#ask-delete").addEventListener("click", function () {
     U.confirm({
       title: "Delete your account?",
-      body: "This permanently removes your account with its watchlist, ratings, streaks, achievements and Lolli chats. It can’t be undone.",
+      body: "This permanently removes your account with its watchlist, ratings, streaks, achievements and Neko chats. It can’t be undone.",
       confirm: "Delete permanently",
       cancel: "Keep my account",
       danger: true,

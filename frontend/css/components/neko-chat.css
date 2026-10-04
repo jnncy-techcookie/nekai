@@ -1,6 +1,6 @@
 /* =========================================================
-   LOLLI CHAT
-   A floating Lolli button sits bottom right on every page (built in js/core/ui.js).
+   NEKO CHAT
+   A floating Neko button sits bottom right on every page (built in js/core/ui.js).
    Clicking it pops the chat box out of the button: the box scales up from the
    button's center while fading in, with a slight springy settle. The × in the chat
    header (or Esc) shrinks it back into the button. Only transform and opacity animate,
@@ -9,7 +9,7 @@
    ========================================================= */
 
 /* ---------- floating button ---------- */
-.lolli-fab {
+.neko-fab {
   position: fixed;
   right: 36px;
   bottom: 36px;
@@ -33,41 +33,41 @@
     background-color 0.2s ease,
     opacity 0.16s ease 0.14s; /* after closing: reappears as the chat shrinks into it */
 }
-.lolli-fab:hover {
+.neko-fab:hover {
   transform: translateY(-3px) scale(1.06);
   filter:
     drop-shadow(0 0 16px rgba(247, 130, 58, 0.6))
     drop-shadow(0 12px 18px rgb(var(--shadow-rgb) / 0.26));
 }
-.lolli-fab:active {
+.neko-fab:active {
   transform: scale(0.95);
 }
-.lolli-fab:focus-visible {
+.neko-fab:focus-visible {
   outline: 3px solid var(--blue);
   outline-offset: 3px;
 }
-.lolli-fab-face {
+.neko-fab-face {
   display: inline-flex;
 }
-.lolli-fab-face .lolli-img {
+.neko-fab-face .neko-img {
   width: 64px;
   height: 64px;
 }
-html.theme-dark .lolli-fab {
+html.theme-dark .neko-fab {
   filter:
     drop-shadow(0 0 12px rgba(255, 162, 92, 0.55))
     drop-shadow(0 0 28px rgba(255, 162, 92, 0.22));
 }
-html.theme-dark .lolli-fab:hover {
+html.theme-dark .neko-fab:hover {
   filter:
     drop-shadow(0 0 16px rgba(255, 162, 92, 0.75))
     drop-shadow(0 0 34px rgba(255, 162, 92, 0.3));
 }
-/* floating: while the chat is closed, Lolli drifts gently up and down */
-.lolli-fab-face {
-  animation: lolliFloat 4s ease-in-out infinite;
+/* floating: while the chat is closed, Neko drifts gently up and down */
+.neko-fab-face {
+  animation: nekoFloat 4s ease-in-out infinite;
 }
-@keyframes lolliFloat {
+@keyframes nekoFloat {
   0%,
   100% {
     transform: translateY(0);
@@ -76,15 +76,15 @@ html.theme-dark .lolli-fab:hover {
     transform: translateY(-6px);
   }
 }
-.lchat-open .lolli-fab-face,
-.opt-reduce-motion .lolli-fab-face {
+.lchat-open .neko-fab-face,
+.opt-reduce-motion .neko-fab-face {
   animation: none;
 }
-.lolli-img {
+.neko-img {
   display: block;
 }
 /* while the chat is open, the button shrinks away: the chat takes its corner */
-.lchat-open .lolli-fab {
+.lchat-open .neko-fab {
   opacity: 0;
   transform: scale(0.7);
   pointer-events: none;
@@ -97,7 +97,7 @@ html.theme-dark .lolli-fab:hover {
 .lchat {
   position: fixed;
   right: 36px;
-  bottom: 36px; /* the same corner as the Lolli button */
+  bottom: 36px; /* the same corner as the Neko button */
   z-index: 47;
   display: flex;
   flex-direction: column;
@@ -345,7 +345,7 @@ html.theme-dark .lolli-fab:hover {
   opacity: 1;
   transition: opacity 0.2s ease, visibility 0s;
 }
-.opt-reduce-motion .lolli-fab {
+.opt-reduce-motion .neko-fab {
   transform: none;
 }
 .opt-reduce-motion .lchat-typing i {
@@ -361,28 +361,28 @@ html.theme-dark .lolli-fab:hover {
     opacity: 1;
     transition: opacity 0.2s ease, visibility 0s;
   }
-  .lolli-fab,
-  .lolli-fab:hover,
-  .lchat-open .lolli-fab {
+  .neko-fab,
+  .neko-fab:hover,
+  .lchat-open .neko-fab {
     transform: none;
   }
   .lchat-typing i {
     animation: none;
   }
-  .lolli-fab-face {
+  .neko-fab-face {
     animation: none;
   }
 }
 
 /* ---------- phones: the button sits above the tab bar; the chat is a bottom sheet ---------- */
 @media (max-width: 767px) {
-  .lolli-fab {
+  .neko-fab {
     right: 20px;
     bottom: 104px; /* clear the 80px tab bar */
     width: 56px;
     height: 56px;
   }
-  .lolli-fab-face .lolli-img {
+  .neko-fab-face .neko-img {
     width: 56px;
     height: 56px;
   }
@@ -437,7 +437,7 @@ html.theme-dark .lolli-fab:hover {
 
 /* Settings → Stronger outlines: outlines come back for people who need clearer edges */
 .opt-strong .lchat,
-.opt-strong .lolli-fab,
+.opt-strong .neko-fab,
 .opt-strong .lchat-bubble,
 .opt-strong .lchat-form textarea {
   box-shadow: inset 0 0 0 1.5px var(--ink);

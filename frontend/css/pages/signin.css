@@ -44,8 +44,23 @@
   -webkit-mask-image: linear-gradient(105deg, transparent 22%, #000 68%);
   mask-image: linear-gradient(105deg, transparent 22%, #000 68%);
 }
+/* dark theme: the same waves in charcoal, a step lighter than the canvas, with a faint cobalt
+   glow behind the card so the brand colour still shows */
 html.theme-dark .auth {
+  background: #10151c;
   box-shadow: var(--dark-ring);
+}
+html.theme-dark .auth::before {
+  --wf: #10151c;
+  --wl: #1f2630;
+}
+html.theme-dark .auth::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(ellipse 55% 70% at 78% 50%, rgb(31 63 166 / 0.22), transparent 70%);
+  pointer-events: none;
 }
 
 /* ---------- the pitch (left) ---------- */
@@ -227,8 +242,13 @@ html.theme-dark .auth {
   box-shadow: 0 24px 64px rgb(1 4 9 / 0.35);
   scrollbar-width: thin;
 }
+/* dark theme: a faint grey-white glow lifts the card off the charcoal waves */
 html.theme-dark .auth-card {
-  box-shadow: var(--dark-ring), 0 24px 64px rgb(0 0 0 / 0.5);
+  box-shadow:
+    var(--dark-ring),
+    0 0 0 1px rgb(236 230 218 / 0.05),
+    0 6px 56px rgb(236 230 218 / 0.12),
+    0 24px 64px rgb(0 0 0 / 0.5);
 }
 .auth-head {
   display: flex;

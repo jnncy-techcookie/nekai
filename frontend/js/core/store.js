@@ -39,12 +39,12 @@
       earned: {}, // achievement name -> time it was unlocked (0: unlock time unknown)
       log: {}, // day -> episodes watched that day
       logBy: {}, // day -> { anime id -> episodes }: what the log is made of, saved as watch events
-      ui: { navOpen: true, lolliHidden: false },
+      ui: { navOpen: true, nekoHidden: false },
       profile: { name: "", handle: "", email: "", bio: "", since: new Date().getFullYear() },
       settings: {
         sound: false,
         confetti: true,
-        lolli: true,
+        neko: true,
         streak: true,
         motion: false,
         text: false,
@@ -54,7 +54,7 @@
       signedIn: false,
       favGenres: [], // the 3 genres picked at sign-up: the AI's starting point before any history
       onboarding: false, // true from sign-up until those genres are picked
-      firstHome: false, // Home greets a new account with "Welcome," once, then "Welcome back,"
+      firstHome: false, // Home greets a new account with "Welcome" once, then "Welcome back"
     };
   }
 
@@ -242,6 +242,32 @@
     if (total) state.log[k] = total;
     else delete state.log[k];
   }
+  // The status change itself, without saving: adjusts episodes and the watch log to match.
+  // Returns true when this is the title's first completion. Used by setStatus and setStatusMany.
+  function applyStatus(id, status) {
+    var a = anime(id),
+      e = state.list[String(id)] || {};
+    var patch = { status: status };
+    var first = false;
+    // Starting a planned show or rewatching a completed one begins at episode 1; Plan to Watch means nothing watched yet
+    if (
+      status === "watching" &&
+      (e.status === "completed" || (e.status === "plan" && !e.watched))
+    )
+      patch.watched = 1;
+    if (status === "plan") patch.watched = 0;
+    if (status === "completed") {
+      if (a && a.episodes) patch.watched = a.episodes;
+      first = !e.completedOnce;
+      patch.completedOnce = true;
+      // Finishing a show you were watching counts the remaining episodes as watched today.
+      // Plan to Watch -> Completed is treated as backfilling history, so it doesn't touch the streak.
+      if (e.status === "watching" && patch.watched > (e.watched || 0))
+        logToday(patch.watched - (e.watched || 0), id);
+    }
+    touch(id, patch);
+    return first;
+  }
   // Updates (or creates) a list entry and stamps updatedAt. New entries start as Plan to Watch.
   function touch(id, patch) {
     id = String(id);
@@ -368,34 +394,36 @@
     // Returns { undo, firstCompletion, streakUp }.
     setStatus: function (id, status) {
       var snap = snapshot();
-      var a = anime(id),
-        e = state.list[String(id)] || {};
-      var patch = { status: status };
-      var first = false,
-        wasLogged = !!state.log[dayKey()];
-      // Starting a planned show or rewatching a completed one begins at episode 1; Plan to Watch means nothing watched yet
-      if (
-        status === "watching" &&
-        (e.status === "completed" || (e.status === "plan" && !e.watched))
-      )
-        patch.watched = 1;
-      if (status === "plan") patch.watched = 0;
-      if (status === "completed") {
-        if (a && a.episodes) patch.watched = a.episodes;
-        first = !e.completedOnce;
-        patch.completedOnce = true;
-        // Finishing a show you were watching counts the remaining episodes as watched today.
-        // Plan to Watch -> Completed is treated as backfilling history, so it doesn't touch the streak.
-        if (e.status === "watching" && patch.watched > (e.watched || 0))
-          logToday(patch.watched - (e.watched || 0), id);
-      }
-      touch(id, patch);
+      var wasLogged = !!state.log[dayKey()];
+      var first = applyStatus(id, status);
       emit();
       return {
         undo: undoTo(snap),
         firstCompletion: first,
         streakUp: !wasLogged && !!state.log[dayKey()],
       };
+    },
+    // Bulk versions for the Library's multi-select: one change, one save and one Undo for the lot.
+    // setStatusMany returns { undo, firstCompletion, moved } (moved: how many actually changed status).
+    setStatusMany: function (ids, status) {
+      var snap = snapshot();
+      var first = false, moved = 0;
+      ids.forEach(function (id) {
+        var e = state.list[String(id)];
+        if (!e || e.status === status) return;
+        if (applyStatus(id, status)) first = true;
+        moved++;
+      });
+      emit();
+      return { undo: undoTo(snap), firstCompletion: first, moved: moved };
+    },
+    removeMany: function (ids) {
+      var snap = snapshot();
+      ids.forEach(function (id) {
+        delete state.list[String(id)];
+      });
+      emit();
+      return undoTo(snap);
     },
     // +1 episode: logs it for today (streak), starts a planned show and completes it on the last episode.
     // Returns null when it can't go up, else { undo, watched, finished, firstCompletion, streakUp }.
@@ -475,7 +503,7 @@
       Object.assign(state.ui, patch);
       save();
     },
-    // Settings switches (sound, confetti, Lolli, dark mode…)
+    // Settings switches (sound, confetti, Neko, dark mode…)
     setSettings: function (patch) {
       Object.assign(state.settings, patch);
       emit();
