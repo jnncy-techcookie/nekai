@@ -13,15 +13,11 @@
   <!-- boot.js applies saved layout settings before the first paint; the rest run once the page is parsed,
        and blocking="render" holds the first paint until the sidebar and content are built (no flash) -->
   <script src="js/core/boot.js"></script>
-  <script src="js/data/sample-data.js" defer blocking="render"></script>
-  <script src="js/core/store.js" defer blocking="render"></script>
-  <script src="js/services/tenrai.js" defer blocking="render"></script>
-  <script src="js/services/recommend.js" defer></script>
-  <script src="js/core/ui.js" defer blocking="render"></script>
-  <script src="js/core/lolli.js" defer blocking="render"></script>
-  <script src="js/core/panes.js" defer blocking="render"></script>
-  <script src="js/core/detail-panel.js" defer blocking="render"></script>
-  <script src="js/pages/discover.js" defer blocking="render"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" defer></script>
+  <script src="js/data/sample-data.js" defer></script>
+  <script src="js/core/supabase.js" defer></script>
+  <!-- start.js checks the session, loads the user's data, then runs these in order -->
+  <script src="js/core/start.js" defer data-app="js/core/store.js js/services/tenrai.js js/services/recommend.js js/core/ui.js js/core/lolli.js js/core/panes.js js/core/detail-panel.js js/pages/discover.js"></script>
 </head>
 <body class="paper">
   <div class="app">

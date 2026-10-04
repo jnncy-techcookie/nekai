@@ -296,6 +296,12 @@
           return request("/anime/" + id)
             .then(function (r) {
               var n = normalize(r.data);
+              // a placeholder (not in anime_catalog yet) takes everything
+              if (NEKAI.store.anime(id).stub) {
+                NEKAI.store.cacheAnime(Object.assign(n, { stub: false }));
+                if (onEach) onEach(id);
+                return;
+              }
               // keep our curated title/season text, take the poster, score and synopsis
               NEKAI.store.cacheAnime({
                 id: n.id,

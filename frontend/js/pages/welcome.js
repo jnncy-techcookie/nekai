@@ -61,7 +61,11 @@
   U.$("#ob-go").addEventListener("click", function () {
     if (picked.length < MAX) return;
     S.setFavGenres(picked);
-    location.href = "index.html";
+    var go = U.$("#ob-go");
+    go.disabled = true;
+    go.setAttribute("aria-busy", "true");
+    // wait for the picks to save, or Home would send the account back here
+    NEKAI.db.flush().then(function () { location.href = "index.html"; });
   });
 
   render();
