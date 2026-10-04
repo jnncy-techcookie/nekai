@@ -4,6 +4,9 @@
  * - Successful answers are cached in memory for 30 minutes.
  * - Identical requests already on their way share one upstream call.
  */
+const { rememberAnime } = require("./catalog");
+
+
 const BASE_URL = "https://api.tenrai.org/v1";
 // url → { data, expiresAt }
 const cache = new Map();
@@ -69,6 +72,7 @@ function getTenrai(path, params = {}) {
         data,
         expiresAt: Date.now() + 30 * 60 * 1000,
       });
+      rememberAnime(path, data);
       return data;
     })
     .finally(() => inFlight.delete(key));

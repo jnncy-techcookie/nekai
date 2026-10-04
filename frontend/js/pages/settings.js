@@ -84,14 +84,29 @@
     if (!dirty()) return;
     var btn = saveBtn; saving = true; btn.disabled = true; btn.setAttribute("aria-busy", "true");
     btn.innerHTML = '<span class="spinner" aria-hidden="true"></span>Saving…';
-    setTimeout(function () {
-      S.setProfile({ name: nm.value.trim(), email: em.value.trim(), bio: bio.value.slice(0, 160) });
-      saving = false; btn.removeAttribute("aria-busy"); btn.textContent = "Save changes"; syncSave();
-      U.toast("Settings saved");
+    // The email belongs to the Supabase account: changing it sends a confirmation link to the new address
+    var newEmail = em.value.trim(), emailChanged = newEmail !== S.state.profile.email;
+    var account = emailChanged ? NEKAI.db.client.auth.updateUser({ email: newEmail }) : Promise.resolve({});
+    account.then(function (r) {
+      if (r.error) throw r.error;
+      S.setProfile({ name: nm.value.trim(), bio: bio.value.slice(0, 160) });
+      return NEKAI.db.flush();
+    }).then(function () {
+      U.toast(emailChanged ? "Saved. Confirm your new email from the link we sent to " + newEmail + "." : "Settings saved");
       var who = U.$(".side-me .side-label span"); if (who) who.textContent = nm.value.trim();
-    }, 500);
+    }).catch(function (err) {
+      U.toast((err && err.message) || "Your changes couldn’t be saved. Please try again.");
+    }).then(function () {
+      if (emailChanged) em.value = S.state.profile.email; // the old email stays until the new one is confirmed
+      saving = false; btn.removeAttribute("aria-busy"); btn.textContent = "Save changes"; syncSave();
+    });
   });
-  U.$("#pw-change").addEventListener("click", function () { U.toast("We’ve emailed a password reset link to " + S.state.profile.email); });
+  U.$("#pw-change").addEventListener("click", function () {
+    var email = S.state.profile.email;
+    NEKAI.db.client.auth.resetPasswordForEmail(email, { redirectTo: location.origin + "/signin.html?mode=reset" }).then(function (r) {
+      U.toast(r.error ? r.error.message : "We’ve emailed a password reset link to " + email);
+    });
+  });
 
   /* ---------- data ---------- */
   // Export: the list as a CSV file (values quoted where needed), made in the browser
@@ -111,13 +126,27 @@
   U.$("#ask-delete").addEventListener("click", function () {
     U.confirm({
       title: "Delete your account?",
-      body: "This permanently removes your watchlist, ratings, streaks and achievements from this browser. It can’t be undone.",
+      body: "This permanently removes your account with its watchlist, ratings, streaks, achievements and Lolli chats. It can’t be undone.",
       confirm: "Delete permanently",
       cancel: "Keep my account",
       danger: true,
       icon: "trash",
     }).then(function (ok) {
-      if (ok) { S.reset(); location.href = "signin.html?deleted=1"; }
+      if (!ok) return;
+      NEKAI.db.flush().then(NEKAI.db.token).then(function (token) {
+        return fetch("/api/account", { method: "DELETE", headers: { Authorization: "Bearer " + token } });
+      }).then(function (res) {
+        return res.json().catch(function () { return {}; }).then(function (body) {
+          if (!res.ok) throw new Error(body.error || "Your account couldn’t be deleted just now. Please try again.");
+        });
+      }).then(function () {
+        // the account is gone; clear this browser's session too
+        return NEKAI.db.client.auth.signOut({ scope: "local" }).catch(function () {});
+      }).then(function () {
+        location.href = "signin.html?deleted=1";
+      }).catch(function (err) {
+        U.toast(err && err.name !== "TypeError" ? err.message : "Can’t reach the NEKAI server. Please try again.");
+      });
     });
   });
 

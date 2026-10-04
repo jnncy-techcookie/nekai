@@ -12,11 +12,11 @@
   <link rel="preload" href="assets/fonts/The%20Last%20Shuriken.ttf" as="font" type="font/ttf" crossorigin>
   <!-- boot.js applies saved display settings (dark mode) before the first paint -->
   <script src="js/core/boot.js"></script>
-  <script src="js/data/sample-data.js" defer blocking="render"></script>
-  <script src="js/core/store.js" defer blocking="render"></script>
-  <script src="js/services/tenrai.js" defer blocking="render"></script>
-  <script src="js/core/ui.js" defer blocking="render"></script>
-  <script src="js/pages/welcome.js" defer blocking="render"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" defer></script>
+  <script src="js/data/sample-data.js" defer></script>
+  <script src="js/core/supabase.js" defer></script>
+  <!-- start.js checks the session, loads the user's data, then runs these in order -->
+  <script src="js/core/start.js" defer data-app="js/core/store.js js/services/tenrai.js js/core/ui.js js/pages/welcome.js"></script>
 </head>
 <body class="paper">
   <main class="ob" id="main">

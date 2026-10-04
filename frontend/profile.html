@@ -1,65 +1,101 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>NEKAI — Profile</title>
-  <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=block" rel="stylesheet">
-  <link rel="stylesheet" href="css/main.css">
-  <link rel="preload" href="assets/fonts/The%20Last%20Shuriken.ttf" as="font" type="font/ttf" crossorigin>
-  <!-- boot.js applies saved layout settings before the first paint; the rest run once the page is parsed,
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NEKAI — Profile</title>
+    <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=block"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/main.css" />
+    <link
+      rel="preload"
+      href="assets/fonts/The%20Last%20Shuriken.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
+    <!-- boot.js applies saved layout settings before the first paint; the rest run once the page is parsed,
        and blocking="render" holds the first paint until the sidebar and content are built (no flash) -->
-  <script src="js/core/boot.js"></script>
-  <script src="js/data/sample-data.js" defer blocking="render"></script>
-  <script src="js/core/store.js" defer blocking="render"></script>
-  <script src="js/services/tenrai.js" defer blocking="render"></script>
-  <script src="js/core/ui.js" defer blocking="render"></script>
-  <script src="js/core/lolli.js" defer blocking="render"></script>
-  <script src="js/core/panes.js" defer blocking="render"></script>
-  <script src="js/core/detail-panel.js" defer blocking="render"></script>
-  <script src="js/pages/profile.js" defer blocking="render"></script>
-</head>
-<body class="paper">
-  <div class="app">
-    <main id="main" class="main tight" tabindex="-1">
-      <noscript><p class="notice">NEKAI needs JavaScript turned on to load your profile.</p></noscript>
-      <!-- Profile, after Letterboxd's pattern: a banner header with the avatar, name and a
+    <script src="js/core/boot.js"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"
+      defer
+    ></script>
+    <script src="js/data/sample-data.js" defer></script>
+    <script src="js/core/supabase.js" defer></script>
+    <!-- start.js checks the session, loads the user's data, then runs these in order -->
+    <script
+      src="js/core/start.js"
+      defer
+      data-app="js/core/store.js js/services/tenrai.js js/core/ui.js js/core/lolli.js js/core/panes.js js/core/detail-panel.js js/pages/profile.js"
+    ></script>
+  </head>
+  <body class="paper">
+    <div class="app">
+      <main id="main" class="main tight" tabindex="-1">
+        <noscript
+          ><p class="notice">
+            NEKAI needs JavaScript turned on to load your profile.
+          </p></noscript
+        >
+        <!-- Profile, after Letterboxd's pattern: a banner header with the avatar, name and a
            strip of headline numbers; posters and achievements in the main column; level,
            genres and your library in a narrow sidebar -->
-      <h1 class="sr">Profile</h1>
-      <section id="me" class="pf-hero" aria-labelledby="me-h"></section>
+        <h1 class="sr">Profile</h1>
+        <section id="me" class="pf-hero" aria-labelledby="me-h"></section>
 
-      <div class="pf-grid">
-        <div class="pf-main">
-          <section aria-labelledby="top-h" class="pf-sec">
-            <div class="sec-head"><h2 id="top-h" class="h2 sec-title">Your top rated</h2><a class="btn btn-ghost ml-auto" href="library.html?tab=all">View Library</a></div>
-            <div id="top" class="pf-posters"></div>
-          </section>
-          <section aria-labelledby="ac-h" class="pf-sec">
-            <div class="sec-head"><h2 id="ac-h" class="h2 sec-title">Achievements</h2><span id="ach-count" class="small muted semibold ml-auto"></span></div>
-            <ul id="ach" class="ach pf-card"></ul>
-          </section>
-        </div>
-        <aside class="pf-side" aria-labelledby="st-h">
-          <div class="sec-head"><h2 id="st-h" class="h2 sec-title">Your stats</h2></div>
-          <div class="pf-side-cards">
-          <section id="level" aria-labelledby="lv-h" class="pf-card"></section>
-          <section aria-labelledby="gm-h" class="pf-card">
-            <h2 id="gm-h" class="pf-side-h">Favorite genres</h2>
-            <div id="mix" class="stack gap-16"></div>
-            <p class="caption muted">From the genres of anime you’ve started, finished or dropped.</p>
-          </section>
-          <section aria-labelledby="lib-h" class="pf-card">
-            <h2 id="lib-h" class="pf-side-h">Your Library</h2>
-            <ul id="lib" class="pf-lib"></ul>
-          </section>
+        <div class="pf-grid">
+          <div class="pf-main">
+            <section aria-labelledby="top-h" class="pf-sec">
+              <div class="sec-head">
+                <h2 id="top-h" class="h2 sec-title">Your top rated</h2>
+                <a class="btn btn-ghost ml-auto" href="library.html?tab=all"
+                  >View Library</a
+                >
+              </div>
+              <div id="top" class="pf-posters"></div>
+            </section>
+            <section aria-labelledby="ac-h" class="pf-sec">
+              <div class="sec-head">
+                <h2 id="ac-h" class="h2 sec-title">Achievements</h2>
+                <span
+                  id="ach-count"
+                  class="small muted semibold ml-auto"
+                ></span>
+              </div>
+              <ul id="ach" class="ach pf-card"></ul>
+            </section>
           </div>
-        </aside>
-      </div>
-    </main>
-  </div>
-</body>
+          <aside class="pf-side" aria-labelledby="st-h">
+            <div class="sec-head">
+              <h2 id="st-h" class="h2 sec-title">Your stats</h2>
+            </div>
+            <div class="pf-side-cards">
+              <section
+                id="level"
+                aria-labelledby="lv-h"
+                class="pf-card"
+              ></section>
+              <section aria-labelledby="gm-h" class="pf-card">
+                <h2 id="gm-h" class="pf-side-h">Favorite genres</h2>
+                <div id="mix" class="stack gap-16"></div>
+                <p class="caption muted">
+                  From the genres of anime you’ve started, finished or dropped.
+                </p>
+              </section>
+              <section aria-labelledby="lib-h" class="pf-card">
+                <h2 id="lib-h" class="pf-side-h">Your Library</h2>
+                <ul id="lib" class="pf-lib"></ul>
+              </section>
+            </div>
+          </aside>
+        </div>
+      </main>
+    </div>
+  </body>
 </html>

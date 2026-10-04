@@ -1,10 +1,11 @@
 /* NEKAI store
- * All user data lives in localStorage under one key. Every change notifies
- * subscribers so pages can re-render, and returns an undo function.
+ * The signed-in user's data, loaded from Supabase by start.js before the page runs.
+ * Every change is saved back to Supabase (NEKAI.db.sync), notifies subscribers so
+ * pages can re-render, and returns an undo function.
  */
 (function () {
   "use strict";
-  var KEY = "nekai:v1";
+  var DISPLAY_KEY = "nekai:display"; // this device's layout and theme, read by boot.js before the first paint
   var D = NEKAI.data;
   var listeners = [];
   var unlockListeners = [];
@@ -28,45 +29,18 @@
     return dayKey(d);
   }
 
-  // A fresh state. demo: fill it with the sample list and watch history (the first visit only);
-  // without it the list, log and badges start empty, as for a new account or after deleting data.
-  function seed(demo) {
-    var list = {};
-    var log = {};
-    if (demo) {
-      var now = Date.now();
-      D.seedList.forEach(function (s, i) {
-        list[s.id] = {
-          status: s.status,
-          watched: s.watched,
-          rating: s.rating * 2, // sample data is written out of 5; ratings are stored out of 10
-          updatedAt: now - i * 3600e3,
-          completedOnce: s.status === "completed",
-        };
-      });
-      // A believable watch history: a 5-day streak ending yesterday,
-      // a 14-day run last month and one 12-episode binge day.
-      for (var i = 1; i <= 5; i++) log[daysAgo(i)] = 2 + (i % 3);
-      for (var j = 30; j < 44; j++) log[daysAgo(j)] = 1 + (j % 2);
-      log[daysAgo(21)] = 12;
-    }
+  // An empty state (signed out). Signed-in pages start from NEKAI.startState instead.
+  function seed() {
     return {
-      v: 1,
-      ratingScale: 10,
-      list: list,
+      list: {},
       anime: {},
       hidden: {},
       recs: null, // AI picks: { at, key, items: [{ id, why, fit }] }
-      earned: {}, // achievement name -> time it was unlocked (0: already earned before times were saved)
-      log: log,
+      earned: {}, // achievement name -> time it was unlocked (0: unlock time unknown)
+      log: {}, // day -> episodes watched that day
+      logBy: {}, // day -> { anime id -> episodes }: what the log is made of, saved as watch events
       ui: { navOpen: true, lolliHidden: false },
-      profile: {
-        name: "Niko",
-        handle: "niko",
-        email: "niko@example.com",
-        bio: "Fantasy journeys, cooking anime, and anything with a good opening song.",
-        since: 2024,
-      },
+      profile: { name: "", handle: "", email: "", bio: "", since: new Date().getFullYear() },
       settings: {
         sound: false,
         confetti: true,
@@ -77,46 +51,29 @@
         contrast: false,
         dark: false,
       },
-      signedIn: true,
+      signedIn: false,
       favGenres: [], // the 3 genres picked at sign-up: the AI's starting point before any history
       onboarding: false, // true from sign-up until those genres are picked
+      firstHome: false, // Home greets a new account with "Welcome," once, then "Welcome back,"
     };
   }
 
-  // Reads the saved state and upgrades older saves in place.
-  // A first visit (nothing saved) gets the sample list.
+  // The signed-in user's data that start.js loaded from Supabase, or an empty state when signed out
   function load() {
-    try {
-      var raw = localStorage.getItem(KEY);
-      if (raw) {
-        var s = JSON.parse(raw);
-        if (s && s.v === 1) {
-          // Ratings used to be whole stars out of 5; convert once to the 1–10 scale
-          if (s.ratingScale !== 10) {
-            Object.keys(s.list || {}).forEach(function (id) {
-              if (s.list[id].rating) s.list[id].rating = s.list[id].rating * 2;
-            });
-            s.ratingScale = 10;
-          }
-          // Preserve the saved view when upgrading to the Library setting name.
-          if (s.ui && Object.prototype.hasOwnProperty.call(s.ui, "myAnimeView")) {
-            if (s.ui.libraryView == null) s.ui.libraryView = s.ui.myAnimeView;
-            delete s.ui.myAnimeView;
-          }
-          return Object.assign(seed(), s);
-        }
-      }
-    } catch (e) {
-      /* storage unavailable: fall back to an in-memory seed */
-    }
-    return seed(true); // first visit: show the app with sample data
+    return NEKAI.startState ? Object.assign(seed(), NEKAI.startState) : seed();
   }
-  // Writes the whole state back to localStorage
+  // Saves the changes to Supabase (NEKAI.db.sync), and this device's layout and theme to
+  // localStorage so boot.js can apply them before the next page paints
   function save() {
+    if (NEKAI.db) NEKAI.db.sync(state);
     try {
-      localStorage.setItem(KEY, JSON.stringify(state));
+      localStorage.setItem(DISPLAY_KEY, JSON.stringify({
+        navOpen: state.ui.navOpen !== false,
+        motion: !!state.settings.motion,
+        dark: !!state.settings.dark,
+      }));
     } catch (e) {
-      /* quota or privacy mode */
+      /* storage unavailable: the page just paints with default layout first */
     }
   }
   // After every change: record newly met achievements, save, re-render subscribers, then announce unlocks
@@ -146,7 +103,9 @@
   }
   function undoTo(snap) {
     return function () {
+      var earned = state.earned; // achievements stay earned (they are saved for good)
       state = JSON.parse(snap);
+      state.earned = earned;
       emit();
     };
   }
@@ -268,11 +227,19 @@
     });
     return c;
   }
-  // Adds n episodes (or removes, when negative) to today's watch log; a day at 0 is dropped
-  function logToday(n) {
-    var k = dayKey(),
-      v = Math.max(0, (state.log[k] || 0) + n);
-    if (v) state.log[k] = v;
+  // Adds n episodes of anime id (or removes, when negative) to today's watch log; a day at 0 is dropped.
+  // Only episodes logged today for that anime can be taken back.
+  function logToday(n, id) {
+    var k = dayKey();
+    id = String(id);
+    var byDay = (state.logBy[k] = state.logBy[k] || {});
+    var before = byDay[id] || 0,
+      v = Math.max(0, before + n);
+    if (v) byDay[id] = v;
+    else delete byDay[id];
+    if (!Object.keys(byDay).length) delete state.logBy[k];
+    var total = Math.max(0, (state.log[k] || 0) + (v - before));
+    if (total) state.log[k] = total;
     else delete state.log[k];
   }
   // Updates (or creates) a list entry and stamps updatedAt. New entries start as Plan to Watch.
@@ -420,7 +387,7 @@
         // Finishing a show you were watching counts the remaining episodes as watched today.
         // Plan to Watch -> Completed is treated as backfilling history, so it doesn't touch the streak.
         if (e.status === "watching" && patch.watched > (e.watched || 0))
-          logToday(patch.watched - (e.watched || 0));
+          logToday(patch.watched - (e.watched || 0), id);
       }
       touch(id, patch);
       emit();
@@ -448,7 +415,7 @@
       }
       touch(id, patch);
       var wasLogged = !!state.log[dayKey()];
-      logToday(1);
+      logToday(1, id);
       emit();
       return {
         undo: undoTo(snap),
@@ -468,7 +435,7 @@
       if (patch.watched === 0 && e.status === "watching") patch.status = "plan";
       touch(id, patch);
       // Take back one of today's logged episodes (an episode from an earlier day stays in history)
-      logToday(-1);
+      logToday(-1, id);
       emit();
       return undoTo(snap);
     },
@@ -518,29 +485,6 @@
       Object.assign(state.profile, patch);
       emit();
     },
-    /* A brand-new account: an empty library, the new profile, and the genre picker still to do.
-       The previous data in this browser is kept under a backup key. Settings carry over. */
-    startFresh: function (profile) {
-      try {
-        var prev = localStorage.getItem(KEY);
-        if (prev) localStorage.setItem(KEY + ":backup", prev);
-      } catch (e) {}
-      var settings = state.settings, cache = state.anime;
-      state = seed();
-      state.list = {};
-      state.log = {};
-      state.earned = {};
-      state.hidden = {};
-      state.recs = null;
-      state.anime = cache;
-      state.settings = settings;
-      Object.assign(state.profile, { bio: "" }, profile);
-      state.favGenres = [];
-      state.onboarding = true;
-      state.firstHome = true; // Home greets with "Welcome," once, then "Welcome back,"
-      state.signedIn = true;
-      save();
-    },
     // Home has greeted a new account once
     seenHome: function () {
       if (!state.firstHome) return;
@@ -551,33 +495,6 @@
     setFavGenres: function (list) {
       state.favGenres = list.slice(0, 3);
       state.onboarding = false;
-      emit();
-    },
-    // Sign in / log out. The list stays saved either way.
-    setSignedIn: function (v) {
-      state.signedIn = v;
-      save();
-    },
-    // Delete account: wipes the save and starts empty and signed out
-    reset: function () {
-      try {
-        localStorage.removeItem(KEY);
-      } catch (e) {}
-      state = seed(); // empty: no sample list, streak history or badges come back
-      state.signedIn = false;
-      save();
-    },
-    // A new account starts from zero: empty list, watch log (so no streak), badges and AI picks.
-    // This device's settings, layout and cached anime details carry over.
-    // Not called at the moment: sign-up uses startFresh() above.
-    newAccount: function (profile) {
-      var fresh = seed();
-      fresh.settings = state.settings;
-      fresh.ui = state.ui;
-      fresh.anime = state.anime;
-      Object.assign(fresh.profile, { bio: "" }, profile);
-      state = fresh;
-      state.signedIn = true;
       emit();
     },
 
@@ -894,7 +811,7 @@
         }, null);
     },
   };
-  // Achievements already met when the page loads (older saves, the sample list) are recorded without a toast
+  // Achievements already met when the page loads (e.g. one not saved yet) are recorded without a toast
   if (recordUnlocks(0).length) save();
   NEKAI.store = api;
 })();

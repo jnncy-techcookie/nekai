@@ -13,11 +13,11 @@
   <!-- boot.js applies saved layout settings before the first paint; the rest run once the page is parsed,
        and blocking="render" holds the first paint until the sidebar and content are built (no flash) -->
   <script src="js/core/boot.js"></script>
-  <script src="js/data/sample-data.js" defer blocking="render"></script>
-  <script src="js/core/store.js" defer blocking="render"></script>
-  <script src="js/services/tenrai.js" defer blocking="render"></script>
-  <script src="js/core/ui.js" defer blocking="render"></script>
-  <script src="js/pages/signin.js" defer blocking="render"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" defer></script>
+  <script src="js/data/sample-data.js" defer></script>
+  <script src="js/core/supabase.js" defer></script>
+  <!-- start.js checks the session, loads the user's data, then runs these in order -->
+  <script src="js/core/start.js" defer data-app="js/core/store.js js/services/tenrai.js js/core/ui.js js/pages/signin.js"></script>
 </head>
 <body class="paper auth-page">
   <div class="auth">
@@ -61,7 +61,7 @@
           <h1 id="auth-h" class="auth-title">Welcome back</h1>
           <p id="auth-sub" class="auth-sub">Sign in to pick up where you left off.</p>
         </div>
-        <p id="deleted" class="prompt" role="status" hidden>Your account data was deleted from this browser.</p>
+        <p id="deleted" class="prompt" role="status" hidden>Your account and everything in it was deleted.</p>
         <!-- segmented control: the thumb slides under the active tab (data-mode set by signin.js) -->
         <div class="auth-tabs" role="tablist" aria-label="Account" data-mode="signin">
           <span class="auth-thumb" aria-hidden="true"></span>
