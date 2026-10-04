@@ -71,17 +71,17 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0; /* name, handle and bio read as one tight block */
+  gap: 0; /* name, profile metadata and bio read as one tight block */
   padding-top: 60px; /* clears the banner */
 }
 .pf-name {
   margin: 0;
   font-size: 24px;
-  line-height: 26px; /* little extra leading: the handle sits right under the name */
+  line-height: 26px; /* little extra leading for the metadata under the name */
   font-weight: 800;
   color: var(--ink);
 }
-.pf-handle {
+.pf-meta {
   margin: 0;
   font-size: 14px;
   line-height: 16px;
