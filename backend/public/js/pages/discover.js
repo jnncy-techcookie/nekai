@@ -354,7 +354,7 @@
   }
 
   /* ---------- the pick, popped out ----------
-     A modal over a dimmed page: poster, title, details, Add to Library, View details and Spin again.
+     A modal over a dimmed page: poster, clickable title, details, Add to Library and Spin again.
      ✕, Esc or a click on the dimmed page closes it; the pick stays listed under the wheel. */
   var dlg = document.createElement("dialog");
   dlg.className = "pick-dlg";
@@ -371,13 +371,12 @@
         '<div class="pick-dlg-poster">' + U.art(e) + "</div>" +
         '<div class="pick-dlg-body">' +
           '<span class="pick-dlg-eyebrow">Your pick</span>' +
-          '<h2 id="pick-dlg-title" class="pick-dlg-title">' + esc(e.title) + "</h2>" +
+          '<h2 id="pick-dlg-title" class="pick-dlg-title"><a class="title-link" data-dlg-key="details" data-pick-details href="' + U.detailsHref(e) + '">' + esc(e.title) + "</a></h2>" +
           '<div class="pick-dlg-meta">' + U.scoreBadge(e) + '<span class="small muted semibold">' + esc([e.type, e.epsText, (e.genres || []).join(" · ")].filter(Boolean).join(" · ")) + "</span></div>" +
           '<div class="pick-dlg-actions">' +
             '<button type="button" data-dlg-key="add" class="btn ' + (e.inList ? "btn-accent" : "btn-primary btn-add") + '" data-act="toggle" data-id="' + e.id + '" aria-pressed="' + e.inList + '">' + (e.inList ? "✓ " + D.statuses[e.status].label : "Add to Library") + "</button>" +
-            '<a class="btn btn-secondary" data-dlg-key="details" data-pick-details href="' + U.detailsHref(e) + '">View details</a>' +
+            '<button type="button" class="btn btn-secondary" data-dlg-key="again" data-pick-again>' + icon("play", 16) + "Spin again</button>" +
           "</div>" +
-          '<button type="button" class="pick-dlg-again" data-dlg-key="again" data-pick-again>' + icon("play", 16) + "Spin again</button>" +
         "</div>" +
       "</div>";
     if (had) { var f = dlg.querySelector('[data-dlg-key="' + had + '"]'); if (f) f.focus(); }
