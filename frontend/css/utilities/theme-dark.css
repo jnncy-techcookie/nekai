@@ -182,9 +182,6 @@ html.theme-dark .pf-avatar {
 html.theme-dark .pf-xp span {
   color: var(--navy);
 }
-html.theme-dark .auth-hero {
-  color: var(--navy);
-}
 
 /* ---------- hand-tuned ---------- */
 /* tab counts sit on a faint tint, not on a bright fill: keep them light */

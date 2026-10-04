@@ -100,8 +100,7 @@
   .toast.is-leaving {
     animation-name: toastOutDown;
   }
-  .grid-2,
-  .auth {
+  .grid-2 {
     grid-template-columns: minmax(0, 1fr);
   }
   .grid-4 {
@@ -130,23 +129,6 @@
   }
   .ach {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .auth-hero {
-    padding: 32px 24px;
-    min-height: auto;
-  }
-  .auth-claim {
-    font-size: 32px;
-    line-height: 40px;
-  }
-  .auth-deco {
-    display: none;
-  }
-  .auth-side {
-    padding: 24px 16px 48px;
-  }
-  .auth-card {
-    padding: 24px;
   }
   .pick {
     flex-basis: 232px;

@@ -28,21 +28,43 @@
     U.$("#auth-sub").textContent = reg ? "Start tracking in under a minute." : "Sign in to pick up where you left off.";
     U.$("#tab-in").setAttribute("aria-selected", !reg); U.$("#tab-up").setAttribute("aria-selected", reg);
     U.$("#tab-in").tabIndex = reg ? -1 : 0; U.$("#tab-up").tabIndex = reg ? 0 : -1;
+    U.$(".auth-tabs").dataset.mode = mode; // slides the segmented control's thumb
     U.$("#name-field").hidden = !reg;
     U.$("#forgot").hidden = reg;
+    U.$("#switch-hint").hidden = reg;
     U.$("#pw-help").hidden = !reg;
     pw.autocomplete = reg ? "new-password" : "current-password";
-    U.$("#submit").textContent = reg ? "Create account" : "Sign in";
+    U.$("#submit-label").textContent = reg ? "Create account" : "Sign in";
     [[nm, "#nm-err", v.name], [em, "#em-err", v.email], [pw, "#pw-err", v.pw]].forEach(function (f) {
       var bad = tried && !f[2];
       f[0].setAttribute("aria-invalid", bad); U.$(f[1]).hidden = !bad;
     });
     U.$("#pw-err span").textContent = reg ? "Use at least 8 characters." : "Enter your password.";
   }
-  function setMode(m) { mode = m; tried = false; paint(); }
+  // Switches mode; the card fits its content, so its height glides from the old size to the new one
+  // instead of snapping (skipped when reduce motion is on)
+  var card = U.$(".auth-card");
+  function setMode(m) {
+    if (m === mode) return;
+    var from = card.offsetHeight;
+    mode = m; tried = false; paint();
+    var still = document.documentElement.classList.contains("opt-reduce-motion") || matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (still || getComputedStyle(card).maxHeight === "none") return; // phones: the page scrolls, no need
+    var to = card.offsetHeight;
+    card.style.height = from + "px"; card.style.overflow = "hidden";
+    card.offsetHeight; // apply the start height before animating
+    card.style.transition = "height .28s cubic-bezier(.2,.8,.2,1)";
+    card.style.height = to + "px";
+    card.addEventListener("transitionend", function done(e) {
+      if (e.target !== card) return;
+      card.removeEventListener("transitionend", done);
+      card.style.height = card.style.overflow = card.style.transition = "";
+    });
+  }
 
   U.$("#tab-in").addEventListener("click", function () { setMode("signin"); });
   U.$("#tab-up").addEventListener("click", function () { setMode("register"); });
+  U.$("#to-register").addEventListener("click", function () { setMode("register"); nm.focus(); });
   U.$(".auth-tabs").addEventListener("keydown", function (e) {
     if (e.key === "ArrowRight" || e.key === "ArrowLeft") { setMode(mode === "signin" ? "register" : "signin"); U.$(mode === "signin" ? "#tab-in" : "#tab-up").focus(); }
   });
