@@ -2,7 +2,9 @@
 
 NEKAI is a responsive full-stack anime tracking and discovery web app. Users can build and manage an anime library, track episode progress, rate and review titles, maintain watch streaks, unlock achievements, discover personalized recommendations, and chat with **Neko**, NEKAI's Gemini-powered anime watch buddy.
 
-The browser UI is built with plain **HTML, CSS, and JavaScript** and is served by a small **Node.js + Express** backend. **Supabase** provides authentication, PostgreSQL data storage, and profile-image storage. Anime data comes from the **Tenrai API**, and AI features use the **Google Gemini API**. The production app is prepared for **Vercel** deployment.
+**Live demo:** https://nekai-theta.vercel.app/
+
+The browser UI is built with plain **HTML, CSS, and JavaScript** and is served by a small **Node.js + Express** backend. **Supabase** provides authentication, PostgreSQL data storage, and profile-image storage. Anime data comes from the **Tenrai API**, and AI features use the **Google Gemini API**. The production app is deployed on **Vercel**.
 
 ## Current features
 
@@ -98,7 +100,7 @@ Neko can use a summary of the user's:
 - achievements;
 - recommendation context.
 
-The backend sends Neko requests to Gemini. Requests require a valid Supabase access token and are rate-limited server-side. Neko conversation data is stored in Supabase. Some database tables and columns still use the older **Lolli** naming for compatibility, while the user-facing app consistently uses **Neko**.
+The backend sends Neko requests to Gemini. Requests require a valid Supabase access token and are rate-limited server-side. **Neko conversations persist in Supabase in both local and deployed use.** Some database tables and columns still use the older **Lolli** naming for compatibility, while the user-facing app consistently uses **Neko**.
 
 ### Settings and experience
 
@@ -140,8 +142,14 @@ All browser-facing files now live in `backend/public/`.
 | File storage | Supabase Storage |
 | Anime data | Tenrai API v1 / MyAnimeList data |
 | AI | Google Gemini API |
-| Hosting | Vercel |
+| Hosting | Vercel — https://nekai-theta.vercel.app/ |
 | Client library | `@supabase/supabase-js` |
+
+## Why Tenrai instead of Jikan?
+
+The original assignment reference used **Jikan** for the anime lookup. During development, the project team chose to migrate to **Tenrai API v1** because Jikan is expected to shut down soon.
+
+Tenrai provides similar MyAnimeList-backed anime data, so NEKAI could keep the same general lookup and integration flow without redesigning the whole application. The current production version therefore uses **Tenrai**, not Jikan, for anime search, details, genres, popular titles, and related lookup data.
 
 ## How personalization works
 
@@ -287,7 +295,11 @@ http://localhost:3000/api/health
 
 ## Vercel deployment
 
-The repository is structured so Vercel can deploy the Express backend and static frontend together.
+Production deployment:
+
+**https://nekai-theta.vercel.app/**
+
+The repository is structured so Vercel deploys the Express backend and static frontend together.
 
 Use:
 
@@ -311,11 +323,7 @@ SUPABASE_SECRET_KEY
 
 Set them for both **Production** and **Preview** environments. Do not manually set `PORT`.
 
-After deployment, update Supabase **Authentication → URL Configuration**:
-
-- Site URL → the production Vercel URL
-- Redirect URLs → the production Vercel URL pattern
-- Keep `http://localhost:3000/**` for local development
+After deployment, Supabase **Authentication → URL Configuration** should include the production Vercel URL while keeping `http://localhost:3000/**` for local development.
 
 See `backend/VERCEL_DEPLOY.md` for the deployment checklist.
 
@@ -407,11 +415,14 @@ On phones, the desktop sidebar becomes a compact top bar with a menu button that
 
 Accessibility support includes labelled form controls, visible keyboard focus, ARIA roles/states, live regions for important feedback, keyboard-operable filters and dialogs, and a Reduce motion setting that works with `prefers-reduced-motion`.
 
-## Current limitations / not yet implemented
+## Out of scope
 
-- **Google sign-in** is not enabled yet.
-- **Public Share list pages** are not implemented; the Share list action remains hidden.
-- A completely new Supabase project cannot currently be recreated from the README alone unless the required NEKAI database schema, RLS policies, triggers, and storage configuration are also available.
+The following features are intentionally outside the current project scope:
+
+- **Google sign-in**
+- **Public Share list pages**
+
+The corresponding UI actions remain hidden rather than being presented as incomplete user-facing features.
 
 ## Credits
 
