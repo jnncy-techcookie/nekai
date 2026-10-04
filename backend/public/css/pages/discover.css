@@ -627,7 +627,8 @@ html.theme-dark .pick-dlg-card {
   background: var(--tint-2);
 }
 .pick-dlg-close:focus-visible,
-.pick-dlg-again:focus-visible {
+.wheel-result-title a:focus-visible,
+.pick-dlg-title a:focus-visible {
   outline: 3px solid var(--blue);
   outline-offset: 2px;
 }
@@ -682,21 +683,18 @@ html.theme-dark .pick-dlg-card {
   gap: 10px;
   margin-top: 6px;
 }
-.pick-dlg-again {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 0;
-  border: 0;
-  background: none;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--blue-text);
-  cursor: pointer;
+/* the title opens the details panel */
+.wheel-result-title a,
+.pick-dlg-title a {
+  color: inherit;
+  text-decoration: none;
+  border-radius: 4px;
 }
-.pick-dlg-again:hover {
+.wheel-result-title a:hover,
+.pick-dlg-title a:hover {
+  color: var(--accent-text);
   text-decoration: underline;
+  text-underline-offset: 4px;
 }
 /* phones: the poster on top, everything centered */
 @media (max-width: 540px) {

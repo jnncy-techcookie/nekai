@@ -9,14 +9,13 @@
   "use strict";
   window.NEKAI = window.NEKAI || {};
 
-  // Database names from when the chat buddy was called Lolli. The app calls it Neko now, but these
-  // tables and columns keep their names in Supabase (renaming them needs a migration), so every
-  // read and write goes through this map.
+  // Neko's tables and columns in Supabase. They were called lolli_* before the database was
+  // migrated to the Neko names; every read and write goes through this map.
   var DB = {
-    chats: "lolli_conversations",
-    messages: "lolli_messages",
-    nekoOn: "lolli", // user_settings: the Neko on/off switch
-    nekoHidden: "lolli_hidden", // user_settings: Neko's button tucked away
+    chats: "neko_conversations",
+    messages: "neko_messages",
+    nekoOn: "neko", // user_settings: the Neko on/off switch
+    nekoHidden: "neko_hidden", // user_settings: Neko's button tucked away
   };
 
   var SUPABASE_URL = "https://vhusawbkfjwowxjsyfud.supabase.co";

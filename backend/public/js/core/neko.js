@@ -1,6 +1,6 @@
 /* Neko chat: the floating Neko button (and any other [data-neko-chat] button) opens a chat box. Questions go to
  * the backend (/api/neko/chat), which asks Gemini with a snapshot of the user's list.
- * The conversation is saved to Supabase (the lolli_conversations / lolli_messages tables, named before Neko was renamed), so it follows the
+ * The conversation is saved to Supabase (the neko_conversations / neko_messages tables), so it follows the
  * user to other pages and devices. Clearing it starts a new conversation.
  */
 (function () {
