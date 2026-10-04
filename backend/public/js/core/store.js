@@ -45,7 +45,7 @@
       log: {}, // day -> episodes watched that day
       logBy: {}, // day -> { anime id -> episodes }: what the log is made of, saved as watch events
       ui: { navOpen: true, nekoHidden: false },
-      profile: { name: "", handle: "", email: "", bio: "", since: new Date().getFullYear() },
+      profile: { name: "", email: "", bio: "", since: new Date().getFullYear() },
       settings: {
         sound: false,
         confetti: true,
@@ -531,7 +531,7 @@
       Object.assign(state.settings, patch);
       emit();
     },
-    // Name, handle, email and bio
+    // Name, email and bio
     setProfile: function (patch) {
       Object.assign(state.profile, patch);
       emit();
