@@ -62,7 +62,69 @@
   function iso(ms) { return new Date(ms || Date.now()).toISOString(); }
 
   /* ---------- reading ---------- */
+  // Loads the account's data and makes it the saved copy that sync() compares against
   function load() {
+    return fetchState().then(function (state) {
+      adopt(state);
+      return state;
+    });
+  }
+  // Takes freshly loaded data as the saved copy (and this tab's copy, below)
+  function adopt(state) {
+    saved = JSON.parse(JSON.stringify(state));
+    writeCache(state, true);
+  }
+
+  /* ---------- this tab's copy of the account data ----------
+     Kept in sessionStorage (this tab only, gone when it closes) so the next page can draw at once
+     instead of waiting for Supabase; start.js then refreshes it in the background. It holds the
+     latest data and the saved copy sync() compares against, so saving carries on exactly where
+     the last page left off. Cleared on sign-out. */
+  var CACHE = "nekai:cache", cacheTimer = null, cacheState = null;
+  function writeCache(state, now) {
+    cacheState = state;
+    clearTimeout(cacheTimer);
+    if (now) flushCache();
+    else cacheTimer = setTimeout(flushCache, 250); // many quick changes (+1, +1, +1) write once
+  }
+  function flushCache() {
+    clearTimeout(cacheTimer);
+    if (!cacheState || !user || !saved) return;
+    try {
+      sessionStorage.setItem(CACHE, JSON.stringify({ uid: user.id, at: Date.now(), state: cacheState, saved: saved }));
+    } catch (e) {
+      /* storage full or unavailable: the next page just loads from Supabase */
+    }
+  }
+  // the tab is being left: write any change still waiting
+  window.addEventListener("pagehide", flushCache);
+  // This tab's copy for the signed-in user, or null
+  function cached() {
+    try {
+      var c = JSON.parse(sessionStorage.getItem(CACHE));
+      return c && user && c.uid === user.id && c.state && c.saved ? c : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  // Starts this page from the tab's copy: its saved copy becomes sync()'s starting point
+  function useCache(c) {
+    saved = c.saved;
+    cacheState = c.state;
+    return c.state;
+  }
+  // Signed out (here or in another tab): forget this tab's copy and the sidebar snapshot (ui.js)
+  function forget() {
+    try {
+      sessionStorage.removeItem(CACHE);
+      localStorage.removeItem("nekai:shell");
+    } catch (e) { /* storage unavailable */ }
+  }
+  sb.auth.onAuthStateChange(function (event) {
+    if (event === "SIGNED_OUT") forget();
+  });
+
+  function fetchState() {
     var uid = user.id;
     var eq = function (table, cols) { return function () { return sb.from(table).select(cols).eq("user_id", uid); }; };
     return Promise.all([
@@ -140,7 +202,6 @@
       // Settings remember the user's time zone for their watch history
       if (s.user_id && s.timezone !== TZ) sb.from("user_settings").update({ timezone: TZ }).eq("user_id", uid).then(function () {});
       return loadAnime(state).then(function () {
-        saved = JSON.parse(JSON.stringify(state));
         return state;
       });
     });
@@ -268,6 +329,7 @@
     var next = JSON.parse(JSON.stringify(state));
     var ops = changes(saved, next);
     saved = next;
+    writeCache(state);
     if (!ops.length) return writes;
     pending++;
     writes = writes.then(function () {
@@ -387,6 +449,12 @@
       });
     },
     load: load,
+    // the page-to-page fast path (start.js): this tab's copy, and a background refresh
+    cached: cached,
+    useCache: useCache,
+    refresh: fetchState, // fresh data from Supabase, without touching the saved copy
+    adopt: adopt,
+    forget: forget,
     sync: sync,
     // fn(error) runs when a save fails
     onSaveError: function (fn) { failListeners.push(fn); },
@@ -397,7 +465,7 @@
     token: token,
     neko: neko,
     signOut: function () {
-      return writes.then(function () { return sb.auth.signOut(); });
+      return writes.then(function () { forget(); return sb.auth.signOut(); });
     },
   };
 })();

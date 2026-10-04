@@ -213,7 +213,8 @@
           if (!res.ok) throw new Error(body.error || "Your account couldn’t be deleted just now. Please try again.");
         });
       }).then(function () {
-        // the account is gone; clear this browser's session too
+        // the account is gone; clear this browser's session and its copies of the account too
+        NEKAI.db.forget();
         return NEKAI.db.client.auth.signOut({ scope: "local" }).catch(function () {});
       }).then(function () {
         location.href = "signin.html?deleted=1";

@@ -145,9 +145,9 @@
     var src = S.state.profile && S.state.profile.avatar;
     return src ? '<img class="avatar-img" src="' + esc(src) + '" alt="" decoding="async">' : fallback || AVATAR;
   }
-  // Neko's face: the robot image (assets/images/neko.png), at n px
+  // Neko's face (assets/images/logo-bot-neko.png: a transparent 256px cut-out of logo-bot-neko.jpg), at n px
   function nekoSvg(n) {
-    return '<img class="neko-img" src="assets/images/neko.png" alt="" width="' + n + '" height="' + n + '">';
+    return '<img class="neko-img" src="assets/images/logo-bot-neko.png" alt="" width="' + n + '" height="' + n + '">';
   }
 
 
@@ -321,6 +321,8 @@
       icon("logout") +
       '<span class="side-label">Log out</span></button>' +
       "</div>";
+    // the snapshot start.js showed while the page loaded steps aside for the real thing (they look the same)
+    $$("[data-shell-snapshot]").forEach(function (el) { el.remove(); });
     app.insertBefore(side, app.firstChild);
     // Settings opened from here shows no Back button; from anywhere else (e.g. Edit profile) it does
     side.addEventListener("click", function (e) {
@@ -345,11 +347,36 @@
     // the profile picture updates in the sidebar and top bar as soon as it changes (e.g. saved in Settings)
     var shownAvatar = S.state.profile.avatar || "";
     S.subscribe(function () {
+      applySettings(); // e.g. dark mode changed on another device, picked up by start.js's background check
       var now = S.state.profile.avatar || "";
-      if (now === shownAvatar) return;
-      shownAvatar = now;
-      $$(".side-me .avatar, .mtop-me").forEach(function (el) { el.innerHTML = avatar(); });
+      if (now !== shownAvatar) {
+        shownAvatar = now;
+        $$(".side-me .avatar, .mtop-me").forEach(function (el) { el.innerHTML = avatar(); });
+      }
+      saveShellSoon();
     });
+
+    // A snapshot of the sidebar and top bar for the next page: start.js shows it the moment that
+    // page opens, so the sidebar never waits for the account data (cleared on sign-out)
+    var shellTimer;
+    function saveShell() {
+      try {
+        localStorage.setItem("nekai:shell", JSON.stringify({ side: side.outerHTML, top: top.outerHTML }));
+      } catch (e) { /* storage unavailable: the next page builds it a moment later instead */ }
+    }
+    function saveShellSoon() { clearTimeout(shellTimer); shellTimer = setTimeout(saveShell, 300); }
+    saveShell();
+
+    // Load a page in the background when the pointer rests on (or a finger presses) its link in
+    // the sidebar or top bar, so opening it is near-instant (Chrome and Edge; others ignore this)
+    if (HTMLScriptElement.supports && HTMLScriptElement.supports("speculationrules") && !$("script[type=speculationrules]")) {
+      var rules = document.createElement("script");
+      rules.type = "speculationrules";
+      rules.textContent = JSON.stringify({
+        prerender: [{ where: { selector_matches: ".side-nav a, .side-foot a[href], .mtop a[href]" }, eagerness: "moderate" }],
+      });
+      document.head.appendChild(rules);
+    }
 
     // The drawer: the same sidebar, sliding in from the left over a dimmed page.
     // Closes on the ✕, the dimmed page, Esc, or when the window grows back to the desktop layout.

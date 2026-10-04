@@ -21,7 +21,7 @@
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: transparent; /* the robot itself is the button, like a sticker */
+  background: transparent; /* Neko itself is the button, like a sticker */
   color: var(--ink);
   cursor: pointer;
   filter:

@@ -9,7 +9,12 @@
   var D = NEKAI.data;
   var listeners = [];
   var unlockListeners = [];
+  var version = 0; // counts the user's changes on this page (start.js checks it before a background refresh)
   var state = load();
+  // Keep this device's copy of the theme in step with the account as soon as it loads (not only after
+  // a change): otherwise dark mode set on another device, or before accounts, would paint light first
+  // on every page, then switch to dark. Signed out (the sign-in page) there's no account to copy.
+  if (NEKAI.startState) saveDisplay();
 
   // "YYYY-MM-DD" in local time: the key for a day in the watch log
   function dayKey(d) {
@@ -66,6 +71,10 @@
   // localStorage so boot.js can apply them before the next page paints
   function save() {
     if (NEKAI.db) NEKAI.db.sync(state);
+    saveDisplay();
+  }
+  // This device's copy of the layout and theme, for boot.js to apply before the first paint
+  function saveDisplay() {
     try {
       localStorage.setItem(DISPLAY_KEY, JSON.stringify({
         navOpen: state.ui.navOpen !== false,
@@ -78,6 +87,7 @@
   }
   // After every change: record newly met achievements, save, re-render subscribers, then announce unlocks
   function emit() {
+    version++;
     var unlocked = recordUnlocks(Date.now());
     save();
     listeners.forEach(function (fn) {
@@ -335,6 +345,19 @@
   var api = {
     get state() {
       return state;
+    },
+    get version() {
+      return version;
+    },
+    // Swaps in newer account data (a background refresh, see start.js) and redraws the page.
+    // Nothing is saved: the data came from Supabase. Anime details already loaded here are kept.
+    replace: function (next) {
+      var anime = Object.assign({}, next.anime || {}, state.anime);
+      state = Object.assign(seed(), next, { anime: anime });
+      saveDisplay();
+      listeners.forEach(function (fn) {
+        fn(state);
+      });
     },
     // fn(state) runs after every change
     subscribe: function (fn) {

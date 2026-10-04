@@ -255,7 +255,7 @@
   // Offline: NEKAI's built-in sample list, same rules
   function localPool(names) { return eligible(Object.keys(D.catalog).map(S.anime), names); }
 
-  // The wheel is a long strip of identical mystery cards (assets/images/mystery-anime.png). Each spin snaps back to HOME
+  // The wheel is a long strip of identical mystery cards (mystery-anime-clear.png, or mystery-anime.png in dark mode). Each spin snaps back to HOME
   // (invisible, since every card looks the same) and glides forward to a random stop.
   var wheelEl = U.$(".wheel"), track = U.$("#wheel-track"), viewport = track.parentNode;
   var N = 64, HOME = 10;
@@ -322,11 +322,70 @@
     Promise.all([live, spin()]).then(function (r) {
       var list = r[0];
       ui.finding = false;
-      if (list.length) { var e = list[Math.floor(Math.random() * list.length)]; ui.pick = ui.lastPick = e.id; reveal(r[1], S.entry(e.id)); }
+      if (list.length) {
+        var e = list[Math.floor(Math.random() * list.length)]; ui.pick = ui.lastPick = e.id; reveal(r[1], S.entry(e.id));
+        // the card flips on the wheel first, then the pick pops out
+        setTimeout(openPick, U.reducedMotion() ? 0 : 650);
+      }
       else ui.pickNone = true;
       renderPicker();
     });
   }
+
+  /* ---------- the pick, popped out ----------
+     A modal over a dimmed page: poster, title, details, Add to Library, View details and Spin again.
+     ✕, Esc or a click on the dimmed page closes it; the pick stays listed under the wheel. */
+  var dlg = document.createElement("dialog");
+  dlg.className = "pick-dlg";
+  dlg.setAttribute("aria-labelledby", "pick-dlg-title");
+  document.body.appendChild(dlg);
+  function renderPickDialog() {
+    if (!ui.pick) return;
+    var e = S.entry(ui.pick);
+    // keep keyboard focus on the same control when the contents redraw (e.g. after Add to Library)
+    var had = dlg.contains(document.activeElement) ? document.activeElement.getAttribute("data-dlg-key") : null;
+    dlg.innerHTML =
+      '<div class="pick-dlg-card">' +
+        '<button type="button" class="pick-dlg-close" data-dlg-key="close" data-pick-close aria-label="Close">' + icon("x", 20, 2.6) + "</button>" +
+        '<div class="pick-dlg-poster">' + U.art(e) + "</div>" +
+        '<div class="pick-dlg-body">' +
+          '<span class="pick-dlg-eyebrow">Your pick</span>' +
+          '<h2 id="pick-dlg-title" class="pick-dlg-title">' + esc(e.title) + "</h2>" +
+          '<div class="pick-dlg-meta">' + U.scoreBadge(e) + '<span class="small muted semibold">' + esc([e.type, e.epsText, (e.genres || []).join(" · ")].filter(Boolean).join(" · ")) + "</span></div>" +
+          '<div class="pick-dlg-actions">' +
+            '<button type="button" data-dlg-key="add" class="btn ' + (e.inList ? "btn-accent" : "btn-primary btn-add") + '" data-act="toggle" data-id="' + e.id + '" aria-pressed="' + e.inList + '">' + (e.inList ? "✓ " + D.statuses[e.status].label : "Add to Library") + "</button>" +
+            '<a class="btn btn-secondary" data-dlg-key="details" data-pick-details href="' + U.detailsHref(e) + '">View details</a>' +
+          "</div>" +
+          '<button type="button" class="pick-dlg-again" data-dlg-key="again" data-pick-again>' + icon("play", 16) + "Spin again</button>" +
+        "</div>" +
+      "</div>";
+    if (had) { var f = dlg.querySelector('[data-dlg-key="' + had + '"]'); if (f) f.focus(); }
+  }
+  function openPick() {
+    if (!ui.pick) return;
+    renderPickDialog();
+    dlg.classList.remove("is-closing");
+    if (!dlg.open) dlg.showModal();
+    var add = dlg.querySelector('[data-dlg-key="add"]');
+    if (add) add.focus();
+  }
+  // plays the closing animation, then closes; then runs after (e.g. spin again)
+  function closePick(after) {
+    if (!dlg.open) { if (after) after(); return; }
+    dlg.classList.add("is-closing");
+    setTimeout(function () {
+      dlg.close();
+      dlg.classList.remove("is-closing");
+      if (after) after(); else U.$("#find").focus();
+    }, U.reducedMotion() ? 0 : 160);
+  }
+  dlg.addEventListener("click", function (ev) {
+    if (ev.target === dlg) return closePick(); // the dimmed page around the card
+    if (ev.target.closest("[data-pick-close]")) return closePick();
+    if (ev.target.closest("[data-pick-again]")) return closePick(find);
+    if (ev.target.closest("[data-pick-details]")) { dlg.close(); } // the link opens the details panel
+  });
+  dlg.addEventListener("cancel", function (ev) { ev.preventDefault(); closePick(); }); // Esc
   // The spin button, the help line under it and the result (a pick, nothing found, or an offline note)
   function renderPicker() {
     var names = genreNames(WHEEL), size = ui.poolSize[WHEEL.ids.join(",")];
@@ -455,7 +514,7 @@
   });
   U.$("#find").addEventListener("click", find);
 
-  S.subscribe(function () { renderResults(); renderPicker(); renderPicks(); renderPopular(); });
+  S.subscribe(function () { renderResults(); renderPicker(); renderPicks(); renderPopular(); if (dlg.open) renderPickDialog(); });
   renderSearch(); loadGenres(); renderResults(); renderPicker(); renderPopular(); renderPicks(); layoutWheel(HOME, 0);
   if (location.hash === "#q") U.$("#q").focus();
   U.$("#picks-new").addEventListener("click", function () { loadPicks(true); });
