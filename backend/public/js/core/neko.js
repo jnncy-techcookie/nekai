@@ -234,14 +234,21 @@
     busy = true;
     failed = "";
     render();
-    fetch("/api/neko/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        messages: messages.slice(-MAX_SEND).map(function (m) { return { role: m.role, text: m.text }; }),
-        context: context(),
-      }),
-    })
+    NEKAI.db.token()
+      .then(function (token) {
+        if (!token) throw new Error("Your session expired. Please sign in again.");
+        return fetch("/api/neko/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token,
+          },
+          body: JSON.stringify({
+            messages: messages.slice(-MAX_SEND).map(function (m) { return { role: m.role, text: m.text }; }),
+            context: context(),
+          }),
+        });
+      })
       .then(function (res) {
         return res.json().catch(function () { return {}; }).then(function (body) {
           if (!res.ok || !body.reply) throw new Error(body.error || "Neko couldn’t answer just now. Please try again.");

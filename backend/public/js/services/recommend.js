@@ -58,17 +58,24 @@
     if (pending) return pending;
     if (!force && fresh()) return Promise.resolve(S.state.recs);
     var hidden = Object.keys(S.state.hidden);
-    pending = fetch("/api/recommend", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        history: history(),
-        exclude: Object.keys(S.state.list).concat(hidden).map(Number).slice(0, 300),
-        notInterested: hidden.map(S.anime).filter(Boolean).map(function (a) { return a.title; }).slice(0, 50),
-        // the genres picked at sign-up: the AI's starting guide, weighed less as the history grows
-        favoriteGenres: (S.state.favGenres || []).slice(0, 3),
-      }),
-    })
+    pending = NEKAI.db.token()
+      .then(function (token) {
+        if (!token) throw new Error("Your session expired. Please sign in again.");
+        return fetch("/api/recommend", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token,
+          },
+          body: JSON.stringify({
+            history: history(),
+            exclude: Object.keys(S.state.list).concat(hidden).map(Number).slice(0, 300),
+            notInterested: hidden.map(S.anime).filter(Boolean).map(function (a) { return a.title; }).slice(0, 50),
+            // the genres picked at sign-up: the AI's starting guide, weighed less as the history grows
+            favoriteGenres: (S.state.favGenres || []).slice(0, 3),
+          }),
+        });
+      })
       .then(function (res) {
         // 404: a server started before /api/recommend existed
         if (res.status === 404) throw new Error("AI picks need the latest server. Restart it (npm start in backend) and reload.");

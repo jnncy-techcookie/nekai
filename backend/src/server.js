@@ -3,7 +3,7 @@
  *   /api/neko/chat  the Neko chatbot (Gemini), see routes/neko.js
  *   /api/recommend   Nekai's Picks (Gemini + Tenrai), see routes/recommend.js
  *   /api/account     deleting the signed-in user's Supabase account, see routes/account.js
- * Sign-in and user data go straight from the browser to Supabase (frontend/js/core/supabase.js).
+ * Sign-in and user data go straight from the browser to Supabase (public/js/core/supabase.js).
  * Start it with `npm start` in backend/. Settings: backend/.env (see .env.example).
  */
 const path = require("node:path");
@@ -33,20 +33,29 @@ if (
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Production hardening. Vercel sits behind a trusted reverse proxy.
+app.disable("x-powered-by");
+app.set("trust proxy", 1);
+
 // Quick check that the server is up (makes no upstream calls)
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-// API routes come before the static files, so nothing in frontend/ can shadow them.
+// API routes come before the static files, so nothing in public/ can shadow them.
 // JSON bodies are parsed only for the routes that take one, each with a size cap.
 app.use("/api/tenrai", animeRoutes);
 app.use("/api/neko", express.json({ limit: "32kb" }), nekoRoutes);
 app.use("/api/recommend", express.json({ limit: "64kb" }), recommendRoutes);
 app.use("/api/account", accountRoutes);
 // Everything else is the static site: the HTML pages, css/, js/ and assets/
-app.use(express.static(path.join(__dirname, "../../frontend")));
+app.use(express.static(path.join(__dirname, "../public")));
 
-app.listen(PORT, () => {
-  console.log(`Nekai is running at http://localhost:${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Nekai is running at http://localhost:${PORT}`);
+  });
+}
+
+// Vercel imports the Express app as a serverless function; local npm start still listens above.
+module.exports = app;

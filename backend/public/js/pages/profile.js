@@ -48,7 +48,7 @@
           (p.bio ? '<p class="pf-bio">' + esc(p.bio) + "</p>" : "") +
         "</div>" +
         '<div class="pf-actions"><a class="btn btn-soft" href="settings.html">' + icon("edit", 18) + "Edit profile</a>" +
-        '<button type="button" id="share" class="btn btn-soft">' + icon("share", 18) + "Share list</button></div>" +
+        '<button type="button" id="share" class="btn btn-soft" hidden>' + icon("share", 18) + "Share list</button></div>" +
       "</div>" +
       '<dl class="pf-nums">' + nums.map(function (n) { return "<div><dd>" + n[0] + "</dd><dt>" + n[1] + "</dt></div>"; }).join("") +
         // top genres fill the rest of the strip, right after Best streak

@@ -9,6 +9,7 @@ const router = require("express").Router();
 const { askGemini } = require("../services/gemini");
 const { getTenrai } = require("../services/tenrai");
 const { rateLimiter } = require("../services/rate-limit");
+const { requireUser } = require("../services/supabase");
 
 // Request limits, how many titles to ask Gemini for, and how many picks to return
 const MAX_HISTORY = 60;
@@ -115,7 +116,7 @@ async function resolve(pick) {
 }
 
 // Validate → rate-limit → ask Gemini → find each pick on MyAnimeList
-router.post("/", async (req, res) => {
+router.post("/", requireUser, async (req, res) => {
   const { history, exclude = [], notInterested = [], favoriteGenres = [] } = req.body || {};
 
   if (
@@ -133,7 +134,7 @@ router.post("/", async (req, res) => {
     return res.status(400).json({ error: "Invalid watch history" });
   }
 
-  if (rateLimited(req.ip)) {
+  if (rateLimited(`${req.user.id}:${req.ip}`)) {
     return res
       .status(429)
       .json({ error: "Too many refreshes. Try again in a minute." });
