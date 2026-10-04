@@ -147,7 +147,6 @@
         anime: {},
         profile: {
           name: p.display_name || "",
-          handle: p.handle || "",
           email: user.email || "",
           bio: p.bio || "",
           avatar: p.avatar_url || "", // the profile picture's public URL (avatars bucket), or none
@@ -349,23 +348,6 @@
     if (pending) e.preventDefault();
   });
 
-  /* ---------- account ---------- */
-  // Handles are 3–30 of a–z, 0–9 and _, and unique; add digits until one is free
-  function claimHandle(name) {
-    var base = String(name || "").toLowerCase().replace(/[^a-z0-9_]+/g, "").slice(0, 24);
-    if (!base) base = "nekaifan";
-    else if (base.length < 3) base += "_fan";
-    function attempt(n) {
-      var handle = n ? base + Math.floor(1000 + Math.random() * 9000) : base;
-      return sb.from("profiles").update({ handle: handle }).eq("user_id", user.id).then(function (res) {
-        if (!res.error) return handle;
-        if (res.error.code === "23505" && n < 5) return attempt(n + 1); // taken
-        throw res.error;
-      });
-    }
-    return attempt(0);
-  }
-
   /* ---------- profile picture ----------
      Files live in the public "avatars" bucket, one folder per user (avatars/<user id>/...).
      Each upload gets a new file name, so browsers never show a cached old picture;
@@ -459,7 +441,6 @@
     // fn(error) runs when a save fails
     onSaveError: function (fn) { failListeners.push(fn); },
     flush: function () { return writes; },
-    claimHandle: claimHandle,
     uploadAvatar: uploadAvatar,
     removeAvatar: removeAvatar,
     token: token,

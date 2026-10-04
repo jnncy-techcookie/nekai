@@ -1,7 +1,7 @@
 /* Sign in / create account with Supabase (email and password).
- * A new account gets its profile and settings rows from a database trigger; this page
- * then gives it a handle and sends it to the genre picker. ?mode=reset is where the
- * password reset email lands: the link signs the user in to choose a new password.
+ * A new account gets its profile and settings rows from a database trigger, then
+ * continues to the genre picker. ?mode=reset is where the password reset email lands:
+ * the link signs the user in to choose a new password.
  */
 (function () {
   "use strict";
@@ -136,9 +136,7 @@
         if (r.error) throw r.error;
         // With email confirmation on, Supabase returns no session until the link is clicked
         if (!r.data.session) { busy(false); setMode("signin"); em.value = email; say("Check your inbox: we’ve sent a link to confirm " + email + "."); return; }
-        return db.session().then(function () { return db.claimHandle(name); }).catch(function (err) {
-          console.warn("Couldn’t set a handle:", err); // the account still works without one
-        }).then(function () { location.href = "welcome.html"; });
+        location.href = "welcome.html";
       }).catch(function (err) { busy(false); say(friendly(err)); });
       return;
     }
