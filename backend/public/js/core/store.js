@@ -775,6 +775,8 @@
           tot++;
         });
       });
+      if (!tot) return [];
+
       var top = Object.keys(g)
         .sort(function (a, b) {
           return g[b] - g[a];
