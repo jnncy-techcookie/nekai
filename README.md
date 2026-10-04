@@ -1,159 +1,422 @@
 # NEKAI — Anime Watchlist
 
-A responsive anime watchlist with a plain HTML, CSS and JavaScript frontend and a small Express backend. The backend serves the site and fetches anime data from the [Tenrai API](https://api.tenrai.org/documentation) (an unofficial MyAnimeList data provider).
+NEKAI is a responsive full-stack anime tracking and discovery web app. Users can build and manage an anime library, track episode progress, rate and review titles, maintain watch streaks, unlock achievements, discover personalized recommendations, and chat with **Neko**, NEKAI's Gemini-powered anime watch buddy.
 
-## Run it
+The browser UI is built with plain **HTML, CSS, and JavaScript** and is served by a small **Node.js + Express** backend. **Supabase** provides authentication, PostgreSQL data storage, and profile-image storage. Anime data comes from the **Tenrai API**, and AI features use the **Google Gemini API**. The production app is prepared for **Vercel** deployment.
+
+## Current features
+
+### Accounts and onboarding
+
+- Email/password sign up and sign in through Supabase Auth.
+- New accounts start with an empty library instead of sample watchlist data.
+- First-time onboarding asks the user to choose **3 favorite genres**. These are used as the starting point for personalization until the user builds watch history.
+- Password reset and email-change flows.
+- Editable display name and bio.
+- Upload, change, or remove a profile picture. Images are validated, center-cropped, resized to 256 × 256, and stored in Supabase Storage.
+- Sign out and permanent account deletion.
+- Usernames/handles are no longer part of the profile model.
+
+### Home
+
+- Personalized greeting and account summary.
+- Continue-watching section with episode progress controls.
+- Library status overview.
+- Current watch streak and latest achievement.
+- XP and level progress.
+- **Picked for you** recommendations based on the same recommendation data used by Discover.
+
+### Library
+
+- Full watchlist CRUD: add, view, update, and remove anime.
+- Statuses: **Watching**, **Plan to Watch**, **Completed**, and **Dropped**.
+- Search, status filters, sorting, and list/card layouts.
+- Episode progress controls.
+- Personal 1–10 rating, separate from the MyAnimeList community score.
+- Written review/note support.
+- Inline status changes.
+- Multi-select mode for moving or removing several anime at once.
+- Ctrl/Cmd-click, Shift-click, Ctrl/Cmd+A, hover checkboxes, and touch long-press selection.
+- Undo support for major library actions.
+- Completing the final episode automatically marks the anime as completed.
+
+### Discover
+
+- Live anime search through Tenrai.
+- Type filtering and multi-genre filtering.
+- Genres are fetched dynamically from Tenrai instead of being hardcoded.
+- The most populated genres are surfaced first, while the full list stays alphabetized.
+- Search results use pagination and current card/skeleton styling.
+- **What should I watch next?** randomizer:
+  - choose up to 5 genres or leave them blank for a fully random result;
+  - skips titles already watched or dropped;
+  - animated wheel/card reveal;
+  - selected anime opens in a result dialog with **Add to Library**, **View details**, and **Spin again**.
+- **Nekai's Picks** — Gemini-assisted recommendations personalized to the current user.
+- **Popular right now** — top-rated currently airing titles from MyAnimeList/Tenrai.
+- **Not interested** removes a title from recommendation surfaces and future picks.
+- Offline/rate-limit fallbacks use NEKAI's built-in sample catalog where possible.
+
+### Anime detail panel
+
+NEKAI does not use a separate details page. Anime links open a reusable split-view detail panel on the current page using URLs such as `#anime-<mal_id>`.
+
+The panel can show:
+
+- poster and basic metadata;
+- genres, type, year/season, studio, score, and episode information;
+- synopsis;
+- trailer when available;
+- episode list/data;
+- current library status and progress;
+- rating/review controls;
+- add, update, or remove actions.
+
+On wide screens the panel sits beside the page. On smaller screens it takes over the content area. It can be closed with the X button, Escape, or browser Back.
+
+### Profile, progression, and achievements
+
+- Profile picture, display name, member-since year, and bio.
+- Library totals, completed count, watched episodes, average rating, and best streak.
+- Five highest-rated anime.
+- Favorite-genre breakdown based on anime the user has actually started, completed, or dropped.
+- Empty accounts correctly show a zero/empty genre state instead of assigning the remainder to **Other**.
+- XP, levels, rank titles, and XP breakdown.
+- Persistent achievements with unlock timestamps.
+- Latest unlocked achievement appears on Home.
+
+### Neko — AI watch buddy
+
+Neko is available as a floating chat assistant across the authenticated app.
+
+Neko can use a summary of the user's:
+
+- library and statuses;
+- ratings and reviews;
+- watch streak;
+- XP and level;
+- achievements;
+- recommendation context.
+
+The backend sends Neko requests to Gemini. Requests require a valid Supabase access token and are rate-limited server-side. Neko conversation data is stored in Supabase. Some database tables and columns still use the older **Lolli** naming for compatibility, while the user-facing app consistently uses **Neko**.
+
+### Settings and experience
+
+- Profile picture, display name, email, and bio editing.
+- Change-password flow.
+- Sound effects toggle.
+- Completion confetti toggle.
+- Neko supporter toggle.
+- Streak reminder toggle.
+- Dark mode.
+- Reduce motion.
+- CSV watchlist export.
+- Sign out.
+- Permanent account deletion.
+
+## Pages
+
+All browser-facing files now live in `backend/public/`.
+
+| File | Page | Main purpose |
+|---|---|---|
+| `index.html` | Home | Greeting, continue watching, stats, streak, achievement, personalized picks |
+| `library.html` | Library | Search/filter/sort library, progress, ratings, status, bulk actions |
+| `discover.html` | Discover | Tenrai search, dynamic genre filters, randomizer, AI picks, popular anime |
+| `profile.html` | Profile | User stats, XP/level, top-rated titles, favorite genres, achievements |
+| `settings.html` | Settings | Account/profile editing, preferences, CSV export, sign out/delete |
+| `welcome.html` | Onboarding | Pick 3 favorite genres for a new account |
+| `signin.html` | Authentication | Sign in, account creation, password-reset flow |
+| `#anime-<id>` | Detail panel | Opens anime details inside the current page |
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | HTML5, CSS3, vanilla JavaScript |
+| Backend | Node.js 24.x, Express 5 |
+| Authentication | Supabase Auth |
+| Database | Supabase PostgreSQL |
+| File storage | Supabase Storage |
+| Anime data | Tenrai API v1 / MyAnimeList data |
+| AI | Google Gemini API |
+| Hosting | Vercel |
+| Client library | `@supabase/supabase-js` |
+
+## How personalization works
+
+### Favorite genres for a new account
+
+A new account starts with no viewing history. During onboarding, the user chooses 3 favorite genres. Until the user starts adding and rating anime, those genres are used as the fallback signal for match percentages and AI recommendations.
+
+For a title with no viewing history yet, the local match score is based on how many of the user's 3 chosen genres appear in that anime:
+
+| Matching favorite genres | Starting match |
+|---:|---:|
+| 0 | 48% |
+| 1 | 68% |
+| 2 | 80% |
+| 3+ | 90% |
+
+### History-based match percentage
+
+Once the user has started anime, the local match formula becomes:
+
+```text
+Match =
+  60% genre overlap
++ 30% rating preference for those genres
++ 10% finish-vs-drop history
+```
+
+The result is mapped into approximately a **35–95%** range.
+
+### Nekai's Picks
+
+The recommendation client sends a summarized version of the user's recent library/history to `POST /api/recommend`. Gemini proposes candidate titles and a fit estimate. The backend resolves those titles through Tenrai, removes anime already in the user's library or marked **Not interested**, and returns the usable recommendations.
+
+For AI-generated picks, the displayed match score blends both systems:
+
+```text
+Final AI match =
+  60% NEKAI history-based match
++ 40% Gemini fit estimate
+```
+
+Recommendations are cached in Supabase and are refreshed when relevant library/recommendation inputs change, when they become stale, or when the user requests **New picks**.
+
+**Popular right now** is different: the list itself comes from Tenrai's top currently airing titles. NEKAI may still show a user-specific match percentage on those cards, but the popularity ranking is not personalized.
+
+## Data and persistence
+
+Supabase is the source of truth for account data.
+
+The app currently persists data such as:
+
+- user profile and onboarding choices;
+- library entries and statuses;
+- watched episode history;
+- ratings and written reviews;
+- earned achievements;
+- hidden / Not interested recommendations;
+- cached AI recommendations;
+- user settings and UI preferences;
+- Neko conversations and messages;
+- anime metadata cached in `anime_catalog`.
+
+Deleting a library item uses a soft-delete timestamp so changes can be synchronized safely. Deleting the account uses the backend's Supabase admin access and removes the user's account data through the configured database relationships.
+
+For faster page changes, NEKAI also keeps a temporary per-tab account snapshot in `sessionStorage`. Supabase remains the source of truth, and the page refreshes from Supabase in the background. Local storage is used for display/layout settings needed before first paint, such as dark mode and sidebar state.
+
+## CRUD and online integration
+
+NEKAI still covers the core CRUD + online-service requirements of the original anime watchlist project:
+
+| Requirement | NEKAI implementation |
+|---|---|
+| Create | Add an anime to the library |
+| Read | Load and display the signed-in user's saved library |
+| Update | Change status, episode progress, rating, or review |
+| Delete | Remove one or multiple anime from the library |
+| Persistent data | Supabase PostgreSQL |
+| Online lookup | Search and fetch live anime data through Tenrai |
+| JSON handling | Browser ↔ Express ↔ Tenrai/Gemini/Supabase integrations |
+| Safe integration | Server-side secrets, access-token validation, request validation, and rate limiting |
+
+## Local development
+
+### Requirements
+
+- Node.js **24.x**
+- npm
+- Access to the configured Supabase project
+- Gemini API key for Neko and AI recommendations
+
+### 1. Install dependencies
 
 From the repository root:
 
 ```bash
 cd backend
-npm install
+npm ci
+```
+
+### 2. Create the backend environment file
+
+Copy:
+
+```text
+backend/.env.example
+```
+
+to:
+
+```text
+backend/.env
+```
+
+Then provide the required server-side values:
+
+```env
+SUPABASE_URL=...
+SUPABASE_SECRET_KEY=...
+GEMINI_API_KEY=...
+```
+
+`backend/.env` is gitignored and must never be committed.
+
+The browser uses the Supabase publishable key from `backend/public/js/core/supabase.js`. A publishable key is expected to be visible in frontend code; security depends on the project's Row Level Security policies. The Supabase secret/service-role key must stay server-side.
+
+### 3. Start NEKAI
+
+```bash
 npm start
 ```
 
-Copy `backend/.env.example` to `backend/.env` and fill it in. `.env` is gitignored, and every key in it stays on the server.
+Open:
 
-- `SUPABASE_URL` and `SUPABASE_SECRET_KEY` (Supabase → Project Settings → API keys): the server uses the secret key to fill `anime_catalog` and to delete accounts. Never put it in frontend code.
-- `GEMINI_API_KEY` turns on the **Neko chatbot** and AI picks (get one at [Google AI Studio](https://aistudio.google.com/apikey)). Without it, the rest of the app works and Neko explains that it isn't set up.
+```text
+http://localhost:3000
+```
 
-The browser signs in with Supabase's publishable key, set in `frontend/js/core/supabase.js`. It's safe to ship: row level security only lets each user read and write their own rows. For password reset emails, add `http://localhost:3000/signin.html` to *Authentication → URL Configuration → Redirect URLs* in Supabase.
+A quick backend health check is available at:
 
-Open [http://localhost:3000](http://localhost:3000). The frontend calls the backend at `/api/tenrai`; the backend requests `https://api.tenrai.org/v1`. To deploy live anime search, deploy both the frontend and the Node.js backend.
+```text
+http://localhost:3000/api/health
+```
 
-## Pages
+## Vercel deployment
 
-| File (in `frontend/`) | Page | What it does |
-|---|---|---|
-| `index.html` | Home | Greeting, stats, continue-watching hero with episode stepper, streak, latest achievement, *Picked for you* row |
-| `library.html` | Library | Search, sort and filter by status (Watching / Plan to Watch / Completed / Dropped); change progress, rating (a "★ 8.4" button that opens a pane: drag across the stars or type 1–10, one decimal) and status inline; remove |
-| `discover.html` | Discover | Live Tenrai search with type and genre filters, *What should I watch next?* genre picker, Nekai's Picks (AI recommendations with a match % and High / Medium / Low tier), browse-by-genre signs |
-| `<page>#anime-<id>` | Anime details | There is no separate details page. Titles, posters and "View details" links (`#anime-<id>`, where `id` is the MyAnimeList ID) open the **detail panel** (`js/core/detail-panel.js`) as a split view beside the page: poster, stats, synopsis, watchlist controls, details, trailer and episodes. It sits next to the content from 1024px (1280px with the sidebar expanded) and takes the content's place on narrower screens. Close with the X, Esc or Back; Ctrl/⌘-click opens the same page in a new tab with the panel open |
-| `profile.html` | Profile | Level and XP, stats dashboard, favorite-genre mix, achievements |
-| `settings.html` | Settings | Profile form with validation, sound / confetti / Neko / streak toggles, reduce motion, larger text, stronger outlines, CSV export, sign out, delete |
-| *(every page)* | Neko chat | Click the floating Neko button at the bottom right of any page; the chat box grows out of it (click again, ×, or Esc to close). On phones it sits above the tab bar and the chat opens as a bottom sheet. Neko's greeting includes the page's tip, such as a streak reminder. Neko answers with Google Gemini and knows your list, ratings, streak, XP and achievements |
-| `signin.html` | Sign in / Create account | Validated forms with show-password and loading states |
+The repository is structured so Vercel can deploy the Express backend and static frontend together.
+
+Use:
+
+| Setting | Value |
+|---|---|
+| Production branch | `main` |
+| Root Directory | `backend` |
+| Framework preset | Express / auto-detect |
+| Node.js | `24.x` |
+| Build Command | default / blank |
+| Output Directory | default / blank |
+| Install Command | default / blank |
+
+Required Vercel environment variables:
+
+```text
+GEMINI_API_KEY
+SUPABASE_URL
+SUPABASE_SECRET_KEY
+```
+
+Set them for both **Production** and **Preview** environments. Do not manually set `PORT`.
+
+After deployment, update Supabase **Authentication → URL Configuration**:
+
+- Site URL → the production Vercel URL
+- Redirect URLs → the production Vercel URL pattern
+- Keep `http://localhost:3000/**` for local development
+
+See `backend/VERCEL_DEPLOY.md` for the deployment checklist.
 
 ## Project structure
 
-```
-nekai-anime-watchlist/
+```text
+nekai/
 ├── README.md
-├── backend/                   Express server and Tenrai API proxy
-│   ├── package.json
-│   └── src/
-│       ├── server.js          serves the frontend and /api/tenrai
-│       ├── routes/anime.js    validates anime requests
-│       ├── routes/neko.js    Neko chat: validates, rate-limits, builds the prompt
-│       ├── routes/recommend.js AI picks: asks Gemini for JSON picks, finds each on MyAnimeList via Tenrai
-│       ├── routes/account.js  deletes the signed-in user's account (Supabase admin API)
-│       ├── services/tenrai.js queues and caches upstream requests
-│       ├── services/catalog.js saves anime details from Tenrai into Supabase's anime_catalog
-│       ├── services/supabase.js server-side Supabase client (secret key) and access-token check
-│       ├── services/gemini.js calls the Gemini API (key from backend/.env)
-│       └── services/rate-limit.js per-IP request limits for the Gemini routes
-└── frontend/                  the browser interface
-    ├── index.html, library.html, discover.html,
-    │   profile.html, settings.html, signin.html
-    ├── assets/
-    │   ├── fonts/             Kamikaze 3D Gradient, The Last Shuriken (declared in css/base/fonts.css)
-    │   └── icons/favicon.svg
-    ├── css/
-    │   ├── main.css           entry point; @imports the files below in cascade order
-    │   ├── base/              fonts.css (@font-face), tokens.css (colors, sizes), base.css (reset, type scale)
-    │   ├── components/        components.css (buttons, cards, chips, pills, forms, poster art, picks, toasts)
-    │   ├── layout/            shell.css (sidebar, mobile bars), helpers.css (spacing, grids), responsive.css
-    │   ├── pages/             one stylesheet per page
-    │   └── utilities/         preferences.css (reduce motion, larger text, stronger outlines)
-    └── js/
-        ├── data/sample-data.js   curated catalog (keyed by real MyAnimeList IDs), starter picks, genre colors
-        ├── core/supabase.js      Supabase client: loads the signed-in user's data and saves each change
-        ├── core/start.js         checks the session, loads the data, then runs the page's scripts
-        ├── core/store.js         the user's data in memory, list actions with undo, streak / XP / achievements / match %
-        ├── core/ui.js            icons, app shell (sidebar, mobile bars, floating Neko button), toasts, confetti, sound, shared components
-        ├── core/neko.js         Neko chat panel (sends your list summary to /api/neko/chat)
-        ├── core/detail-panel.js  the anime detail panel, a split view beside the page (opens from any #anime-<id> link)
-        ├── services/tenrai.js     Tenrai client: rate-limited queue, 429 retry, normalisation
-        ├── services/recommend.js  AI picks client (Discover only): sends your history to /api/recommend, saves the picks
-        └── pages/                one script per page
+└── backend/
+    ├── .env.example
+    ├── VERCEL_DEPLOY.md
+    ├── package.json
+    ├── package-lock.json
+    ├── public/                     Browser application
+    │   ├── index.html
+    │   ├── library.html
+    │   ├── discover.html
+    │   ├── profile.html
+    │   ├── settings.html
+    │   ├── signin.html
+    │   ├── welcome.html
+    │   ├── assets/
+    │   ├── css/
+    │   └── js/
+    │       ├── data/
+    │       │   └── sample-data.js
+    │       ├── core/
+    │       │   ├── boot.js
+    │       │   ├── start.js
+    │       │   ├── store.js
+    │       │   ├── supabase.js
+    │       │   ├── ui.js
+    │       │   ├── neko.js
+    │       │   ├── panes.js
+    │       │   └── detail-panel.js
+    │       ├── services/
+    │       │   ├── tenrai.js
+    │       │   └── recommend.js
+    │       └── pages/
+    │           ├── home.js
+    │           ├── library.js
+    │           ├── discover.js
+    │           ├── profile.js
+    │           ├── settings.js
+    │           ├── signin.js
+    │           └── welcome.js
+    └── src/                        Express backend
+        ├── server.js
+        ├── routes/
+        │   ├── anime.js
+        │   ├── neko.js
+        │   ├── recommend.js
+        │   └── account.js
+        └── services/
+            ├── tenrai.js
+            ├── catalog.js
+            ├── supabase.js
+            ├── gemini.js
+            └── rate-limit.js
 ```
 
-HTML pages sit at the root of `frontend/` so their URLs stay short and links between pages are plain file names.
+### Main backend routes
 
-Scripts are classic `<script>` tags that share one `window.NEKAI` namespace. Serve the site through the backend so `/api/tenrai` is available. Each page loads Supabase's library, `data/sample-data.js` and `core/supabase.js`, then `core/start.js`, which runs the scripts listed in its `data-app` attribute in dependency order (`core/store.js`, `services/tenrai.js`, `core/ui.js`, `core/neko.js`, then the page's own `pages/*.js`) once the user's data has loaded.
+| Route | Purpose |
+|---|---|
+| `GET /api/health` | Deployment/server health check |
+| `/api/tenrai/*` | Validated Tenrai proxy and anime metadata caching |
+| `POST /api/neko/chat` | Authenticated Gemini-powered Neko chat |
+| `POST /api/recommend` | Authenticated Gemini + Tenrai recommendations |
+| `DELETE /api/account` | Permanently delete the signed-in Supabase account |
 
-Add new styles to the file that matches their scope (a token, a shared component, a single page), and add any new stylesheet to `css/main.css` so it loads.
+## Important app rules
 
-## How the data works
+- Episode progress cannot exceed a known total.
+- Incrementing a **Plan to Watch** anime starts it and changes the status to **Watching**.
+- Watching the final known episode automatically changes the anime to **Completed**.
+- Personal ratings and MyAnimeList community scores are stored/displayed separately.
+- Completion confetti only triggers on the first completion and is disabled when Reduce motion is on.
+- Achievements stay earned once unlocked.
+- Watch streaks are based on days with logged episode activity.
+- Major list changes offer Undo.
+- Favorite-genre statistics ignore **Plan to Watch** titles because the user has not started them yet.
 
-- **Accounts**: every page needs a Supabase account (email and password). Signed-out visitors go to the sign-in page, and a new account starts empty, then picks 3 genres.
-- **Your data** lives in Supabase: the library (`user_anime`), watch history (`watch_events`, one row per change), badges (`user_achievements`), *Not interested* titles, AI picks, settings, profile and Neko chats. `core/start.js` loads it all before the page runs, and `core/supabase.js` compares each change with what was last saved and writes only the rows that changed. Removing a title sets `deleted_at` instead of deleting the row. *Settings → Delete account* calls `DELETE /api/account`, which removes the account and, through the tables' cascades, all its data. Neko was called Lolli before, so its data keeps the old names in Supabase: the `lolli_conversations` / `lolli_messages` tables and the `lolli` / `lolli_hidden` columns of `user_settings` (`core/supabase.js` maps them).
-- **Anime details** (title, poster, genres…) are saved to `anime_catalog` by the backend whenever it fetches them from Tenrai, so a library loads without asking Tenrai again. The only thing kept in the browser is this device's sidebar and theme (`nekai:display`), so pages paint in the right theme before your data arrives.
-- **Nekai's Picks** (Discover, and *Picked for you* on Home once they exist) come from Gemini. `services/recommend.js` sends up to 60 of your titles with their genres, status, rating and the first 200 characters of your review (if any) to `POST /api/recommend`. Gemini returns 10 titles, each with a one-line reason and a 0–100 fit estimate. The backend finds each title on MyAnimeList through Tenrai and drops anything already on your list or marked *Not interested*, keeping 8. Picks are saved in `user_recommendations` and only requested again when a title, status, rating, review or *Not interested* changes, after a day, or when you select **New picks**. If the AI can't answer, the curated picks in `sample-data.js` are shown and the page says so.
-- **Match %** on AI picks is 60% the history formula (`store.match`: genre overlap, genres you rated highly, finished vs dropped) and 40% the AI's fit estimate (`store.blendMatch`). Other cards use the formula alone. Tiers: **High** 80%+, **Medium** 65–79%, **Low** under 65%.
-- **Tenrai** is called for search, anime details, episode lists, the genre picker and poster images. Browser requests are spaced 400 ms apart, and the backend queues requests across users and caches successful responses. Tenrai's public limit is 120 requests per minute, 4 per second, and 40,000 per day per IP.
-- **Offline or rate-limited?** Search falls back to the built-in sample list, and the detail panel shows saved data. Each fallback is clearly labelled in the UI.
+## Responsive design and accessibility
 
-### Rules the app enforces
-- Episode progress can't go past the total. Unknown totals show a count with no percentage.
-- When every episode is watched, NEKAI offers **Mark completed**.
-- Adding an episode to a *Plan to Watch* title moves it to *Watching*.
-- Confetti plays only the **first** time a title is completed, and never with reduce motion on.
-- Your personal 1–10 rating is kept separate from the MyAnimeList community score.
-- Changes to your list show a toast with **Undo** (removing, rating, status changes, adding episodes).
+NEKAI supports desktop, tablet, and phone layouts.
 
-### Formulas
-- **Match %** = 60% genre overlap with your viewing + 30% how highly you rate those genres + 10% finish-vs-drop history, mapped to 35–95%.
-- **XP** = 2 per episode + 50 per completed anime + 5 per rating + 10 per written review + 25 per badge + a streak bonus: each day you watch earns 5 × the day of the streak it continues (5, 10, 15 … up to 50 a day from day 10). XP is worked out from your list, log and badges, so removing a show takes its XP back.
-- **Levels**: level *n* costs 500 + 100 × (*n* − 1) XP (500, 600, 700 …), so Level 10 takes 8,100 XP in total.
-- **Titles** cover a range of levels: Newcomer 1–2, Casual Viewer 3–4, Regular 5–7, Weekend Binger 8–10, Enthusiast 11–14, Seasoned Viewer 15–18, Otaku in Training 19–22, Veteran 23–26, Sensei 27–29, Legend 30–39, then a new rank every 10 levels (Legend II 40–49 … Legend IX 110–119) and **Legendary** (Legend X) from Level 120.
-- **Streak** counts consecutive days with at least one logged episode. Today stays open until midnight.
-  - Episodes are logged by **+1**, and by marking a *Watching* title completed (its remaining episodes count for today). *Plan to Watch → Completed* is treated as backfilling history and isn't logged. **−1** takes back one of today's episodes.
-  - The first episode of the day adds "Day N of your streak" to the toast; days 3, 7, 14, 30, 50, 100 and 365 get confetti and a sound.
-  - With *Settings → Streak reminders* on, from 6 pm Neko warns on every page when a running streak has nothing logged today, and a toast repeats it once a day. With it off, Neko leaves the streak alone.
-- **Achievements** are saved with the time they were unlocked (`earned` in `nekai:v1`), so a badge stays earned even if its condition stops holding (Week Streak counts any 7-day run). A change that unlocks one adds "<name> badge earned!" to its toast, or shows a toast of its own. Home shows the most recently unlocked badge. Badges already earned before unlock times were saved are recorded silently.
+On phones, the desktop sidebar becomes a compact top bar with a menu button that opens the navigation as a drawer. Hover-only interactions are removed or replaced for touch users.
 
-## Design system
+Accessibility support includes labelled form controls, visible keyboard focus, ARIA roles/states, live regions for important feedback, keyboard-operable filters and dialogs, and a Reduce motion setting that works with `prefers-reduced-motion`.
 
-The official palette is **cream, cobalt blue and orange**. The tokens in `css/base/tokens.css` drive everything (some keep older names like `--red` and `--yellow` but hold palette colors):
+## Current limitations / not yet implemented
 
-| Token | Value | Use |
-|---|---|---|
-| `--ink` | `#0F1F5C` | Navy: text, strokes, text on orange |
-| `--paper` | `#F3EAD7` | Cream page background (32 px grid) |
-| `--cream` | `#FAF3E6` | Light cream: sidebar, labels |
-| `--red` | `#F25C05` | Brand orange: primary actions |
-| `--blue` | `#1F3FA6` | Brand cobalt blue |
-| `--yellow` | `#FFA25C` | Light orange: selected nav, accents, score chips |
-| `--pink` / `--teal` / `--orange` | `#FFD3B3` / `#6F8FE8` / `#F7823A` | Peach, periwinkle, mid orange: stats, tags, signs |
-
-- **Type:** Dela Gothic One for display headings; The Last Shuriken (`.display-title`) for the Home greeting and name and the Library, Discover and Profile page titles; Kamikaze 3D Gradient is installed but unused; the body stack is `"Arial Rounded MT Bold", "Trebuchet MS", Arial, sans-serif`. Scale: 48 / 32 / 24 / 20 / 18 / 16 / 14.
-- **Spacing:** an 8 pt scale (8, 16, 24, 32, 48, 64).
-- **Strokes and shadows:** 1.5 px strokes. Shadows appear only on hovered and floating pick cards.
-- **Touch targets:** primary buttons 48 px; icon buttons (close, more, heart) at least 44 × 44.
-- **Breakpoints:**
-
-  | Width | Layout |
-  |---|---|
-  | ≤ 1280 | Home and Profile go to a single column; Library list rows stack |
-  | ≤ 1100 | Tablet: 2-column stats |
-  | ≤ 767 | Phone: the sidebar becomes a top bar plus bottom tabs, and the quick-info panel becomes a bottom sheet |
-
-## Accessibility
-
-- Skip link, landmarks and visible 3 px focus rings.
-- Labelled form fields, with errors announced via `role="alert"` and `aria-invalid`.
-- `role="tab"` status filters with arrow-key support.
-- Switches use `role="switch"`, and progress bars expose their values.
-- The live region announces toasts, and focus is kept when lists re-render.
-- The quick-info panel opens on keyboard focus and closes with Esc.
-- Respects `prefers-reduced-motion`, plus an in-app *Reduce motion* switch.
-
-## Not done yet
-
-- **Google sign-in** isn't set up yet: it needs a Google OAuth client added under *Authentication → Providers* in Supabase.
-- **Share list** copies a link to your list, but there's no public page for someone else's list yet.
+- **Google sign-in** is not enabled yet.
+- **Public Share list pages** are not implemented; the Share list action remains hidden.
+- A completely new Supabase project cannot currently be recreated from the README alone unless the required NEKAI database schema, RLS policies, triggers, and storage configuration are also available.
 
 ## Credits
 
-Anime data © MyAnimeList, served through the unofficial Tenrai API. Fonts: Dela Gothic One via Google Fonts.
+Anime metadata is sourced from MyAnimeList through the unofficial Tenrai API.
+
+NEKAI uses Google Gemini for AI-assisted recommendations and the Neko chat assistant.
+
+Dela Gothic One is loaded through Google Fonts. Additional project fonts and artwork are stored under `backend/public/assets/`.
