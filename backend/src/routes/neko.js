@@ -5,6 +5,7 @@
 const router = require("express").Router();
 const { askGemini } = require("../services/gemini");
 const { rateLimiter } = require("../services/rate-limit");
+const { requireUser } = require("../services/supabase");
 
 // Limits: messages of history sent to Gemini, characters per message, characters of user data
 const MAX_TURNS = 12;
@@ -50,7 +51,7 @@ function toTurns(messages) {
 }
 
 // Validate → rate-limit → ask Gemini. Every failure becomes a short message the chat shows as is.
-router.post("/chat", async (req, res) => {
+router.post("/chat", requireUser, async (req, res) => {
   const { messages, context } = req.body || {};
 
   if (
@@ -74,7 +75,7 @@ router.post("/chat", async (req, res) => {
     return res.status(400).json({ error: "Too much list data" });
   }
 
-  if (rateLimited(req.ip)) {
+  if (rateLimited(`${req.user.id}:${req.ip}`)) {
     return res
       .status(429)
       .json({ error: "Neko needs a breather. Try again in a minute." });

@@ -29,4 +29,14 @@ async function userFromRequest(req) {
   return error ? null : data.user;
 }
 
-module.exports = { getAdmin, userFromRequest };
+// Middleware for API routes that should only be usable by a signed-in Nekai account.
+async function requireUser(req, res, next) {
+  const user = await userFromRequest(req);
+  if (!user) {
+    return res.status(401).json({ error: "Please sign in again, then retry." });
+  }
+  req.user = user;
+  return next();
+}
+
+module.exports = { getAdmin, userFromRequest, requireUser };
