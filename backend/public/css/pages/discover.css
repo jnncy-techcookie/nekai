@@ -733,3 +733,54 @@ html.theme-dark .pick-dlg-card {
 .opt-reduce-motion .pick-dlg.is-closing::backdrop {
   animation: none;
 }
+
+
+/* Discover search loading cards: mirror the current .pick card proportions and spacing. */
+.discover-skeleton-grid .pick {
+  min-width: 0;
+}
+.pick-skeleton .pick-card {
+  pointer-events: none;
+}
+.pick-skel-media {
+  width: 100%;
+  aspect-ratio: 6 / 5;
+  border-radius: 12px;
+}
+.pick-skel-match {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 82px;
+  height: 32px;
+  border-radius: 999px;
+}
+.pick-skel-title {
+  width: 78%;
+  height: 20px;
+}
+.pick-skel-year {
+  width: 52px;
+  height: 16px;
+  margin-left: 12px;
+}
+.pick-skel-score {
+  width: 48px;
+  height: 20px;
+}
+.pick-skel-chip {
+  width: 42px;
+  height: 24px;
+  border-radius: 6px;
+}
+.pick-skel-chip-wide {
+  width: 58px;
+}
+.pick-skel-tag {
+  width: 74px;
+  height: 24px;
+  border-radius: 999px;
+}
+.pick-skel-tag-short {
+  width: 58px;
+}

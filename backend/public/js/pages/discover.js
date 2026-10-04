@@ -86,8 +86,29 @@
     f.note = ""; renderGenres(f); f.onChange();
   }
 
-  // Loading placeholder for one result card
-  var SKEL = '<div class="cart" aria-hidden="true"><div class="skel" style="aspect-ratio:3/4;background:#26336A"></div><div class="cart-label"><div class="skel" style="height:16px;width:80%"></div><div class="skel" style="height:16px;width:56%"></div><div class="skel" style="height:48px;margin-top:16px"></div></div></div>';
+  // Loading placeholder mirrors the current Discover result card so the grid does not jump when data arrives.
+  var SKEL =
+    '<article class="pick pick-skeleton" aria-hidden="true">' +
+      '<div class="pick-card">' +
+        '<div class="pick-media has-cap">' +
+          '<div class="skel pick-skel-media"></div>' +
+          '<div class="skel pick-skel-match"></div>' +
+          '<div class="card-cap"><div class="skel pick-skel-title"></div></div>' +
+        '</div>' +
+        '<div class="skel pick-skel-year"></div>' +
+        '<div class="pick-stats">' +
+          '<div class="skel pick-skel-score"></div>' +
+          '<span class="pick-sep"></span>' +
+          '<div class="skel pick-skel-chip"></div>' +
+          '<span class="pick-sep"></span>' +
+          '<div class="skel pick-skel-chip pick-skel-chip-wide"></div>' +
+        '</div>' +
+        '<div class="pick-tags">' +
+          '<div class="skel pick-skel-tag"></div>' +
+          '<div class="skel pick-skel-tag pick-skel-tag-short"></div>' +
+        '</div>' +
+      '</div>' +
+    '</article>';
 
   // The type chips switched on (TV, Movie, OVA, ONA)
   function typesOn() { return Object.keys(ui.types).filter(function (t) { return ui.types[t]; }); }
@@ -211,7 +232,7 @@
       '<div class="results-toolbar"><div class="row gap-8" role="group" aria-label="Filter by type">' + types + '</div>' + pagination("top") + '</div>';
     var note = ui.offline && !ui.searching ? '<p class="notice" role="status">' + icon("wifiOff", 20) + "<span>Couldn’t reach the Tenrai API, so these results come from NEKAI’s built-in sample list. Check your connection and search again for everything on MyAnimeList.</span></p>" : "";
     var body;
-    if (ui.searching) body = '<div class="grid-auto">' + SKEL + SKEL + SKEL + SKEL + "</div>";
+    if (ui.searching) body = '<div class="pick-grid discover-skeleton-grid">' + SKEL + SKEL + SKEL + SKEL + "</div>";
     else if (ui.results.length) body = '<div id="r-row"></div>';
     else body = U.emptyState("No match", ui.submitted ? "Nothing found for " + ui.submitted : "Nothing found",
       "Check the spelling, try the Japanese title, or clear the type and genre filters.",
