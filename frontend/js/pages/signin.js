@@ -52,7 +52,10 @@
   // Supabase's messages, in NEKAI's words where we know them
   function friendly(err) {
     var m = String((err && err.message) || "");
-    if (/invalid login credentials/i.test(m)) return "That email and password don’t match an account.";
+    // Supabase gives the same answer for an unknown email and a wrong password, so nobody can
+    // find out which emails have an account; the message covers both
+    if (/invalid login credentials/i.test(m)) return "Incorrect email or password. Check them and try again, or create an account if you don’t have one yet.";
+    if (/email not confirmed/i.test(m)) return "Confirm your email first: open the link we sent you, then sign in.";
     if (/already registered|already exists/i.test(m)) return "There’s already an account with that email. Sign in instead.";
     if (/rate limit|too many/i.test(m)) return "Too many tries. Wait a minute, then try again.";
     if (/failed to fetch|network/i.test(m)) return "Can’t reach NEKAI’s account service. Check your connection and try again.";
@@ -103,11 +106,12 @@
     say("Google sign-in isn’t available yet. Use your email and password.");
   });
 
+  // The spinner replaces the button's contents, so keep them (label and arrow) to put back afterwards
+  var submitBtn = U.$("#submit"), submitHtml = submitBtn.innerHTML;
   function busy(on, label) {
-    var btn = U.$("#submit");
-    btn.disabled = on;
-    if (on) { btn.setAttribute("aria-busy", "true"); btn.innerHTML = '<span class="spinner" aria-hidden="true"></span>' + label; }
-    else { btn.removeAttribute("aria-busy"); paint(); }
+    submitBtn.disabled = on;
+    if (on) { submitBtn.setAttribute("aria-busy", "true"); submitBtn.innerHTML = '<span class="spinner" aria-hidden="true"></span>' + label; }
+    else { submitBtn.removeAttribute("aria-busy"); submitBtn.innerHTML = submitHtml; paint(); }
   }
 
   U.$("#auth-form").addEventListener("submit", function (e) {
