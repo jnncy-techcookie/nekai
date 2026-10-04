@@ -354,7 +354,7 @@
   }
 
   /* ---------- the pick, popped out ----------
-     A modal over a dimmed page: poster, clickable title, details, Add to Library and Spin again.
+     A modal over a dimmed page: poster, title, details, Add to Library, View details and Spin again.
      ✕, Esc or a click on the dimmed page closes it; the pick stays listed under the wheel. */
   var dlg = document.createElement("dialog");
   dlg.className = "pick-dlg";
@@ -371,12 +371,13 @@
         '<div class="pick-dlg-poster">' + U.art(e) + "</div>" +
         '<div class="pick-dlg-body">' +
           '<span class="pick-dlg-eyebrow">Your pick</span>' +
-          '<h2 id="pick-dlg-title" class="pick-dlg-title"><a class="title-link" data-dlg-key="details" data-pick-details href="' + U.detailsHref(e) + '">' + esc(e.title) + "</a></h2>" +
+          '<h2 id="pick-dlg-title" class="pick-dlg-title">' + esc(e.title) + "</h2>" +
           '<div class="pick-dlg-meta">' + U.scoreBadge(e) + '<span class="small muted semibold">' + esc([e.type, e.epsText, (e.genres || []).join(" · ")].filter(Boolean).join(" · ")) + "</span></div>" +
           '<div class="pick-dlg-actions">' +
             '<button type="button" data-dlg-key="add" class="btn ' + (e.inList ? "btn-accent" : "btn-primary btn-add") + '" data-act="toggle" data-id="' + e.id + '" aria-pressed="' + e.inList + '">' + (e.inList ? "✓ " + D.statuses[e.status].label : "Add to Library") + "</button>" +
-            '<button type="button" class="btn btn-secondary" data-dlg-key="again" data-pick-again>' + icon("play", 16) + "Spin again</button>" +
+            '<a class="btn btn-secondary" data-dlg-key="details" data-pick-details href="' + U.detailsHref(e) + '">View details</a>' +
           "</div>" +
+          '<button type="button" class="pick-dlg-again" data-dlg-key="again" data-pick-again>' + icon("play", 16) + "Spin again</button>" +
         "</div>" +
       "</div>";
     if (had) { var f = dlg.querySelector('[data-dlg-key="' + had + '"]'); if (f) f.focus(); }
@@ -419,11 +420,11 @@
     if (ui.pick && !ui.finding) {
       var e = S.entry(ui.pick);
       U.render(out, '<div class="wheel-result"><span class="eyebrow">YOUR PICK</span>' +
-        '<h3 class="h2"><a class="title-link" href="' + U.detailsHref(e) + '">' + esc(e.title) + "</a></h3>" +
+        '<h3 class="h2">' + esc(e.title) + "</h3>" +
         '<div class="row gap-16" style="justify-content:center">' + U.scoreBadge(e) + '<span class="small muted semibold">' + esc([e.type, e.epsText, e.genres.join(" · ")].filter(Boolean).join(" · ")) + "</span></div>" +
         '<div class="row gap-16" style="justify-content:center;margin-top:8px">' +
           '<button type="button" class="btn ' + (e.inList ? "btn-accent" : "btn-primary btn-add") + '" data-act="toggle" data-id="' + e.id + '" aria-pressed="' + e.inList + '">' + (e.inList ? "✓ " + D.statuses[e.status].label : "Add to Library") + "</button>" +
-          '<button type="button" class="btn btn-secondary" data-pick-inline-again>' + icon("play", 16) + "Spin again</button></div></div>');
+          '<a class="btn btn-secondary" href="' + U.detailsHref(e) + '">View details</a></div></div>');
     } else if (ui.pickNone && !ui.finding) {
       U.render(out, '<div class="prompt" role="status" style="background:#FFE9D6;border-color:var(--ink);color:var(--ink)">' +
         (names.length ? "No anime you haven’t seen has all of these genres: " + esc(names.join(", ")) + ". Remove a genre to widen the pool." : "Couldn’t find an anime you haven’t seen. Spin again.") + "</div>");
@@ -533,9 +534,6 @@
     if (e.target.id === "clear" || e.target.id === "clear2") clearSearch();
   });
   U.$("#find").addEventListener("click", find);
-  U.$("#pick-out").addEventListener("click", function (e) {
-    if (e.target.closest("[data-pick-inline-again]")) find();
-  });
 
   S.subscribe(function () { renderResults(); renderPicker(); renderPicks(); renderPopular(); if (dlg.open) renderPickDialog(); });
   renderSearch(); loadGenres(); renderResults(); renderPicker(); renderPopular(); renderPicks(); layoutWheel(HOME, 0);
