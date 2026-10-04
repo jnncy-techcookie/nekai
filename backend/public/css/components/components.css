@@ -1173,6 +1173,15 @@ textarea {
   right: calc(100% + 16px);
   transform: translateX(8px);
 }
+/* Hidden previews must not extend the row's scrollable end. Otherwise opening
+   a final card on the left shrinks the row, shifts its scroll position and
+   triggers the scroll handler that immediately closes the preview. */
+@media (min-width: 768px) {
+  .pick-row .pick:not(.is-open) .qi {
+    left: auto;
+    right: calc(100% + 16px);
+  }
+}
 .pick.is-open .qi {
   opacity: 1;
   visibility: visible;
