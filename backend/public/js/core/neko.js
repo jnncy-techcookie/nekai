@@ -288,6 +288,7 @@
   }
   // from: the button that opened the chat (focus returns there on close)
   function open(from) {
+    stopPeeks(); // Neko has been found: no more "peek" bubbles this session (below)
     var first = !panel;
     if (first) build();
     opener = from || document.activeElement;
@@ -316,6 +317,85 @@
     e.preventDefault();
     if (isOpen()) close();
     else open(b);
+  });
+
+  /* ---------- "peek" bubbles ----------
+     The button is small, so while the chat is closed Neko says hello now and then: a speech bubble
+     beside the button, 8 s after the page opens, then again after each 30 s break; about 7 s each, cycling through
+     PEEKS in order (carrying on across pages). Clicking it opens the chat. They stop for the rest of
+     this tab's session once the chat has been opened or a bubble is dismissed with ×, and pause while
+     the chat is open, the Library's multi-select is on (the button steps aside), or the tab is hidden.
+     The bubble is decoration for pointer users: the button itself stays the accessible way in, so
+     screen readers aren't interrupted every 30 seconds. */
+  var PEEKS = [
+    "Hi, I’m Neko! Tap me to chat.",
+    "Psst… need something to watch tonight?",
+    "Ask me how your streak is going!",
+    "Tell me a mood and I’ll find an anime to match.",
+    "Curious how close your next badge is? Just ask.",
+  ];
+  var PEEK_FIRST = 8000, PEEK_SHOW = 7000, PEEK_REST = 30000; // first after 8 s; each shows 7 s, then a 30 s break
+  var peekEl = null, peekHideTimer = null;
+  function peeksOff() {
+    try { return sessionStorage.getItem("nekai:neko-peek") === "off"; } catch (e) { return false; }
+  }
+  function stopPeeks() {
+    try { sessionStorage.setItem("nekai:neko-peek", "off"); } catch (e) { /* storage unavailable: just hide it */ }
+    hidePeek();
+  }
+  function nextPeekText() {
+    var i = 0;
+    try { i = Number(sessionStorage.getItem("nekai:neko-peek-i")) || 0; } catch (e) { /* start at the first */ }
+    try { sessionStorage.setItem("nekai:neko-peek-i", String((i + 1) % PEEKS.length)); } catch (e) { /* fine */ }
+    return PEEKS[i % PEEKS.length];
+  }
+  function canPeek() {
+    var b = fab(), h = document.documentElement;
+    return !!b && !peeksOff() && !isOpen() && !document.hidden &&
+      !h.classList.contains("lib-selecting") && !h.classList.contains("drawer-open") &&
+      !document.querySelector("dialog[open]");
+  }
+  function buildPeek() {
+    peekEl = document.createElement("div");
+    peekEl.className = "neko-peek";
+    peekEl.setAttribute("aria-hidden", "true");
+    peekEl.innerHTML = '<span class="neko-peek-text"></span>' +
+      '<button type="button" class="neko-peek-x" tabindex="-1" title="Hide these for now">' + icon("x", 12, 3) + "</button>";
+    peekEl.addEventListener("click", function (e) {
+      if (e.target.closest(".neko-peek-x")) { stopPeeks(); return; }
+      hidePeek();
+      open(fab());
+    });
+    document.body.appendChild(peekEl);
+  }
+  var peekMissed = false; // one came due while the tab was in the background
+  function showPeek() {
+    if (document.hidden) { peekMissed = true; return; }
+    if (!canPeek()) return;
+    peekMissed = false;
+    if (!peekEl) buildPeek();
+    peekEl.querySelector(".neko-peek-text").textContent = nextPeekText();
+    peekEl.classList.remove("is-shown");
+    void peekEl.offsetWidth; // restart the pop-in
+    peekEl.classList.add("is-shown");
+    clearTimeout(peekHideTimer);
+    peekHideTimer = setTimeout(hidePeek, PEEK_SHOW);
+  }
+  function hidePeek() {
+    clearTimeout(peekHideTimer);
+    if (peekEl) peekEl.classList.remove("is-shown");
+  }
+  // one bubble, then it rests: the next comes PEEK_REST after this one has gone
+  function peekLoop() {
+    if (peeksOff()) return;
+    showPeek();
+    setTimeout(peekLoop, PEEK_SHOW + PEEK_REST);
+  }
+  if (!peeksOff()) setTimeout(peekLoop, PEEK_FIRST);
+  // back on the tab: catch up with a bubble that came due while away, after a short pause
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) hidePeek();
+    else if (peekMissed) setTimeout(showPeek, 1500);
   });
 
   NEKAI.neko = { open: open, close: close };

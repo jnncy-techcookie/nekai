@@ -99,7 +99,10 @@
 
     U.$("#ach-count").textContent = earned + " of " + ach.length + " earned";
     U.$("#ach").innerHTML = ach.map(function (a) {
-      return '<li class="' + (a.earned ? "" : "locked") + '"><span class="ach-badge" aria-hidden="true" style="' + (a.earned ? "background:" + a.bg + ";color:" + (a.bg === "#1F3FA6" ? "#FFFBF2" : "#0F1F5C") : "") + '">' + esc(a.glyph) +
+      // the badge artwork (greyed out until earned), or the old glyph circle if there's no artwork
+      var face = a.img ? '<img class="ach-img" src="' + a.img + '" alt="" width="64" height="64" loading="lazy" decoding="async">' : esc(a.glyph);
+      var tint = a.img || !a.earned ? "" : "background:" + a.bg + ";color:" + (a.bg === "#1F3FA6" ? "#FFFBF2" : "#0F1F5C");
+      return '<li class="' + (a.earned ? "" : "locked") + '"><span class="ach-badge' + (a.img ? " has-img" : "") + '" aria-hidden="true" style="' + tint + '">' + face +
         (a.earned ? "" : '<span class="ach-lock">' + icon("lock", 12, 2.6) + "</span>") + "</span>" +
         '<span class="small bold">' + esc(a.name) + '</span><span class="caption muted" style="font-weight:500">' + esc(a.desc) + "</span>" +
         (a.earned ? '<span class="pf-earned">' + icon("check", 12, 3) + "Earned</span>" : '<span class="caption bold" style="color:var(--blue-text)">' + esc(a.progress) + "</span>") + "</li>";

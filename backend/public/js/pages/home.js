@@ -150,7 +150,9 @@
     var ach = S.achievements(), earned = ach.filter(function (a) { return a.earned; });
     var last = S.latestAchievement();
     U.$("#achievement").innerHTML = '<span class="hp-eyebrow">LATEST ACHIEVEMENT</span>' +
-      (last ? '<div class="hp-head"><span class="hp-badge" aria-hidden="true" style="background:' + last.bg + ";color:" + (last.bg === "#1F3FA6" ? "#FFFBF2" : "#0F1F5C") + '">' + esc(last.glyph) + "</span>" +
+      (last ? '<div class="hp-head">' + (last.img
+          ? '<span class="hp-badge has-img" aria-hidden="true"><img class="ach-img" src="' + last.img + '" alt="" width="44" height="44" decoding="async"></span>'
+          : '<span class="hp-badge" aria-hidden="true" style="background:' + last.bg + ";color:" + (last.bg === "#1F3FA6" ? "#FFFBF2" : "#0F1F5C") + '">' + esc(last.glyph) + "</span>") +
         '<div><h2 id="ach-h" class="hp-title">' + esc(last.name) + '</h2><p class="hp-sub">' + esc(last.desc) + " · " + earned.length + " of " + ach.length + " earned</p></div></div>"
         : '<h2 id="ach-h" class="hp-title">No stickers yet</h2><p class="hp-sub">Add your first anime to earn First Steps.</p>') +
       '<a class="hp-link" href="profile.html">' + icon("trophy", 16) + "All achievements" + icon("arrow", 14, 2.4) + "</a>";

@@ -308,6 +308,17 @@
   });
 
   /* ---------- XP, levels and titles ---------- */
+  // Each achievement's badge: 192px copies (assets/images/badges/) of the artwork in assets/images/badge_*.png
+  var BADGE_IMG = {
+    "First Steps": "assets/images/badges/first_steps.png",
+    Finisher: "assets/images/badges/finisher.png",
+    Critic: "assets/images/badges/critic.png",
+    "Binge Mode": "assets/images/badges/binge_watch.png",
+    Explorer: "assets/images/badges/explorer.png",
+    "Week Streak": "assets/images/badges/week_streak.png",
+    "Finisher II": "assets/images/badges/finisher_2.png",
+    "Long Haul": "assets/images/badges/long_haul.png",
+  };
   var XP_RULES = {
     episode: 2,
     completed: 50,
@@ -699,6 +710,7 @@
         var at = saved[name];
         return {
           glyph: glyph,
+          img: BADGE_IMG[name] || "", // the badge artwork; glyph and bg are the fallback if it's missing
           name: name,
           desc: desc,
           bg: bg,

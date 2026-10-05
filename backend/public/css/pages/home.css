@@ -807,3 +807,10 @@ html.theme-dark .hello-panel {
 .cw-card .poster-chips {
   max-width: none;
 }
+
+/* the latest achievement's badge artwork on the Home banner, on a cream disc like on Profile */
+.hp-badge.has-img {
+  padding: 0;
+  overflow: hidden;
+  background: #fffbf2;
+}

@@ -601,3 +601,31 @@
     transition: none;
   }
 }
+
+/* ---------- badge artwork (assets/images/badges/) ----------
+   Each badge sits on a small cream disc: invisible behind badges with their own fill, and it keeps
+   the ones with a see-through middle from looking hollow on the dark theme. Locked badges are
+   greyed out and faded, with the lock on top. */
+.ach-badge.has-img {
+  background: #fffbf2;
+  box-shadow: 0 2px 8px rgb(var(--shadow-rgb) / 0.12);
+}
+.ach-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: contain;
+}
+.ach li.locked .ach-badge.has-img {
+  border: 0;
+  background: #fffbf2;
+  box-shadow: none;
+}
+.ach li.locked .ach-img {
+  filter: grayscale(1);
+  opacity: 0.4;
+}
+html.theme-dark .ach li.locked .ach-badge.has-img {
+  background: rgb(255 251 242 / 0.5);
+}
