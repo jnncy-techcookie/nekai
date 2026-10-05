@@ -10,6 +10,11 @@
   var listeners = [];
   var unlockListeners = [];
   var version = 0; // counts the user's changes on this page (start.js checks it before a background refresh)
+  // When the theme or motion was last changed on this device (0: never). A refresh that lands soon after
+  // can carry the old value, because the save hasn't reached Supabase yet (see replace below).
+  var DISPLAY_GRACE = 30000;
+  var changedAt = 0;
+  try { changedAt = (JSON.parse(localStorage.getItem(DISPLAY_KEY)) || {}).changedAt || 0; } catch (e) { /* storage unavailable */ }
   var state = load();
   // Keep this device's copy of the theme in step with the account as soon as it loads (not only after
   // a change): otherwise dark mode set on another device, or before accounts, would paint light first
@@ -80,6 +85,7 @@
         navOpen: state.ui.navOpen !== false,
         motion: !!state.settings.motion,
         dark: !!state.settings.dark,
+        changedAt: changedAt,
       }));
     } catch (e) {
       /* storage unavailable: the page just paints with default layout first */
@@ -353,7 +359,13 @@
     // Nothing is saved: the data came from Supabase. Anime details already loaded here are kept.
     replace: function (next) {
       var anime = Object.assign({}, next.anime || {}, state.anime);
+      var local = state.settings, recent = Date.now() - changedAt < DISPLAY_GRACE;
       state = Object.assign(seed(), next, { anime: anime });
+      // Just changed here: keep this device's theme rather than flash back to a stale one, and save it again
+      if (recent && (state.settings.dark !== local.dark || state.settings.motion !== local.motion)) {
+        state.settings = Object.assign({}, state.settings, { dark: local.dark, motion: local.motion });
+        if (NEKAI.db) NEKAI.db.sync(state);
+      }
       saveDisplay();
       listeners.forEach(function (fn) {
         fn(state);
@@ -528,6 +540,7 @@
     },
     // Settings switches (sound, confetti, Neko, dark mode…)
     setSettings: function (patch) {
+      if ("dark" in patch || "motion" in patch) changedAt = Date.now();
       Object.assign(state.settings, patch);
       emit();
     },
