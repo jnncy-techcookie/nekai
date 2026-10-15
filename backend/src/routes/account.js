@@ -1,40 +1,24 @@
 const router = require("express").Router();
-const { getAdmin, userFromRequest } = require("../services/supabase");
+const db = require("../services/db");
+const { requireUser, endSession } = require("../services/auth");
+const { removeAvatars } = require("../services/avatars");
 
-// Deletes the signed-in user's account. Every Nekai table references auth.users
-// with "on delete cascade", so the library, history, badges and chats go with it.
-router.delete("/", async (req, res) => {
-  const db = getAdmin();
-  if (!db) {
-    return res
-      .status(503)
-      .json({ error: "Account deletion isn’t set up on the server yet." });
-  }
-
-  const user = await userFromRequest(req);
-  if (!user) {
-    return res.status(401).json({ error: "Please sign in again, then retry." });
-  }
-
-  // Profile pictures are files in storage, which the cascade doesn't reach: remove them first
-  // (best effort: a missing bucket or folder doesn't stop the account from being deleted)
+// Deletes the signed-in user's account. Every NEKAI table references users with
+// "on delete cascade", so the library, history, badges, sessions and chats go with it.
+router.delete("/", requireUser, async (req, res) => {
   try {
-    const { data: files } = await db.storage.from("avatars").list(user.id);
-    if (files && files.length) {
-      await db.storage.from("avatars").remove(files.map((f) => `${user.id}/${f.name}`));
-    }
+    await db.query("delete from users where id = $1", [req.user.id]);
   } catch (err) {
+    console.error("Deleting account failed:", err.message);
+    return res.status(503).json({ error: "Your account couldn’t be deleted just now. Please try again." });
+  }
+
+  // Profile pictures are files, which the cascade doesn't reach (best effort: a leftover
+  // file can't be reached without the account anyway)
+  await removeAvatars(req.user.id).catch((err) => {
     console.error("Removing profile pictures failed:", err.message);
-  }
-
-  const { error } = await db.auth.admin.deleteUser(user.id);
-  if (error) {
-    console.error("Deleting account failed:", error.message);
-    return res
-      .status(502)
-      .json({ error: "Your account couldn’t be deleted just now. Please try again." });
-  }
-
+  });
+  await endSession(req, res).catch(() => {});
   return res.json({ deleted: true });
 });
 

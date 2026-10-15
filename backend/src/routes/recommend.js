@@ -9,7 +9,7 @@ const router = require("express").Router();
 const { askGemini } = require("../services/gemini");
 const { getTenrai } = require("../services/tenrai");
 const { rateLimiter } = require("../services/rate-limit");
-const { requireUser } = require("../services/supabase");
+const { requireUser } = require("../services/auth");
 
 // Request limits, how many titles to ask Gemini for, and how many picks to return
 const MAX_HISTORY = 60;

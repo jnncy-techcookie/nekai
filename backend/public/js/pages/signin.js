@@ -1,14 +1,15 @@
-/* Sign in / create account with Supabase (email and password).
- * A new account gets its profile and settings rows from a database trigger, then
- * continues to the genre picker. ?mode=reset is where the password reset email lands:
- * the link signs the user in to choose a new password.
+/* Sign in / create account (email and password, checked by the NEKAI server).
+ * A new account gets its profile and settings rows when it's created, then continues
+ * to the genre picker. ?mode=reset&token=… is where the password reset email lands:
+ * the token lets the user choose a new password, which also signs them in.
  */
 (function () {
   "use strict";
-  var U = NEKAI.ui, db = NEKAI.db, auth = NEKAI.db.client.auth;
+  var U = NEKAI.ui, auth = NEKAI.db.auth;
   U.applySettings();
   var q = new URLSearchParams(location.search);
-  var mode = q.get("mode") === "register" ? "register" : q.get("mode") === "reset" && db.user ? "reset" : "signin";
+  var resetToken = q.get("mode") === "reset" ? q.get("token") || "" : "";
+  var mode = q.get("mode") === "register" ? "register" : resetToken ? "reset" : "signin";
   var EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
   var nm = U.$("#nm"), em = U.$("#em"), pw = U.$("#pw"), tried = false;
 
@@ -49,17 +50,10 @@
   function say(text) {
     U.$("#status").hidden = !text; U.$("#status-text").textContent = text;
   }
-  // Supabase's messages, in NEKAI's words where we know them
+  // The server's answers are already in NEKAI's words; a request that never arrived is not
   function friendly(err) {
-    var m = String((err && err.message) || "");
-    // Supabase gives the same answer for an unknown email and a wrong password, so nobody can
-    // find out which emails have an account; the message covers both
-    if (/invalid login credentials/i.test(m)) return "Incorrect email or password. Check them and try again, or create an account if you don’t have one yet.";
-    if (/email not confirmed/i.test(m)) return "Confirm your email first: open the link we sent you, then sign in.";
-    if (/already registered|already exists/i.test(m)) return "There’s already an account with that email. Sign in instead.";
-    if (/rate limit|too many/i.test(m)) return "Too many tries. Wait a minute, then try again.";
-    if (/failed to fetch|network/i.test(m)) return "Can’t reach NEKAI’s account service. Check your connection and try again.";
-    return m || "Something went wrong. Please try again.";
+    if (err && err.status) return err.message;
+    return "Can’t reach NEKAI’s account service. Check your connection and try again.";
   }
   // Switches mode; the card fits its content, so its height glides from the old size to the new one
   // instead of snapping (skipped when reduce motion is on)
@@ -98,9 +92,9 @@
     e.preventDefault();
     var email = em.value.trim();
     if (!EMAIL.test(email)) { tried = true; paint(); em.focus(); return; }
-    auth.resetPasswordForEmail(email, { redirectTo: location.origin + "/signin.html?mode=reset" }).then(function (r) {
-      say(r.error ? friendly(r.error) : "If there’s an account for " + email + ", a password reset link is on its way.");
-    });
+    auth.forgot(email).then(function () {
+      say("If there’s an account for " + email + ", a password reset link is on its way.");
+    }, function (err) { say(friendly(err)); });
   });
   U.$("#google").addEventListener("click", function () {
     say("Google sign-in isn’t available yet. Use your email and password.");
@@ -123,8 +117,7 @@
 
     if (mode === "reset") {
       busy(true, "Saving…");
-      auth.updateUser({ password: pw.value }).then(function (r) {
-        if (r.error) throw r.error;
+      auth.reset(resetToken, pw.value).then(function () {
         location.href = "index.html";
       }).catch(function (err) { busy(false); say(friendly(err)); });
       return;
@@ -132,18 +125,14 @@
 
     if (mode === "register") {
       busy(true, "Creating account…");
-      auth.signUp({ email: email, password: pw.value, options: { data: { display_name: name } } }).then(function (r) {
-        if (r.error) throw r.error;
-        // With email confirmation on, Supabase returns no session until the link is clicked
-        if (!r.data.session) { busy(false); setMode("signin"); em.value = email; say("Check your inbox: we’ve sent a link to confirm " + email + "."); return; }
+      auth.register(name, email, pw.value).then(function () {
         location.href = "welcome.html";
       }).catch(function (err) { busy(false); say(friendly(err)); });
       return;
     }
 
     busy(true, "Signing in…");
-    auth.signInWithPassword({ email: email, password: pw.value }).then(function (r) {
-      if (r.error) throw r.error;
+    auth.login(email, pw.value).then(function () {
       location.href = "index.html"; // Home sends a new account to the genre picker first
     }).catch(function (err) { busy(false); say(friendly(err)); });
   });

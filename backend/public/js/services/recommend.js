@@ -58,15 +58,12 @@
     if (pending) return pending;
     if (!force && fresh()) return Promise.resolve(S.state.recs);
     var hidden = Object.keys(S.state.hidden);
-    pending = NEKAI.db.token()
-      .then(function (token) {
-        if (!token) throw new Error("Your session expired. Please sign in again.");
+    pending = Promise.resolve()
+      .then(function () {
+        // the session cookie goes with the request; the server answers 401 once it has expired
         return fetch("/api/recommend", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + token,
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             history: history(),
             exclude: Object.keys(S.state.list).concat(hidden).map(Number).slice(0, 300),

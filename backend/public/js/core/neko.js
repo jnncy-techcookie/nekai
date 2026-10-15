@@ -1,6 +1,6 @@
 /* Neko chat: the floating Neko button (and any other [data-neko-chat] button) opens a chat box. Questions go to
  * the backend (/api/neko/chat), which asks Gemini with a snapshot of the user's list.
- * The conversation is saved to Supabase (the neko_conversations / neko_messages tables), so it follows the
+ * The conversation is saved to the database (the neko_conversations / neko_messages tables), so it follows the
  * user to other pages and devices. Clearing it starts a new conversation.
  */
 (function () {
@@ -22,7 +22,7 @@
   var saving = Promise.resolve(); // messages save one after another, in order
   var busy = false, failed = "", panel, logEl, form, input, sendBtn, opener;
 
-  // Loads the latest saved conversation from Supabase the first time the chat opens
+  // Loads the latest saved conversation from the server the first time the chat opens
   function load() {
     if (!loaded) {
       busy = true;
@@ -234,15 +234,12 @@
     busy = true;
     failed = "";
     render();
-    NEKAI.db.token()
-      .then(function (token) {
-        if (!token) throw new Error("Your session expired. Please sign in again.");
+    Promise.resolve()
+      .then(function () {
+        // the session cookie goes with the request; the server answers 401 once it has expired
         return fetch("/api/neko/chat", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + token,
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             messages: messages.slice(-MAX_SEND).map(function (m) { return { role: m.role, text: m.text }; }),
             context: context(),

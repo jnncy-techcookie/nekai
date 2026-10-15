@@ -1,29 +1,38 @@
 # NEKAI — Anime Watchlist
 
-A responsive anime watchlist with a plain HTML, CSS and JavaScript frontend and a small Express backend. The backend serves the site and fetches anime data from the [Tenrai API](https://api.tenrai.org/documentation) (an unofficial MyAnimeList data provider).
+A responsive anime watchlist with a plain HTML, CSS and JavaScript frontend, a small Express backend and a PostgreSQL database. The backend serves the site, keeps accounts and each user's data in PostgreSQL, and fetches anime data from the [Tenrai API](https://api.tenrai.org/documentation) (an unofficial MyAnimeList data provider).
 
 ## Run it
 
-From the repository root:
+You need Node.js 24 and a PostgreSQL 16 database. The quickest way to get the database is Docker (from the repository root):
+
+```bash
+docker run -d --name nekai-db   -e POSTGRES_USER=nekai -e POSTGRES_PASSWORD=change-me -e POSTGRES_DB=nekai   -p 5432:5432 -v nekai-pg-data:/var/lib/postgresql/data   -v "$PWD/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro"   postgres:16-alpine
+```
+
+The schema in `db/init.sql` runs the first time the container starts with an empty `nekai-pg-data` volume. The data stays in that volume when the container is stopped, removed or recreated. To apply the schema to an existing database by hand, run `psql "$DATABASE_URL" -f db/init.sql` (every statement skips what already exists).
+
+Then start the server:
 
 ```bash
 cd backend
+cp .env.example .env   # then fill it in
 npm install
 npm start
 ```
 
-Copy `backend/.env.example` to `backend/.env` and fill it in. `.env` is gitignored, and every key in it stays on the server.
+`.env` is gitignored, and every value in it stays on the server:
 
-- `SUPABASE_URL` and `SUPABASE_SECRET_KEY` (Supabase → Project Settings → API keys): the server uses the secret key to fill `anime_catalog` and to delete accounts. Never put it in frontend code.
+- `DATABASE_URL` points the server at PostgreSQL, e.g. `postgresql://nekai:change-me@localhost:5432/nekai`.
 - `GEMINI_API_KEY` turns on the **Neko chatbot** and AI picks (get one at [Google AI Studio](https://aistudio.google.com/apikey)). Without it, the rest of the app works and Neko explains that it isn't set up.
+- `APP_URL` and the optional `SMTP_*` settings are for password reset emails. Without `SMTP_HOST`, the server prints each reset email (with its link) to its log instead.
+- `UPLOAD_DIR` (optional) is where profile pictures are stored; it defaults to `backend/uploads/` (gitignored).
 
-The browser signs in with Supabase's publishable key, set in `frontend/js/core/supabase.js`. It's safe to ship: row level security only lets each user read and write their own rows. For password reset emails, add `http://localhost:3000/signin.html` to *Authentication → URL Configuration → Redirect URLs* in Supabase.
-
-Open [http://localhost:3000](http://localhost:3000). The frontend calls the backend at `/api/tenrai`; the backend requests `https://api.tenrai.org/v1`. To deploy live anime search, deploy both the frontend and the Node.js backend.
+Open [http://localhost:3000](http://localhost:3000) and create an account. `GET /api/health` answers `{"status":"ok","database":"ok"}` when the server can reach the database, and 503 when it can't.
 
 ## Pages
 
-| File (in `frontend/`) | Page | What it does |
+| File (in `backend/public/`) | Page | What it does |
 |---|---|---|
 | `index.html` | Home | Greeting, stats, continue-watching hero with episode stepper, streak, latest achievement, *Picked for you* row |
 | `library.html` | Library | Search, sort and filter by status (Watching / Plan to Watch / Completed / Dropped); change progress, rating (a "★ 8.4" button that opens a pane: drag across the stars or type 1–10, one decimal) and status inline; remove |
@@ -39,20 +48,27 @@ Open [http://localhost:3000](http://localhost:3000). The frontend calls the back
 ```
 nekai-anime-watchlist/
 ├── README.md
+├── db/init.sql                PostgreSQL schema (tables, keys, checks)
 ├── backend/                   Express server and Tenrai API proxy
 │   ├── package.json
 │   └── src/
-│       ├── server.js          serves the frontend and /api/tenrai
+│       ├── server.js          serves the frontend, the API and /avatars, plus GET /api/health
 │       ├── routes/anime.js    validates anime requests
+│       ├── routes/auth.js     accounts: sign up, sign in, sign out, password reset, change email
+│       ├── routes/me.js       the signed-in user's data: load it all, save changes (one transaction), avatar, Neko chats
+│       ├── routes/catalog.js  reads saved anime details from anime_catalog
 │       ├── routes/neko.js    Neko chat: validates, rate-limits, builds the prompt
 │       ├── routes/recommend.js AI picks: asks Gemini for JSON picks, finds each on MyAnimeList via Tenrai
-│       ├── routes/account.js  deletes the signed-in user's account (Supabase admin API)
+│       ├── routes/account.js  deletes the signed-in user's account and all its data
+│       ├── services/db.js     PostgreSQL connection pool and transactions (DATABASE_URL)
+│       ├── services/auth.js   password hashing (scrypt) and cookie sessions
+│       ├── services/avatars.js profile picture files (UPLOAD_DIR)
+│       ├── services/mailer.js password reset emails (SMTP, or the server log)
 │       ├── services/tenrai.js queues and caches upstream requests
-│       ├── services/catalog.js saves anime details from Tenrai into Supabase's anime_catalog
-│       ├── services/supabase.js server-side Supabase client (secret key) and access-token check
+│       ├── services/catalog.js saves anime details from Tenrai into anime_catalog
 │       ├── services/gemini.js calls the Gemini API (key from backend/.env)
 │       └── services/rate-limit.js per-IP request limits for the Gemini routes
-└── frontend/                  the browser interface
+└── backend/public/            the browser interface
     ├── index.html, library.html, discover.html,
     │   profile.html, settings.html, signin.html
     ├── assets/
@@ -67,7 +83,7 @@ nekai-anime-watchlist/
     │   └── utilities/         preferences.css (reduce motion, larger text, stronger outlines)
     └── js/
         ├── data/sample-data.js   curated catalog (keyed by real MyAnimeList IDs), starter picks, genre colors
-        ├── core/supabase.js      Supabase client: loads the signed-in user's data and saves each change
+        ├── core/db.js            talks to the backend: signs in, loads the user's data and saves each change
         ├── core/start.js         checks the session, loads the data, then runs the page's scripts
         ├── core/store.js         the user's data in memory, list actions with undo, streak / XP / achievements / match %
         ├── core/ui.js            icons, app shell (sidebar, mobile bars, floating Neko button), toasts, confetti, sound, shared components
@@ -78,17 +94,18 @@ nekai-anime-watchlist/
         └── pages/                one script per page
 ```
 
-HTML pages sit at the root of `frontend/` so their URLs stay short and links between pages are plain file names.
+HTML pages sit at the root of `backend/public/` so their URLs stay short and links between pages are plain file names.
 
-Scripts are classic `<script>` tags that share one `window.NEKAI` namespace. Serve the site through the backend so `/api/tenrai` is available. Each page loads Supabase's library, `data/sample-data.js` and `core/supabase.js`, then `core/start.js`, which runs the scripts listed in its `data-app` attribute in dependency order (`core/store.js`, `services/tenrai.js`, `core/ui.js`, `core/neko.js`, then the page's own `pages/*.js`) once the user's data has loaded.
+Scripts are classic `<script>` tags that share one `window.NEKAI` namespace. Serve the site through the backend so `/api/tenrai` is available. Each page loads `data/sample-data.js` and `core/db.js`, then `core/start.js`, which runs the scripts listed in its `data-app` attribute in dependency order (`core/store.js`, `services/tenrai.js`, `core/ui.js`, `core/neko.js`, then the page's own `pages/*.js`) once the user's data has loaded.
 
 Add new styles to the file that matches their scope (a token, a shared component, a single page), and add any new stylesheet to `css/main.css` so it loads.
 
 ## How the data works
 
-- **Accounts**: every page needs a Supabase account (email and password). Signed-out visitors go to the sign-in page, and a new account starts empty, then picks 3 genres.
-- **Your data** lives in Supabase: the library (`user_anime`), watch history (`watch_events`, one row per change), badges (`user_achievements`), *Not interested* titles, AI picks, settings, profile and Neko chats. `core/start.js` loads it all before the page runs, and `core/supabase.js` compares each change with what was last saved and writes only the rows that changed. Removing a title sets `deleted_at` instead of deleting the row. *Settings → Delete account* calls `DELETE /api/account`, which removes the account and, through the tables' cascades, all its data. Neko chats are saved in the `neko_conversations` / `neko_messages` tables, and the Neko switches in the `neko` / `neko_hidden` columns of `user_settings` (`core/supabase.js` maps them).
-- **Anime details** (title, poster, genres…) are saved to `anime_catalog` by the backend whenever it fetches them from Tenrai, so a library loads without asking Tenrai again. The only thing kept in the browser is this device's sidebar and theme (`nekai:display`), so pages paint in the right theme before your data arrives.
+- **Accounts**: every page needs an account (email and password). Signed-out visitors go to the sign-in page, and a new account starts empty, then picks 3 genres. Passwords are hashed with scrypt. Signing in sets an HttpOnly, SameSite=Lax session cookie; the `sessions` table keeps only a SHA-256 hash of each token, and a session lasts 30 days from its last use. Password reset links are single use and expire after an hour. Sign-in, sign-up and reset requests are rate-limited per IP.
+- **Your data** lives in PostgreSQL (schema: `db/init.sql`): the library (`user_anime`), watch history (`watch_events`, one row per change), badges (`user_achievements`), *Not interested* titles (`hidden_recommendations`), AI picks (`user_recommendations`), settings (`user_settings`), profile (`profiles`) and Neko chats (`neko_conversations` / `neko_messages`). The browser never talks to the database: `core/start.js` loads everything from `GET /api/me` before the page runs, and `core/db.js` compares each change with what was last saved and sends only what changed to `POST /api/me/changes`, which checks every value and saves the batch in one transaction. Every query is limited to the signed-in user's own rows. Removing a title sets `deleted_at` instead of deleting the row. *Settings → Delete account* calls `DELETE /api/account`, which deletes the `users` row; every other table cascades from it, and the profile picture files are removed too.
+- **Profile pictures** are files in `UPLOAD_DIR/avatars/<user id>/`, served at `/avatars/…`. The server checks each upload's first bytes (WebP, JPEG or PNG only, up to 1 MB), and a profile can only point at its owner's own file.
+- **Anime details** (title, poster, genres…) are saved to `anime_catalog` by the backend whenever it fetches them from Tenrai, so a library loads without asking Tenrai again (`GET /api/catalog`). The only things kept in the browser are this device's sidebar and theme (`nekai:display`), so pages paint in the right theme before your data arrives, and a per-tab copy of your data (sessionStorage) that makes moving between pages instant.
 - **Nekai's Picks** (Discover, and *Picked for you* on Home once they exist) come from Gemini. `services/recommend.js` sends up to 60 of your titles with their genres, status, rating and the first 200 characters of your review (if any) to `POST /api/recommend`. Gemini returns 10 titles, each with a one-line reason and a 0–100 fit estimate. The backend finds each title on MyAnimeList through Tenrai and drops anything already on your list or marked *Not interested*, keeping 8. Picks are saved in `user_recommendations` and only requested again when a title, status, rating, review or *Not interested* changes, after a day, or when you select **New picks**. If the AI can't answer, the curated picks in `sample-data.js` are shown and the page says so.
 - **Match %** on AI picks is 60% the history formula (`store.match`: genre overlap, genres you rated highly, finished vs dropped) and 40% the AI's fit estimate (`store.blendMatch`). Other cards use the formula alone. Tiers: **High** 80%+, **Medium** 65–79%, **Low** under 65%.
 - **Tenrai** is called for search, anime details, episode lists, the genre picker and poster images. Browser requests are spaced 400 ms apart, and the backend queues requests across users and caches successful responses. Tenrai's public limit is 120 requests per minute, 4 per second, and 40,000 per day per IP.
@@ -151,7 +168,7 @@ The official palette is **cream, cobalt blue and orange**. The tokens in `css/ba
 
 ## Not done yet
 
-- **Google sign-in** isn't set up yet: it needs a Google OAuth client added under *Authentication → Providers* in Supabase.
+- **Google sign-in** isn’t set up yet: it would need a Google OAuth client and an OAuth route in `routes/auth.js`.
 - **Share list** copies a link to your list, but there's no public page for someone else's list yet.
 
 ## Credits
