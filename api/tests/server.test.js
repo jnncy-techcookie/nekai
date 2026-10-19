@@ -34,7 +34,7 @@ test("Unknown API routes return a JSON 404 response", async () => {
     signal: AbortSignal.timeout(5000),
   });
 
-  assert.equal(response.status, 200);
+  assert.equal(response.status, 404);
   assert.match(response.headers.get("content-type"), /application\/json/);
   assert.deepEqual(await response.json(), { error: "Not found" });
 });
