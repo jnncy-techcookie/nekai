@@ -1,0 +1,110 @@
+# NEKAI application stack. One command starts everything:
+#   cp .env.example .env     (then fill it in)
+#   docker compose up -d --build
+# Open http://localhost:8080 (HTTP_PORT in .env). Jenkins is NOT part of this file: it lives in
+# infra/jenkins/ so the pipeline never redeploys itself.
+#
+#   browser -> proxy -> frontend            (static files)
+#                    -> ai-service -> api   (Neko, Nekai's Picks; asks the api for sessions + anime)
+#                    -> api -> db           (accounts and data; avatars in the "uploads" volume)
+#
+# Only the proxy publishes a port. Two networks keep the database out of reach of everything but the api:
+#   web-net   proxy, frontend, api, ai-service
+#   data-net  api, db
+name: nekai
+
+services:
+  proxy:
+    build: ./proxy
+    image: nekai/proxy:${TAG:-latest}
+    ports:
+      - "${HTTP_PORT:-8080}:8080"
+    depends_on:
+      frontend:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+      ai-service:
+        condition: service_healthy
+    restart: unless-stopped
+    networks: [web-net]
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        BUILD_NUMBER: ${TAG:-dev} # shown on every page as "Build <n>"
+    image: nekai/frontend:${TAG:-latest}
+    restart: unless-stopped
+    networks: [web-net]
+
+  api:
+    build:
+      context: ./api
+      target: production
+    image: nekai/api:${TAG:-latest}
+    environment:
+      # PostgreSQL connection (read by the pg library); the host is the db service
+      PGHOST: db
+      PGPORT: "5432"
+      PGUSER: ${DB_USER:?set DB_USER in .env}
+      PGPASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+      PGDATABASE: ${DB_NAME:-nekai}
+      # The address people open NEKAI at: used in password reset links
+      APP_URL: ${APP_URL:-http://localhost:8080}
+      # Optional SMTP; without SMTP_HOST, reset emails are printed in the api's log
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_SECURE: ${SMTP_SECURE:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+    volumes:
+      - uploads:/data/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks: [web-net, data-net]
+
+  ai-service:
+    build:
+      context: ./ai-service
+      target: production
+    image: nekai/ai-service:${TAG:-latest}
+    environment:
+      API_URL: http://api:3000
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-flash-latest}
+      GEMINI_FALLBACK_MODEL: ${GEMINI_FALLBACK_MODEL:-gemini-flash-lite-latest}
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    networks: [web-net]
+
+  db:
+    build: ./db
+    image: nekai/db:${TAG:-latest}
+    environment:
+      POSTGRES_USER: ${DB_USER:?set DB_USER in .env}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+      POSTGRES_DB: ${DB_NAME:-nekai}
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+    networks: [data-net]
+
+volumes:
+  pg-data:   # every account, list, history and chat: survives down/up and redeploys
+  uploads:   # profile pictures
+
+networks:
+  web-net:
+  data-net:

@@ -8,9 +8,38 @@ Browser ──► proxy ─┬─ /                          ──► frontend 
                    └─ /api/*, /avatars/*         ──► api ──► db (PostgreSQL, named volume)
 ```
 
-Only the **api** talks to PostgreSQL. The **ai-service** has no database: it asks the api to check the session cookie and to search Tenrai, so every Tenrai call shares one rate-limited queue and cache. The Docker setup (Dockerfiles, `docker-compose.yml`, `proxy/`) comes next; until then, the three services run on a laptop behind `dev/gateway.js`, a small stand-in for the proxy.
+Only the **api** talks to PostgreSQL. The **ai-service** has no database: it asks the api to check the session cookie and to search Tenrai, so every Tenrai call shares one rate-limited queue and cache. Everything runs in containers with Docker Compose (see below). Without Docker, the three services can also run on a laptop behind `dev/gateway.js`, a small stand-in for the proxy.
 
 ## Run it
+
+### With Docker (recommended)
+
+You need Docker (Docker Desktop with WSL 2 on Windows) and nothing else.
+
+```bash
+cp .env.example .env        # then set DB_PASSWORD and GEMINI_API_KEY
+docker compose up -d --build
+```
+
+Open [http://localhost:8080](http://localhost:8080). The stack is five containers:
+
+| Container | Image | Role |
+|---|---|---|
+| `proxy` | `nginxinc/nginx-unprivileged:1.27-alpine` | The only published port (8080). Routes `/api/neko` and `/api/recommend` to the ai-service, other `/api` paths and `/avatars` to the api, everything else to the frontend |
+| `frontend` | `nginxinc/nginx-unprivileged:1.27-alpine` | The static site. Shows the deployed build number in the corner of every page (`/build.json`) |
+| `api` | `node:24-alpine` | Accounts, user data, anime data |
+| `ai-service` | `node:24-alpine` | Neko chat and Nekai's Picks |
+| `db` | `postgres:16-alpine` | PostgreSQL, data in the `pg-data` named volume (profile pictures are in `uploads`) |
+
+- **Networks:** `web-net` (proxy, frontend, api, ai-service) and `data-net` (api, db). Only the api can reach the database, and the database port is not published.
+- **Start order:** health checks plus `depends_on: condition: service_healthy`: db, then api, then ai-service, then proxy.
+- **Persistence:** `docker compose down` followed by `docker compose up -d` keeps all data. Only `down -v` deletes the volumes.
+- **Tests:** `docker build --target test ./api` (and `./ai-service`) runs a service's tests inside Docker.
+- **Schema:** `db/init.sql` runs only when the `pg-data` volume is empty. Existing data is never touched.
+- **Image tags:** images are tagged `${TAG}` (the Jenkins build number; `latest` when unset). Roll back with `TAG=<earlier build> docker compose up -d --no-build`.
+- **Logs:** `docker compose logs -f api`. Password reset emails are printed there when `SMTP_HOST` isn't set.
+
+### Without Docker
 
 You need Node.js 24 and a PostgreSQL 16 database. The quickest way to get the database is Docker (from the repository root):
 
