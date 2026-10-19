@@ -1,10 +1,25 @@
+# NEKAI's Jenkins, deployed separately from the application (docker-compose.yml at the repo root),
+# so the pipeline never redeploys Jenkins itself. Start it from this folder:
+#   docker compose up -d --build
+# Then open http://localhost:8081. The unlock password for the first visit:
+#   docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+#
+# If jenkins.io's plugin servers are unreachable, build the plugins from a mirror instead:
+#   JENKINS_UC=https://ftp.halifax.rwth-aachen.de/jenkins/updates \
+#   JENKINS_UC_DOWNLOAD=https://ftp.halifax.rwth-aachen.de/jenkins docker compose up -d --build
 services:
   jenkins:
-    build: .
+    build:
+      context: .
+      args:
+        JENKINS_UC: ${JENKINS_UC:-https://updates.jenkins.io}
+        JENKINS_UC_DOWNLOAD: ${JENKINS_UC_DOWNLOAD:-https://updates.jenkins.io/download}
+    container_name: jenkins
+    # Classroom/lab only: root lets Jenkins use the host's Docker socket (see the security note in README)
     user: root
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8081:8080"
+      - "127.0.0.1:8081:8080" # only reachable from this computer (and through ngrok for the webhook)
     volumes:
       - jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock

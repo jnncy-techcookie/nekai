@@ -14,6 +14,9 @@ pipeline {
     }
 
     triggers {
+        // Instant: the GitHub webhook (push events, through the ngrok tunnel) starts a build
+        githubPush()
+        // Fallback: check GitHub every 2 minutes, in case ngrok or the network is down
         pollSCM('H/2 * * * *')
     }
 

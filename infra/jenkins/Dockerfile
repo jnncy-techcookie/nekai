@@ -15,3 +15,14 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 USER jenkins
+
+# Plugins are installed into the image (list: plugins.txt), so the setup wizard has nothing to
+# download. Where they come from is a build argument: the official jenkins.io servers by
+# default, or a mirror when jenkins.io is unreachable (see infra/jenkins/docker-compose.yml).
+ARG JENKINS_UC=https://updates.jenkins.io
+ARG JENKINS_UC_DOWNLOAD=https://updates.jenkins.io/download
+COPY --chown=jenkins:jenkins plugins.txt /usr/share/jenkins/ref/plugins.txt
+RUN JENKINS_UC_DOWNLOAD="$JENKINS_UC_DOWNLOAD" jenkins-plugin-cli \
+      --jenkins-update-center "$JENKINS_UC/update-center.json" \
+      --jenkins-plugin-info "$JENKINS_UC/current/plugin-versions.json" \
+      --plugin-file /usr/share/jenkins/ref/plugins.txt
