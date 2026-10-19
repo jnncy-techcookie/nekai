@@ -7,9 +7,8 @@
  */
 const router = require("express").Router();
 const { askGemini } = require("../services/gemini");
-const { getTenrai } = require("../services/tenrai");
 const { rateLimiter } = require("../services/rate-limit");
-const { requireUser } = require("../services/auth");
+const { requireUser, searchAnime } = require("../services/api-client");
 
 // Request limits, how many titles to ask Gemini for, and how many picks to return
 const MAX_HISTORY = 60;
@@ -104,12 +103,12 @@ const yearOf = (a) => a.year || a.aired?.prop?.from?.year || null;
 
 // Find the MyAnimeList entry for a title Gemini named: prefer a result from the same year
 async function resolve(pick) {
-  const result = await getTenrai("/anime", {
+  // Asks the api service, which owns the Tenrai queue and cache (it always adds sfw=true)
+  const result = await searchAnime({
     q: pick.title.slice(0, 120),
     limit: 5,
     order_by: "members",
     sort: "desc",
-    sfw: "true",
   });
   const found = result.data || [];
   return found.find((a) => yearOf(a) === pick.year) || found[0] || null;
@@ -170,7 +169,7 @@ router.post("/", requireUser, async (req, res) => {
     // The fix for a missing key is for whoever runs the server, so it goes to the log, not the page
     console.error(
       "Gemini recommendation failed:",
-      noKey ? "GEMINI_API_KEY is not set. Add it to backend/.env and restart." : error.message,
+      noKey ? "GEMINI_API_KEY is not set. Add it to ai-service/.env and restart." : error.message,
     );
     return res.status(noKey || error.status === 429 ? 503 : 502).json({
       error: noKey

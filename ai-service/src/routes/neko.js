@@ -5,7 +5,7 @@
 const router = require("express").Router();
 const { askGemini } = require("../services/gemini");
 const { rateLimiter } = require("../services/rate-limit");
-const { requireUser } = require("../services/auth");
+const { requireUser } = require("../services/api-client");
 
 // Limits: messages of history sent to Gemini, characters per message, characters of user data
 const MAX_TURNS = 12;
@@ -93,7 +93,7 @@ router.post("/chat", requireUser, async (req, res) => {
     if (error.status === 503 && !process.env.GEMINI_API_KEY) {
       return res.status(503).json({
         error:
-          "Neko isn't set up yet. Add GEMINI_API_KEY to backend/.env and restart the server.",
+          "Neko isn't set up yet. Add GEMINI_API_KEY to ai-service/.env and restart the server.",
       });
     }
     const busy = [500, 503, 504].includes(error.status);

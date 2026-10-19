@@ -1,10 +1,11 @@
 {
-  "name": "backend",
+  "name": "nekai-api",
   "version": "1.0.0",
-  "description": "NEKAI anime watchlist backend and web app",
+  "description": "NEKAI api service: accounts, user data (PostgreSQL) and anime data (Tenrai)",
   "main": "src/server.js",
   "scripts": {
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "test": "node --test"
   },
   "keywords": [],
   "author": "",

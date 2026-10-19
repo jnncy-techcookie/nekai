@@ -26,7 +26,7 @@
   var ACHIEVEMENT_NAMES = {};
   ACHIEVEMENTS.forEach(function (n) { ACHIEVEMENT_NAMES[achievementId(n)] = n; });
 
-  // Calls the backend: resolves with the JSON answer, or rejects with an Error carrying the
+  // Calls the api service: resolves with the JSON answer, or rejects with an Error carrying the
   // server's message and HTTP status. A body that is a Blob (a picture) is sent as it is.
   // When the session has run out, the page goes to sign-in instead of failing quietly.
   function api(method, url, body) {

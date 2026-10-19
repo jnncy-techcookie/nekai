@@ -3,17 +3,24 @@
   "configurations": [
     {
       "name": "nekai",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["-y", "http-server", "backend/public", "-c-1"],
-      "port": 5173,
-      "autoPort": true
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["dev/gateway.js"],
+      "port": 8080
     },
     {
       "name": "nekai-api",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "backend", "start"],
+      "runtimeArgs": ["--prefix", "api", "start"],
       "env": { "NODE_OPTIONS": "--use-system-ca" },
       "port": 3000,
+      "autoPort": true
+    },
+    {
+      "name": "nekai-ai-service",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "ai-service", "start"],
+      "env": { "NODE_OPTIONS": "--use-system-ca" },
+      "port": 3001,
       "autoPort": true
     }
   ]

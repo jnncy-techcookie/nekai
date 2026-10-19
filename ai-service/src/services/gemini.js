@@ -1,5 +1,5 @@
 /* Gemini client (Google's Generative Language API, generateContent).
- * The key comes from GEMINI_API_KEY in backend/.env and never leaves the server.
+ * The key comes from GEMINI_API_KEY in ai-service/.env and never leaves the server.
  * GEMINI_MODEL and GEMINI_FALLBACK_MODEL can override the default models.
  */
 const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/";

@@ -75,7 +75,7 @@
       })
       .then(function (res) {
         // 404: a server started before /api/recommend existed
-        if (res.status === 404) throw new Error("AI picks need the latest server. Restart it (npm start in backend) and reload.");
+        if (res.status === 404) throw new Error("AI picks need the latest server. Restart the services and reload.");
         return res.json().catch(function () { return {}; }).then(function (body) {
           if (!res.ok || !Array.isArray(body.picks)) throw new Error(body.error || "The AI couldn’t make picks just now.");
           return body.picks;

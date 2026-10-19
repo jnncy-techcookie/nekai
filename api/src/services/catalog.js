@@ -1,7 +1,7 @@
 const db = require("./db");
 
 /* Saves anime details from Tenrai into PostgreSQL's anime_catalog, in the same shape
- * the frontend uses (see normalize in public/js/services/tenrai.js), so signed-in
+ * the frontend uses (see normalize in frontend/js/services/tenrai.js), so signed-in
  * users can load their library's titles and posters without asking Tenrai again. */
 
 const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : "");

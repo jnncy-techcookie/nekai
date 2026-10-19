@@ -1,18 +1,18 @@
-/* NEKAI server: serves the frontend and the API routes it calls.
+/* NEKAI api service: accounts, user data and anime data. The only service that talks to PostgreSQL.
  *   /api/tenrai/*    anime data from Tenrai (MyAnimeList), see routes/anime.js
- *   /api/neko/chat  the Neko chatbot (Gemini), see routes/neko.js
- *   /api/recommend   Nekai's Picks (Gemini + Tenrai), see routes/recommend.js
  *   /api/auth/*      sign up, sign in, sign out, password reset, see routes/auth.js
  *   /api/me/*        the signed-in user's own data (PostgreSQL), see routes/me.js
  *   /api/catalog     saved anime details from anime_catalog, see routes/catalog.js
  *   /api/account     deleting the signed-in user's account, see routes/account.js
  *   /avatars/*       uploaded profile pictures (services/avatars.js)
+ * The page files are served by the frontend container, and Neko and Nekai's Picks by the
+ * ai-service; the reverse proxy (proxy/) sends each request to the right one.
  * Accounts and data live in PostgreSQL (schema: db/init.sql, settings: DATABASE_URL).
- * Start it with `npm start` in backend/. Settings: backend/.env (see .env.example).
+ * Start it with `npm start` in api/. Settings: api/.env (see .env.example).
  */
 const path = require("node:path");
 
-// Secrets such as GEMINI_API_KEY and the database password live in backend/.env (gitignored).
+// Secrets such as the database password live in api/.env (gitignored).
 // Loaded first: some services read their settings as soon as they are required.
 try {
   process.loadEnvFile(path.join(__dirname, "../.env"));
@@ -22,8 +22,6 @@ try {
 
 const express = require("express");
 const animeRoutes = require("./routes/anime");
-const nekoRoutes = require("./routes/neko");
-const recommendRoutes = require("./routes/recommend");
 const accountRoutes = require("./routes/account");
 const authRoutes = require("./routes/auth");
 const meRoutes = require("./routes/me");
@@ -33,8 +31,8 @@ const { AVATAR_DIR } = require("./services/avatars");
 
 if (!process.env.DATABASE_URL && !process.env.PGHOST) {
   console.warn(
-    "DATABASE_URL is missing from backend/.env: trying PostgreSQL on localhost:5432 " +
-      "with the PG* defaults. See backend/.env.example.",
+    "DATABASE_URL is missing from api/.env: trying PostgreSQL on localhost:5432 " +
+      "with the PG* defaults. See api/.env.example.",
   );
 }
 
@@ -45,18 +43,15 @@ const PORT = process.env.PORT || 3000;
 app.disable("x-powered-by");
 app.set("trust proxy", 1);
 
-// Quick check that the server is up and can reach PostgreSQL (makes no Tenrai or Gemini calls).
+// Quick check that the server is up and can reach PostgreSQL (makes no Tenrai call).
 // Used by container health checks and the pipeline's smoke test.
 app.get("/api/health", async (req, res) => {
   const database = await db.ping();
   res.status(database ? 200 : 503).json({ status: database ? "ok" : "degraded", database: database ? "ok" : "unreachable" });
 });
 
-// API routes come before the static files, so nothing in public/ can shadow them.
 // JSON bodies are parsed only for the routes that take one, each with a size cap.
 app.use("/api/tenrai", animeRoutes);
-app.use("/api/neko", express.json({ limit: "32kb" }), nekoRoutes);
-app.use("/api/recommend", express.json({ limit: "64kb" }), recommendRoutes);
 app.use("/api/auth", express.json({ limit: "8kb" }), authRoutes);
 app.use("/api/me", meRoutes); // each route parses its own body (JSON or an image)
 app.use("/api/catalog", catalogRoutes);
@@ -80,12 +75,10 @@ app.use(
     setHeaders: (res) => res.setHeader("X-Content-Type-Options", "nosniff"),
   }),
 );
-// Everything else is the static site: the HTML pages, css/, js/ and assets/
-app.use(express.static(path.join(__dirname, "../public")));
 
 if (require.main === module) {
   app.listen(PORT, () => {
-    console.log(`Nekai is running at http://localhost:${PORT}`);
+    console.log(`Nekai api is running at http://localhost:${PORT}`);
   });
 }
 

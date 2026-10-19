@@ -1,0 +1,18 @@
+{
+  "name": "nekai-ai-service",
+  "version": "1.0.0",
+  "description": "NEKAI AI service: Neko chat and Nekai's Picks (Gemini)",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "engines": {
+    "node": "24.x"
+  }
+}

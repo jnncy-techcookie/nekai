@@ -1,9 +1,9 @@
 node_modules/
 
-# Environment files hold secrets (API keys); copy backend/.env.example instead
+# Environment files hold secrets (API keys); copy api/.env.example (or ai-service/.env.example) instead
 .env
 .env.*
 !.env.example
 
 # Uploaded profile pictures (user data, kept in a volume in Docker)
-backend/uploads/
+api/uploads/
