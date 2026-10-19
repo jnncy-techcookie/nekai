@@ -1,0 +1,121 @@
+// NEKAI rollback: redeploys the images of an earlier build. Parameterized and run by hand
+// ("Build with Parameters"), so it has no triggers. It is a separate Jenkins job (Script Path =
+// Jenkinsfile.rollback) from the deploy pipeline (Jenkinsfile).
+//
+// Nothing is rebuilt. Every deploy leaves its images tagged nekai/<service>:<build number> on the
+// Jenkins host's Docker, so a rollback re-points the running stack at those tags. Data is untouched:
+// the pg-data and uploads volumes are not recreated.
+pipeline {
+    agent any
+
+    parameters {
+        string(
+            name: 'ROLLBACK_TAG',
+            defaultValue: '',
+            description: 'Build number to roll back to (digits only, e.g. 12). Must be a build whose images are still on this Docker host: the Validate stage lists them if it is not.'
+        )
+    }
+
+    options {
+        skipDefaultCheckout(true)
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '15'))
+        timeout(time: 10, unit: 'MINUTES')
+    }
+
+    environment {
+        COMPOSE_PROJECT_NAME = 'nekai'
+        // Compose reads ${TAG} for every image name: this is what selects the version to run
+        TAG = "${params.ROLLBACK_TAG}"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Validate') {
+            steps {
+                // $TAG is read from the environment (not pasted into the script), so a bad value can't inject commands
+                sh '''
+                    list_builds() {
+                        echo "Builds you can roll back to:"
+                        docker images --format '{{.Tag}}' nekai/api | grep -E '^[0-9]+$' | sort -n | tr '\\n' ' '
+                        echo
+                    }
+
+                    if ! echo "$TAG" | grep -Eq '^[0-9]+$'; then
+                        echo "ROLLBACK_TAG must be a build number (digits only), got: '$TAG'"
+                        list_builds
+                        exit 1
+                    fi
+
+                    missing=0
+                    for service in proxy frontend api ai-service db; do
+                        if ! docker image inspect "nekai/$service:$TAG" > /dev/null 2>&1; then
+                            echo "Missing image: nekai/$service:$TAG"
+                            missing=1
+                        fi
+                    done
+                    if [ "$missing" = 1 ]; then
+                        list_builds
+                        exit 1
+                    fi
+
+                    echo "All five images for build $TAG are present."
+                '''
+                script {
+                    currentBuild.displayName = "#${env.BUILD_NUMBER} rollback to ${params.ROLLBACK_TAG}"
+                }
+            }
+        }
+
+        stage('Rollback') {
+            steps {
+                withCredentials([
+                    file(
+                        credentialsId: 'nekai-env',
+                        variable: 'ENV_FILE'
+                    )
+                ]) {
+                    // --no-build: only the existing images are used. --wait: returns once every health check passes.
+                    sh '''
+                        docker compose --env-file "$ENV_FILE" \
+                          -f docker-compose.yml \
+                          up -d --no-build --wait --wait-timeout 120
+                    '''
+                }
+            }
+        }
+
+        stage('Smoke Test / Verify') {
+            steps {
+                withCredentials([
+                    file(
+                        credentialsId: 'nekai-env',
+                        variable: 'ENV_FILE'
+                    )
+                ]) {
+                    // Same checks as the deploy pipeline, plus: the page must report the build we rolled back to
+                    sh '''
+                        docker compose --env-file "$ENV_FILE" \
+                          -f docker-compose.yml \
+                          exec -T -e EXPECTED_BUILD="$TAG" api node - < scripts/smoke-test.js
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Rolled back to build ${params.ROLLBACK_TAG} and verified. The next push deploys a new build on top of it."
+        }
+
+        failure {
+            echo "Rollback failed. Read the failed stage's log (Validate lists the builds that can be used)."
+        }
+    }
+}

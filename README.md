@@ -8,6 +8,10 @@ Browser ──► proxy ─┬─ /                          ──► frontend 
                    └─ /api/*, /avatars/*         ──► api ──► db (PostgreSQL, named volume)
 ```
 
+![NEKAI system architecture](docs/architecture.png)
+
+The full write-up (architecture, Dockerfiles, Compose, Jenkins, pipeline, testing, rollback, problems and contributions) is in [`docs/technical-documentation.pdf`](docs/technical-documentation.pdf), also as an editable Word file: [`docs/technical-documentation.docx`](docs/technical-documentation.docx).
+
 Only the **api** talks to PostgreSQL. The **ai-service** has no database: it asks the api to check the session cookie and to search Tenrai, so every Tenrai call shares one rate-limited queue and cache. Everything runs in containers with Docker Compose (see below). Without Docker, the three services can also run on a laptop behind `dev/gateway.js`, a small stand-in for the proxy.
 
 ## Run it
@@ -25,18 +29,20 @@ Open [http://localhost:8080](http://localhost:8080). The stack is five container
 
 | Container | Image | Role |
 |---|---|---|
-| `proxy` | `nginxinc/nginx-unprivileged:1.27-alpine` | The only published port (8080). Routes `/api/neko` and `/api/recommend` to the ai-service, other `/api` paths and `/avatars` to the api, everything else to the frontend |
-| `frontend` | `nginxinc/nginx-unprivileged:1.27-alpine` | The static site. Shows the deployed build number in the corner of every page (`/build.json`) |
-| `api` | `node:24-alpine` | Accounts, user data, anime data |
-| `ai-service` | `node:24-alpine` | Neko chat and Nekai's Picks |
-| `db` | `postgres:16-alpine` | PostgreSQL, data in the `pg-data` named volume (profile pictures are in `uploads`) |
+| `proxy` | `nginxinc/nginx-unprivileged:1.27.5-alpine` | The only published port (8080). Routes `/api/neko` and `/api/recommend` to the ai-service, other `/api` paths and `/avatars` to the api, everything else to the frontend |
+| `frontend` | `nginxinc/nginx-unprivileged:1.27.5-alpine` | The static site. Shows the deployed build number in the corner of every page (`/build.json`) |
+| `api` | `node:24.22.0-alpine` | Accounts, user data, anime data |
+| `ai-service` | `node:24.22.0-alpine` | Neko chat and Nekai's Picks |
+| `db` | `postgres:16.15-alpine` | PostgreSQL, data in the `pg-data` named volume (profile pictures are in `uploads`) |
+
+Base images are pinned to exact versions, so every build uses the same ones. To update one, change the tag in its `Dockerfile` (the api and ai-service use `node` in two stages each), and let the pipeline's tests confirm the change.
 
 - **Networks:** `web-net` (proxy, frontend, api, ai-service) and `data-net` (api, db). Only the api can reach the database, and the database port is not published.
 - **Start order:** health checks plus `depends_on: condition: service_healthy`: db, then api, then ai-service, then proxy.
 - **Persistence:** `docker compose down` followed by `docker compose up -d` keeps all data. Only `down -v` deletes the volumes.
-- **Tests:** `docker build --target test ./api` (and `./ai-service`) runs a service's tests inside Docker.
+- **Tests:** `docker build --target test ./api` (and `./ai-service`, `./frontend`) runs that service's tests inside Docker. The api and ai-service run their unit and route tests; the frontend checks that every script parses and every page, script and style points at a file that exists (`frontend/tests/site.test.js`).
 - **Schema:** `db/init.sql` runs only when the `pg-data` volume is empty. Existing data is never touched.
-- **Image tags:** images are tagged `${TAG}` (the Jenkins build number; `latest` when unset). Roll back with `TAG=<earlier build> docker compose up -d --no-build`.
+- **Image tags:** images are tagged `${TAG}` (the Jenkins build number; `latest` when unset). Roll back with the `nekai-rollback` Jenkins job (see [Rollback](#rollback)), or by hand with `TAG=<earlier build> docker compose up -d --no-build`.
 - **Logs:** `docker compose logs -f api`. Password reset emails are printed there when `SMTP_HOST` isn't set.
 - **Port 8080 taken?** (for example by a Jenkins installed directly on Windows) Set `HTTP_PORT=8090` and `APP_URL=http://localhost:8090` in `.env`.
 
@@ -66,11 +72,30 @@ docker compose up -d --build
 
 **4. The pipeline job.** *New Item* → name `nekai` → **Pipeline** → *Pipeline*: Definition **Pipeline script from SCM**, SCM **Git**, Repository URL `https://github.com/jnncy-techcookie/nekai.git` (add a GitHub access token credential if the repository is private), Branch `*/main`, Script Path `Jenkinsfile`. Save, then press **Build Now once**: the first run registers the trigger declared in the Jenkinsfile. From then on, pushes start it automatically.
 
-**Trigger:** the Jenkinsfile polls GitHub every 2 minutes (`pollSCM('H/2 * * * *')`), so a push is picked up within 2 minutes with no public URL needed. For instant builds, use a webhook instead: run `ngrok http 8081`, add `https://<ngrok-url>/github-webhook/` under the repository's *Settings → Webhooks* (content type `application/json`, push events), and switch the Jenkinsfile's trigger to `githubPush()`.
+**Trigger:** the Jenkinsfile declares two triggers, so a push starts the pipeline with nobody pressing Build Now.
+- **Webhook (instant):** `githubPush()`. Run `ngrok http 8081`, then add `https://<ngrok-url>/github-webhook/` under the repository's *Settings → Webhooks* (content type `application/json`, push events). Jenkins runs on a laptop with no public address, so ngrok is what lets GitHub reach it.
+- **Poll SCM (fallback):** `pollSCM('H/2 * * * *')` checks GitHub every 2 minutes. It needs no public URL, so pushes are still picked up (within 2 minutes) if ngrok or the network is down.
 
-**Stages:** Checkout → Test (`docker build --target test` for the api and the ai-service; a failing test stops the pipeline here, so nothing is deployed) → Build Images (tagged with the build number) → Deploy (`docker compose up -d --wait`, waits for every health check) → Smoke Test / Verify (the proxy, the frontend, the api and its database, the ai-service, and AI routing).
+**Stages:** Checkout → Test (`docker build --target test` for the api, the ai-service and the frontend; a failing test stops the pipeline here, so nothing is deployed) → Build Images (tagged with the build number) → Deploy (`docker compose up -d --wait`, waits for every health check) → Smoke Test / Verify (`scripts/smoke-test.js`: the proxy, the frontend, the api and its database, the ai-service, AI routing, and that the build number being served is this build's).
 
-**Rollback:** every build's images stay tagged with its build number, so going back is one command on the Jenkins host: `TAG=<earlier build> docker compose --env-file <your .env> up -d --no-build`. The build label in the corner of every page shows which build is live.
+#### Rollback
+
+Every build's images stay tagged with its build number (`nekai/api:14`, `nekai/db:14`, …), so a rollback rebuilds nothing: it points the running stack at an earlier build's images. It is a second, parameterized Jenkins job, defined in `Jenkinsfile.rollback`.
+
+**Set it up once:** *New Item* → name `nekai-rollback` → **Pipeline** → *Pipeline script from SCM*, the same repository and branch as the `nekai` job, Script Path **`Jenkinsfile.rollback`**. It has no triggers: it only runs when someone starts it. Press **Build Now** once (it stops at Validate because no tag is set, and lists the builds you can use); from then on the job shows **Build with Parameters**.
+
+**Use it:** *Build with Parameters*, enter `ROLLBACK_TAG` (a build number, e.g. `14`), and run. Its stages:
+
+1. **Validate**: the tag must be digits only, and all five images for that build (`proxy`, `frontend`, `api`, `ai-service`, `db`) must still exist on the Jenkins host. If not, the log lists the builds that do exist, and nothing is changed.
+2. **Rollback**: `docker compose up -d --no-build --wait` with `TAG` set to that build, using the same `nekai-env` credential.
+3. **Smoke Test / Verify**: the same checks as a deploy, plus the page must report the build you rolled back to (the build label in the corner of every page).
+
+Notes:
+- **Data is kept.** The `pg-data` and `uploads` volumes are not touched. The database schema isn't versioned per build, so rolling back moves the code, not the data.
+- **It uses the current `docker-compose.yml`.** If a later build changed the compose file itself (for example added a service), roll back far enough that all five images exist, and check the result.
+- **The next push deploys a new build** on top of the rolled-back one: fix the problem, push, and the normal pipeline takes over.
+- Old images are not cleaned up automatically. If the Jenkins host prunes them (`docker image prune -a`), those builds can no longer be rolled back to.
+- Without Jenkins, the same thing by hand on the Jenkins host: `TAG=<earlier build> docker compose --env-file <your .env> up -d --no-build`.
 
 **Security note:** mounting `/var/run/docker.sock` and running Jenkins as root gives Jenkins full control of the host's Docker. That's acceptable on a lab laptop, not in production: there, builds run on dedicated agents, with rootless Docker, Docker-in-Docker over TLS, or daemonless builders such as Kaniko or BuildKit. Jenkins's port is bound to `127.0.0.1`, so only this computer (or the ngrok tunnel) can reach it.
 
@@ -83,7 +108,7 @@ docker run -d --name nekai-db \
   -e POSTGRES_USER=nekai -e POSTGRES_PASSWORD=change-me -e POSTGRES_DB=nekai \
   -p 5432:5432 -v nekai-pg-data:/var/lib/postgresql/data \
   -v "$PWD/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro" \
-  postgres:16-alpine
+  postgres:16.15-alpine
 ```
 
 The schema in `db/init.sql` runs the first time the container starts with an empty `nekai-pg-data` volume. The data stays in that volume when the container is stopped, removed or recreated. To apply the schema to an existing database by hand, run `psql "$DATABASE_URL" -f db/init.sql` (every statement skips what already exists).
@@ -128,6 +153,9 @@ Open [http://localhost:8080](http://localhost:8080) and create an account. Each 
 ```
 nekai/
 ├── README.md
+├── Jenkinsfile                deploy pipeline: Checkout, Test, Build Images, Deploy, Smoke Test
+├── Jenkinsfile.rollback       parameterized rollback pipeline (ROLLBACK_TAG = a build number)
+├── scripts/smoke-test.js      post-deploy checks, shared by both pipelines (runs inside the api container)
 ├── db/init.sql                PostgreSQL schema (tables, keys, checks)
 ├── dev/gateway.js             local stand-in for the reverse proxy (no Docker needed)
 ├── api/                       service 1: accounts, user data and anime data (the only one that uses PostgreSQL)
@@ -156,6 +184,7 @@ nekai/
 │       ├── services/gemini.js calls the Gemini API (key from ai-service/.env)
 │       └── services/rate-limit.js per-user request limits for the Gemini routes
 └── frontend/                  service 3: the browser interface (static files)
+    ├── tests/site.test.js     static checks: scripts parse, every referenced file exists (run by the pipeline)
     ├── index.html, library.html, discover.html,
     │   profile.html, settings.html, signin.html
     ├── assets/
@@ -257,6 +286,22 @@ The official palette is **cream, cobalt blue and orange**. The tokens in `css/ba
 
 - **Google sign-in** isn’t set up yet: it would need a Google OAuth client and an OAuth route in `routes/auth.js`.
 - **Share list** copies a link to your list, but there's no public page for someone else's list yet.
+
+## Team
+
+Course project: System Architecture and Integration (Docker and Jenkins final project).
+
+| Member | Role | Main areas (from the Git history) |
+|---|---|---|
+| Jenna Cyrille Pugal (`jnncy-techcookie`) | *to confirm* | Jenkins pipeline and setup, failing-test and automatic-deployment demos, API tests, sign-in and profile fixes |
+| Kristine Madronero | *to confirm* | Frontend: redesigns, dark mode, onboarding, library and phone layout, badges, Neko chat styling |
+| Raiza Lhyn A. Gloria | *to confirm* | AI recommendations, XP, streak and achievements, Neko backend, settings, pull request reviews |
+| Cheska Joyce | *to confirm* | PostgreSQL migration, api and ai-service test suites, Jenkins changes |
+| Heidee David | *to confirm* | Module split, Dockerfiles and `docker-compose.yml` |
+
+## Documentation
+
+`docs/` holds the technical documentation as an editable Word file (`technical-documentation.docx`) and as a PDF, plus the architecture diagram, with their sources and the commands that rebuild them. See [`docs/README.md`](docs/README.md).
 
 ## Credits
 

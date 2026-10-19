@@ -32,6 +32,7 @@ services:
   frontend:
     build:
       context: ./frontend
+      target: production
       args:
         BUILD_NUMBER: ${TAG:-dev} # shown on every page as "Build <n>"
     image: nekai/frontend:${TAG:-latest}

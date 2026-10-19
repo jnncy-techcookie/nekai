@@ -3,7 +3,7 @@
 #   base        dependencies + source
 #   test        `docker build --target test` runs the tests inside Docker (the pipeline's quality gate)
 #   production  small image: no dev files, runs as the unprivileged "node" user
-FROM node:24-alpine AS base
+FROM node:24.22.0-alpine AS base
 WORKDIR /app
 # Dependency files first, so this layer is cached until package*.json changes
 COPY package*.json ./
@@ -15,7 +15,7 @@ FROM base AS test
 RUN npm test
 
 # ---- production stage ----
-FROM node:24-alpine AS production
+FROM node:24.22.0-alpine AS production
 WORKDIR /app
 ENV NODE_ENV=production \
     PORT=3000 \

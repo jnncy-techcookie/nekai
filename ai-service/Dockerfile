@@ -1,6 +1,6 @@
 # NEKAI AI service: Neko chat and Nekai's Picks (Gemini). No database.
 # Stages: base (dependencies + source) → test (`docker build --target test`) → production.
-FROM node:24-alpine AS base
+FROM node:24.22.0-alpine AS base
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
@@ -11,7 +11,7 @@ FROM base AS test
 RUN npm test
 
 # ---- production stage: small image, runs as the unprivileged "node" user ----
-FROM node:24-alpine AS production
+FROM node:24.22.0-alpine AS production
 WORKDIR /app
 ENV NODE_ENV=production \
     PORT=3001
