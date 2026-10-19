@@ -499,7 +499,7 @@
       matchMedia("(prefers-reduced-motion: reduce)").matches
     );
   }
-  // Asks first, then signs out of Supabase (the data stays saved to the account)
+  // Asks first, then signs out (the data stays saved to the account)
   function logOut() {
     confirmDialog({
       title: "Log out of NEKAI?",
@@ -1489,7 +1489,7 @@
     nekoSvg: nekoSvg,
   };
 
-  // Changes save to Supabase in the background; say so when one doesn't make it
+  // Changes save to the database in the background; say so when one doesn't make it
   NEKAI.db.onSaveError(function () {
     toast("Couldn’t save your last change. Check your connection and reload the page.");
   });

@@ -5,7 +5,7 @@
 const router = require("express").Router();
 const { askGemini } = require("../services/gemini");
 const { rateLimiter } = require("../services/rate-limit");
-const { requireUser } = require("../services/supabase");
+const { requireUser } = require("../services/auth");
 
 // Limits: messages of history sent to Gemini, characters per message, characters of user data
 const MAX_TURNS = 12;

@@ -1,6 +1,6 @@
 /* NEKAI store
- * The signed-in user's data, loaded from Supabase by start.js before the page runs.
- * Every change is saved back to Supabase (NEKAI.db.sync), notifies subscribers so
+ * The signed-in user's data, loaded from the server by start.js before the page runs.
+ * Every change is saved back to the database (NEKAI.db.sync), notifies subscribers so
  * pages can re-render, and returns an undo function.
  */
 (function () {
@@ -11,7 +11,7 @@
   var unlockListeners = [];
   var version = 0; // counts the user's changes on this page (start.js checks it before a background refresh)
   // When the theme or motion was last changed on this device (0: never). A refresh that lands soon after
-  // can carry the old value, because the save hasn't reached Supabase yet (see replace below).
+  // can carry the old value, because the save hasn't reached the database yet (see replace below).
   var DISPLAY_GRACE = 30000;
   var changedAt = 0;
   try { changedAt = (JSON.parse(localStorage.getItem(DISPLAY_KEY)) || {}).changedAt || 0; } catch (e) { /* storage unavailable */ }
@@ -68,11 +68,11 @@
     };
   }
 
-  // The signed-in user's data that start.js loaded from Supabase, or an empty state when signed out
+  // The signed-in user's data that start.js loaded from the server, or an empty state when signed out
   function load() {
     return NEKAI.startState ? Object.assign(seed(), NEKAI.startState) : seed();
   }
-  // Saves the changes to Supabase (NEKAI.db.sync), and this device's layout and theme to
+  // Saves the changes to the database (NEKAI.db.sync), and this device's layout and theme to
   // localStorage so boot.js can apply them before the next page paints
   function save() {
     if (NEKAI.db) NEKAI.db.sync(state);
@@ -367,7 +367,7 @@
       return version;
     },
     // Swaps in newer account data (a background refresh, see start.js) and redraws the page.
-    // Nothing is saved: the data came from Supabase. Anime details already loaded here are kept.
+    // Nothing is saved: the data came from the server. Anime details already loaded here are kept.
     replace: function (next) {
       var anime = Object.assign({}, next.anime || {}, state.anime);
       var local = state.settings, recent = Date.now() - changedAt < DISPLAY_GRACE;

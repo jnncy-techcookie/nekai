@@ -147,11 +147,11 @@
     if (!dirty()) return;
     var btn = saveBtn; saving = true; btn.disabled = true; btn.setAttribute("aria-busy", "true");
     btn.innerHTML = '<span class="spinner" aria-hidden="true"></span>Saving…';
-    // The email belongs to the Supabase account: changing it sends a confirmation link to the new address
-    var newEmail = em.value.trim(), emailChanged = newEmail !== S.state.profile.email;
-    var account = emailChanged ? NEKAI.db.client.auth.updateUser({ email: newEmail }) : Promise.resolve({});
-    account.then(function (r) {
-      if (r.error) throw r.error;
+    // The email belongs to the account (it's what you sign in with), so it's saved on its own first
+    var newEmail = em.value.trim().toLowerCase(), emailChanged = newEmail !== S.state.profile.email;
+    var account = emailChanged ? NEKAI.db.auth.changeEmail(newEmail) : Promise.resolve(null);
+    account.then(function (u) {
+      if (u) S.setProfile({ email: u.email });
       // the picture first: a new one is uploaded, a removed one deleted; then everything saves together
       return pendingPic === undefined ? undefined
         : pendingPic ? NEKAI.db.uploadAvatar(pendingPic.blob).catch(function (err) {
@@ -165,19 +165,21 @@
       dropPendingUrl(); pendingPic = undefined; paintPic();
       return NEKAI.db.flush();
     }).then(function () {
-      U.toast(emailChanged ? "Saved. Confirm your new email from the link we sent to " + newEmail + "." : "Settings saved");
+      U.toast(emailChanged ? "Saved. Sign in with " + newEmail + " from now on." : "Settings saved");
       var who = U.$(".side-me .side-label span"); if (who) who.textContent = nm.value.trim();
     }).catch(function (err) {
       U.toast((err && err.message) || "Your changes couldn’t be saved. Please try again.");
     }).then(function () {
-      if (emailChanged) em.value = S.state.profile.email; // the old email stays until the new one is confirmed
+      em.value = S.state.profile.email; // the saved email (the old one, if changing it failed)
       saving = false; btn.removeAttribute("aria-busy"); btn.textContent = "Save changes"; syncSave();
     });
   });
   U.$("#pw-change").addEventListener("click", function () {
     var email = S.state.profile.email;
-    NEKAI.db.client.auth.resetPasswordForEmail(email, { redirectTo: location.origin + "/signin.html?mode=reset" }).then(function (r) {
-      U.toast(r.error ? r.error.message : "We’ve emailed a password reset link to " + email);
+    NEKAI.db.auth.forgot(email).then(function () {
+      U.toast("We’ve emailed a password reset link to " + email);
+    }, function (err) {
+      U.toast(err && err.status ? err.message : "Can’t reach the NEKAI server. Please try again.");
     });
   });
 
@@ -206,20 +208,11 @@
       icon: "trash",
     }).then(function (ok) {
       if (!ok) return;
-      NEKAI.db.flush().then(NEKAI.db.token).then(function (token) {
-        return fetch("/api/account", { method: "DELETE", headers: { Authorization: "Bearer " + token } });
-      }).then(function (res) {
-        return res.json().catch(function () { return {}; }).then(function (body) {
-          if (!res.ok) throw new Error(body.error || "Your account couldn’t be deleted just now. Please try again.");
-        });
-      }).then(function () {
-        // the account is gone; clear this browser's session and its copies of the account too
-        NEKAI.db.forget();
-        return NEKAI.db.client.auth.signOut({ scope: "local" }).catch(function () {});
-      }).then(function () {
+      // the server deletes the account and ends the session; this browser's copies are cleared too
+      NEKAI.db.deleteAccount().then(function () {
         location.href = "signin.html?deleted=1";
       }).catch(function (err) {
-        U.toast(err && err.name !== "TypeError" ? err.message : "Can’t reach the NEKAI server. Please try again.");
+        U.toast(err && err.status ? err.message : "Can’t reach the NEKAI server. Please try again.");
       });
     });
   });

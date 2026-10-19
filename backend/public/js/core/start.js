@@ -1,4 +1,4 @@
-/* NEKAI start: checks the Supabase session, loads the user's data, then runs the page.
+/* NEKAI start: checks the session, loads the user's data, then runs the page.
  * Every page needs an account: without one it goes to the sign-in page, and a
  * signed-in visitor to the sign-in page goes Home. The page's own scripts are listed
  * in this tag's data-app attribute and run in order once the data is ready, so they
@@ -7,8 +7,8 @@
  * Moving between pages is quick:
  * - The sidebar and phone top bar appear at once, from the snapshot ui.js keeps of them,
  *   so only the section itself waits (it shows a spinner if the wait is noticeable).
- * - The data comes from this tab's copy (core/supabase.js) when there is one, so the page
- *   draws straight away; Supabase is asked for anything newer in the background.
+ * - The data comes from this tab's copy (core/db.js) when there is one, so the page
+ *   draws straight away; the server is asked for anything newer in the background.
  */
 (function () {
   "use strict";
@@ -68,7 +68,7 @@
     if (top) app.insertBefore(top, main);
   }
 
-  // Asks Supabase for anything newer than this tab's copy (changes from another device or tab)
+  // Asks the server for anything newer than this tab's copy (changes from another device or tab)
   // and redraws if there is. Skipped if you've already changed something here: those changes
   // were saved, and the next page loads fresh.
   function refreshInBackground(fromCache) {
