@@ -27,6 +27,8 @@ after(async () => {
   }
 });
 
+// The quality-gate demo test: change 404 to 200 below and push, and the pipeline stops at
+// the Test stage, so nothing is deployed. Change it back and the next build passes.
 test("Unknown API routes return a JSON 404 response", async () => {
   const response = await fetch(`${baseUrl}/api/nonexistent-test-route`, {
     signal: AbortSignal.timeout(5000),
