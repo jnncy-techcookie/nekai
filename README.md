@@ -38,6 +38,41 @@ Open [http://localhost:8080](http://localhost:8080). The stack is five container
 - **Schema:** `db/init.sql` runs only when the `pg-data` volume is empty. Existing data is never touched.
 - **Image tags:** images are tagged `${TAG}` (the Jenkins build number; `latest` when unset). Roll back with `TAG=<earlier build> docker compose up -d --no-build`.
 - **Logs:** `docker compose logs -f api`. Password reset emails are printed there when `SMTP_HOST` isn't set.
+- **Port 8080 taken?** (for example by a Jenkins installed directly on Windows) Set `HTTP_PORT=8090` and `APP_URL=http://localhost:8090` in `.env`.
+
+### CI/CD with Jenkins
+
+Jenkins runs in its own container, from its own compose file (`infra/jenkins/`), so the pipeline never redeploys Jenkins itself. It talks to the host's Docker through the mounted Docker socket, and its plugins (`infra/jenkins/plugins.txt`, pinned versions) are baked into the image, so the setup wizard has nothing to download.
+
+**1. Start Jenkins**
+
+```bash
+cd infra/jenkins
+docker compose up -d --build
+docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword   # the unlock password
+```
+
+If jenkins.io's plugin servers are unreachable, build from a mirror instead:
+
+```bash
+JENKINS_UC=https://ftp.halifax.rwth-aachen.de/jenkins/updates \
+JENKINS_UC_DOWNLOAD=https://ftp.halifax.rwth-aachen.de/jenkins \
+docker compose up -d --build
+```
+
+**2. First visit** ([http://localhost:8081](http://localhost:8081)): paste the unlock password, choose **Select plugins to install → None → Install** (everything needed is already installed), then create your admin user. Check that Jenkins can use Docker: `docker exec jenkins docker ps` lists the NEKAI containers.
+
+**3. The `.env` credential.** *Manage Jenkins → Credentials → System → Global credentials → Add Credentials*: Kind **Secret file**, upload your production `.env` (same format as `.env.example`), ID **`nekai-env`**. The pipeline passes it to compose with `--env-file`, so it's never written into the workspace or into Git.
+
+**4. The pipeline job.** *New Item* → name `nekai` → **Pipeline** → *Pipeline*: Definition **Pipeline script from SCM**, SCM **Git**, Repository URL `https://github.com/jnncy-techcookie/nekai.git` (add a GitHub access token credential if the repository is private), Branch `*/main`, Script Path `Jenkinsfile`. Save, then press **Build Now once**: the first run registers the trigger declared in the Jenkinsfile. From then on, pushes start it automatically.
+
+**Trigger:** the Jenkinsfile polls GitHub every 2 minutes (`pollSCM('H/2 * * * *')`), so a push is picked up within 2 minutes with no public URL needed. For instant builds, use a webhook instead: run `ngrok http 8081`, add `https://<ngrok-url>/github-webhook/` under the repository's *Settings → Webhooks* (content type `application/json`, push events), and switch the Jenkinsfile's trigger to `githubPush()`.
+
+**Stages:** Checkout → Test (`docker build --target test` for the api and the ai-service; a failing test stops the pipeline here, so nothing is deployed) → Build Images (tagged with the build number) → Deploy (`docker compose up -d --wait`, waits for every health check) → Smoke Test / Verify (the proxy, the frontend, the api and its database, the ai-service, and AI routing).
+
+**Rollback:** every build's images stay tagged with its build number, so going back is one command on the Jenkins host: `TAG=<earlier build> docker compose --env-file <your .env> up -d --no-build`. The build label in the corner of every page shows which build is live.
+
+**Security note:** mounting `/var/run/docker.sock` and running Jenkins as root gives Jenkins full control of the host's Docker. That's acceptable on a lab laptop, not in production: there, builds run on dedicated agents, with rootless Docker, Docker-in-Docker over TLS, or daemonless builders such as Kaniko or BuildKit. Jenkins's port is bound to `127.0.0.1`, so only this computer (or the ngrok tunnel) can reach it.
 
 ### Without Docker
 

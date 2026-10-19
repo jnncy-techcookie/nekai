@@ -1,0 +1,26 @@
+# Jenkins plugins baked into the image (installed by jenkins-plugin-cli in the Dockerfile),
+# so a fresh Jenkins needs no plugin downloads in the setup wizard. Their dependencies are
+# installed automatically. Versions are pinned (compatible with Jenkins 2.580.1), so every
+# rebuild gets the same plugins.
+#
+# Pipeline: declarative Jenkinsfile support
+workflow-aggregator:608.v67378e9d3db_1
+# checkout scm
+git:5.11.0
+# "GitHub hook trigger for GITScm polling" (the webhook trigger)
+github:1.47.0
+# GitHub repositories and Multibranch Pipelines
+github-branch-source:1986.v801e40614d00
+# withCredentials([file(credentialsId: 'nekai-env', ...)])
+credentials-binding:728.v902a_273b_8947
+# Docker Pipeline
+docker-workflow:653.v2f2c08eff0ec
+# Stage View: the pipeline screenshot for the technical documentation
+pipeline-stage-view:2.41
+# Build log timestamps, workspace cleanup, timeouts, folders, user permissions
+timestamper:1.30
+ws-cleanup:0.49
+build-timeout:1.41
+cloudbees-folder:6.1106.v3a_d9a_6d2465e
+antisamy-markup-formatter:173.v680e3a_b_69ff3
+matrix-auth:3.3
